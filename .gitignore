@@ -1,0 +1,15 @@
+# what the rig generates or downloads
+.dj/
+library/
+bin/
+.venv/
+public/samples/src/
+*.log
+
+# tooling
+node_modules/
+.playwright-mcp/
+.local/
+.env
+.DS_Store
+Thumbs.db

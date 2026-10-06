@@ -1,0 +1,41 @@
+{
+  "name": "dj-claude",
+  "version": "0.1.0",
+  "description": "A Claude-powered DJ: browser decks + a CLI that Claude drives through skills.",
+  "private": true,
+  "author": {
+    "name": "tomek-i",
+    "email": "tomek.iwainski@gmail.com",
+    "url": "https://github.com/tomek-i"
+  },
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomek-i/dj-claude.git"
+  },
+  "homepage": "https://github.com/tomek-i/dj-claude#readme",
+  "bugs": {
+    "url": "https://github.com/tomek-i/dj-claude/issues"
+  },
+  "keywords": [
+    "dj",
+    "web-audio",
+    "claude-code",
+    "beatmatching",
+    "cli"
+  ],
+  "type": "module",
+  "bin": {
+    "dj": "./dj.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs test/server-*.mjs",
+    "scan": "node dj.mjs scan",
+    "setup": "node dj.mjs doctor --fix",
+    "banner": "node dj.mjs banner"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}
