@@ -1,5 +1,6 @@
 import { $, $$, esc } from './util.js';
-import { pointer, mixer } from './state.js';
+import { pointer, mixer, ui } from './state.js';
+import { onUi, saveUi } from './prefs.js';
 import { addFeed } from './booth.js';
 import { actionFor, hint, onBindings, toggleShortcuts } from './bindings.js';
 import { toggleLower } from './lower.js';
@@ -118,6 +119,7 @@ function loopTarget() {
 }
 function run(a, e) {
   if (a.id === 'lower.toggle') return toggleLower();
+  if (a.id === 'keys.toggle') return toggleKeys();
   if (a.id === 'shortcuts.show') return toggleShortcuts();
   if (!mixer?.sampler) return; // the rest needs the engine
   if (a.semis !== undefined) {
@@ -156,7 +158,20 @@ function keyHints() {
     }
   }
 }
-onBindings(() => { keyHints(); renderKeys(); });
+onBindings(() => { keyHints(); renderKeys(); applyKeysCollapsed(); });
+// ---- hide / show the section (ui.keysCollapsed): hidden it is one slim bar; the pads and the keys still play
+function applyKeysCollapsed() {
+  const collapsed = !!ui.keysCollapsed, classic = ui.deckLayout === 'classic'; // classic keeps the pads in the mixer
+  const what = classic ? 'chop keyboard' : 'sampler and chop keyboard', k = hint('keys.toggle');
+  document.body.classList.toggle('keys-collapsed', collapsed);
+  $('#keysLabel').textContent = classic ? 'KEYS' : 'SAMPLER · KEYS';
+  $('#keysArrow').textContent = collapsed ? '▸' : '▾';
+  $('#keysToggle').setAttribute('aria-expanded', String(!collapsed));
+  $('#keysToggle').title = `${collapsed ? 'Show' : 'Hide'} the ${what}${k ? ` (${k})` : ''}`;
+}
+export const toggleKeys = (collapsed = !ui.keysCollapsed) => saveUi({ keysCollapsed: collapsed });
+$('#keysToggle').onclick = () => toggleKeys();
+onUi(applyKeysCollapsed);
 export function renderKeys() {
   const wrap = $('#keysMain'); if (!wrap || !mixer?.sampler) return; // not #keys itself: the pads can live in there too
   const L = KB.loop, p = mixer.sampler.pads[KB.pad - 1];
