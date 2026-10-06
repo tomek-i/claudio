@@ -208,16 +208,14 @@ function jogLayerFor(canvas, d, color) {
   if (jog?.key === key) return jog.cv;
   jog = { key, cv: layer(W, W) };
   const g = jog.cv.getContext('2d'), disc = (r) => { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); };
-  // plinth
-  g.fillStyle = '#16161d'; g.beginPath(); g.roundRect(4, 4, W - 8, W - 8, 22 * k); g.fill();
-  g.strokeStyle = '#26263a'; g.lineWidth = 2; g.stroke();
   g.translate(c, c);
   // outer ring (drag it to nudge) with its finger dimples: pockets shaded at the top, catching light at the bottom
   const large = R < W * PLATE.small, RO = large ? W * 0.465 : R + 11 * k, n = large ? 24 : 60, m = (R + RO) / 2, dr = (RO - R) * (large ? 0.33 : 0.31);
   const rim = g.createRadialGradient(0, 0, R, 0, 0, RO);
   rim.addColorStop(0, '#2a2a33'); rim.addColorStop(0.5, '#3a3a45'); rim.addColorStop(1, '#1c1c23');
   g.fillStyle = rim; disc(RO); g.fill();
-  g.strokeStyle = '#000000a0'; g.lineWidth = 1;
+  g.strokeStyle = '#34343f'; g.lineWidth = 1; g.stroke(); // the wheel's own edge: it sits straight on the deck, no plinth
+  g.strokeStyle = '#000000a0';
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2, x = Math.cos(a) * m, y = Math.sin(a) * m;
     const pocket = g.createLinearGradient(0, y - dr, 0, y + dr);
