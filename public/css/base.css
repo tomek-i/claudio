@@ -4,8 +4,8 @@
   --panel2: #181820;
   --line: #262631;
   --text: #ecebf2;
-  --dim: #8a8998;
-  --faint: #55546a;
+  --dim: #a09fb0;
+  --faint: #7f7e92;     /* the quietest text: still 4.5 : 1 on the panel */
   --a: #ff7a45;       /* deck A — clay */
   --a-dim: #6b3620;
   --b: #36d6e7;       /* deck B — cyan */
@@ -19,6 +19,8 @@
   --claude: #e8a17f;
   --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   --sans: 'Space Grotesk', system-ui, sans-serif;
+  /* text is never under 10px, and a control is one of three heights */
+  --h-sm: 22px; --h: 28px; --h-lg: 40px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
