@@ -2,8 +2,9 @@ import { DECKS, DECK_COLORS, RPS, VOL_MAX, volOfDb } from '../engine.js';
 import './extra-decks.js'; // decks C + D must exist before the overview canvases are collected below
 import { $, $$ } from './util.js';
 import { mixer, ui, wave } from './state.js';
-import { takeHold, scratchBy, letGo, bend } from './hand.js';
+import { takeHold, scratchBy, letGo, bend, hush } from './hand.js';
 import { CUE_COLORS, hotcuesOf } from './deck.js';
+import { turntableOn, drawTurntable, armHit, armTimeAt, armHeld, T_RECORD } from './turntable.js';
 
 // ---- canvas sizing + caches: nothing below is resized or rebuilt per frame.
 // The overview / scroll canvases follow their CSS box; setting canvas.width reallocates the backing store.
@@ -313,6 +314,7 @@ function drawJogHint(g, canvas, d, color) {
 }
 
 export function drawJog(canvas, d, color) {
+  if (turntableOn()) return drawTurntable(canvas, d, color, jogHand.get(canvas)); // ui.deckStyle: a record player in the wheel's place
   const g = canvas.getContext('2d'), W = canvas.width, c = W / 2, k = W / 340;
   g.clearRect(0, 0, W, W);
   g.drawImage(jogLayerFor(canvas, d, color), 0, 0);
@@ -330,16 +332,31 @@ export function wireJog(canvas, d) {
   // the wheel is the square in the middle of the box; a drag keeps the centre it started with
   const centre = () => { const r = canvas.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, half: Math.min(r.width, r.height) / 2 }; };
   const geo = (e, c = drag?.c || centre()) => ({ a: Math.atan2(e.clientY - c.y, e.clientX - c.x), rr: Math.hypot(e.clientX - c.x, e.clientY - c.y) / c.half });
+  // where the scratch area ends and the nudge ring begins, as a fraction of the wheel's radius
+  const edge = () => 2 * (turntableOn() ? T_RECORD : plateR());
+  // the turntable's arm: a point in canvas pixels from the centre, and whether the arm is under it
+  const at = (e, c) => { const s = canvas.width / 2 / c.half; return [(e.clientX - c.x) * s, (e.clientY - c.y) * s]; };
+  const onArm = (e, c) => turntableOn() && armHit(canvas, d, ...at(e, c));
   // for the hint drawn by drawJogHint: the part under the pointer, or the part that is held
   const hand = (e, held = false) => {
-    const c = drag?.c || centre(), g = geo(e, c), s = canvas.width / 2 / c.half;
-    const zone = drag ? (drag.mode === 'nudge' ? 'ring' : 'plate') : g.rr > 1 ? null : g.rr > 2 * plateR() ? 'ring' : 'plate';
-    if (zone) jogHand.set(canvas, { zone, held, x: (e.clientX - c.x) * s, y: (e.clientY - c.y) * s }); else jogHand.delete(canvas);
+    const c = drag?.c || centre(), g = geo(e, c), s = canvas.width / 2 / c.half, x = (e.clientX - c.x) * s, y = (e.clientY - c.y) * s;
+    const zone = drag ? { nudge: 'ring', scratch: 'plate', arm: 'arm' }[drag.mode] : onArm(e, c) ? 'arm' : g.rr > 1 ? null : g.rr > edge() ? 'ring' : 'plate';
+    if (zone) jogHand.set(canvas, { zone, held, x, y }); else jogHand.delete(canvas);
+    canvas.style.cursor = zone === 'arm' ? (held ? 'grabbing' : 'grab') : '';
   };
   canvas.addEventListener('pointerleave', () => { if (!drag) jogHand.delete(canvas); });
   canvas.addEventListener('pointerdown', (e) => {
     if (!d.buffer) return;
-    const g = geo(e), mode = g.rr > 2 * plateR() ? 'nudge' : 'scratch';
+    if (onArm(e, centre())) {
+      // the arm picked up by its headshell: the deck goes quiet, the arm follows the hand, and it plays on from
+      // where it is set down
+      drag = { mode: 'arm', c: centre() };
+      hush(d, true); armHeld.set(canvas, armTimeAt(canvas, d, ...at(e, drag.c)));
+      canvas.setPointerCapture(e.pointerId);
+      hand(e, true);
+      return;
+    }
+    const g = geo(e), mode = g.rr > edge() ? 'nudge' : 'scratch';
     if (g.rr > 1) return; // beside the wheel, not on it
     if (mode === 'scratch' && !takeHold(d)) return;
     drag = { mode, a: g.a, t: performance.now(), bend: mode === 'nudge' ? bend(d) : null, c: centre() };
@@ -349,6 +366,7 @@ export function wireJog(canvas, d) {
   canvas.addEventListener('pointermove', (e) => {
     hand(e, !!drag);
     if (!drag) return;
+    if (drag.mode === 'arm') { armHeld.set(canvas, armTimeAt(canvas, d, ...at(e, drag.c))); return; }
     const g = geo(e), now = performance.now();
     let da = g.a - drag.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
     const dt = Math.max(4, now - drag.t) / 1000;
@@ -358,7 +376,8 @@ export function wireJog(canvas, d) {
   });
   const end = (e) => {
     if (!drag) return;
-    if (drag.mode === 'scratch') letGo(d); else drag.bend.end();
+    if (drag.mode === 'arm') { if (e.type === 'pointerup') d.seek(armHeld.get(canvas)); armHeld.delete(canvas); hush(d, false); }
+    else if (drag.mode === 'scratch') letGo(d); else drag.bend.end();
     drag = null;
     if (e.pointerType === 'mouse' && e.type === 'pointerup') hand(e); else jogHand.delete(canvas); // a finger lifted is gone; the mouse is still there
   };

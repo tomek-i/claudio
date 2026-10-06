@@ -29,6 +29,7 @@ test('coerce: types and ranges', () => {
   assert.deepEqual(coerce(field('ui.jogRing'), 'small'), { value: 'small' });
   assert.match(coerce(field('ui.jogRing'), 'huge').error, /one of: Large, Small/);
   assert.deepEqual(coerce(field('ui.deckLayout'), 'classic'), { value: 'classic' });
+  assert.deepEqual(coerce(field('ui.deckStyle'), 'turntable'), { value: 'turntable' });
   assert.deepEqual(coerce(field('ui.meterStyle'), 'led'), { value: 'led' });
   assert.deepEqual(coerce(field('ui.hotcues'), 'letters'), { value: 'letters' });
   assert.deepEqual(coerce(field('ui.jogHint'), 'spot'), { value: 'spot' });
@@ -52,7 +53,7 @@ test('coerce: types and ranges', () => {
 });
 
 test('uiSettings: what the DJ page is sent, defaults included', () => {
-  const defaults = { deckLayout: 'stacked', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
+  const defaults = { deckLayout: 'stacked', deckStyle: 'cdj', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
   assert.deepEqual(uiSettings(base()), defaults);
   assert.deepEqual(uiSettings({ ...base(), ui: { jogRing: 'small', deckLayout: 'classic', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 } }),
     { ...defaults, deckLayout: 'classic', jogRing: 'small', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 });
