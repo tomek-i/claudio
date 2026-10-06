@@ -8,7 +8,10 @@
 .mixer [data-deck="C"] { --c: var(--cc); }
 .mixer [data-deck="D"] { --c: var(--dc); }
 .k { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; letter-spacing: 0.14em; color: var(--dim); user-select: none; }
-.k svg { cursor: ns-resize; display: block; }
+.k svg { cursor: ns-resize; display: block; overflow: visible; }
+.k svg .arc { filter: drop-shadow(0 0 2px currentColor); }
+.k:active svg .ptr line { stroke: #fff; }
+.knobdefs { position: absolute; }
 .k.auto svg .arc { stroke: var(--claude); }
 .faderwrap { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; height: 124px; }
 .meter { width: 8px; height: 120px; background: #0b0b10; border-radius: 3px; }

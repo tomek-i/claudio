@@ -7,24 +7,38 @@ import { addFeed } from './booth.js';
 import { mixerEls } from './layout.js';
 
 // ------------------------------------------------------------------ knobs
+// A knob is drawn like a pot on a mixer: a groove around it that fills with the deck colour from the centre position to
+// the value, and a lit cap with a knurled edge and a white notch that turn with it. The gradients are defined once.
+const KNOB_DEFS = `<svg class="knobdefs" width="0" height="0" aria-hidden="true"><defs>
+  <radialGradient id="knobCap" cx="36%" cy="26%" r="80%"><stop offset="0" stop-color="#565664"/><stop offset="0.5" stop-color="#2a2a34"/><stop offset="1" stop-color="#131319"/></radialGradient>
+  <linearGradient id="knobRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c7c8c"/><stop offset="0.45" stop-color="#2c2c36"/><stop offset="1" stop-color="#08080b"/></linearGradient>
+  <radialGradient id="knobShade"><stop offset="0.55" stop-color="#000" stop-opacity="0.7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+</defs></svg>`;
 function makeKnob(el, { min, max, center, get, set }) {
-  const size = 38, r = 14, cx = size / 2, cy = size / 2;
+  if (!$('.knobdefs')) document.body.insertAdjacentHTML('beforeend', KNOB_DEFS);
+  const size = 38, r = 16, cap = 12, cx = size / 2, cy = size / 2; // r: the groove; cap: the knob itself
+  const toAng = (v) => -135 + ((v - min) / (max - min)) * 270;
+  const pt = (a) => [cx + r * Math.sin((a * Math.PI) / 180), cy - r * Math.cos((a * Math.PI) / 180)];
+  const sweep = (a0, a1) => { const [x0, y0] = pt(a0), [x1, y1] = pt(a1); return `M${x0} ${y0} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
   el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#0c0c11" stroke="#2a2a36" stroke-width="2"/>
-    <path class="arc" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-    <line class="ptr" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - r + 3}" stroke="#eee" stroke-width="2" stroke-linecap="round"/>
+    <path class="groove" d="${sweep(-135, 135)}" fill="none" stroke="#2a2a36" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="arc" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy + 2.5}" r="${cap + 3.5}" fill="url(#knobShade)"/>
+    <circle cx="${cx}" cy="${cy}" r="${cap}" fill="url(#knobRim)"/>
+    <circle cx="${cx}" cy="${cy}" r="${cap - 1.3}" fill="url(#knobCap)"/>
+    <g class="ptr">
+      <circle cx="${cx}" cy="${cy}" r="${cap - 0.65}" fill="none" stroke="#000" stroke-opacity="0.55" stroke-width="1.3" stroke-dasharray="0.9 1.75"/>
+      <line x1="${cx}" y1="${cy - 3.5}" x2="${cx}" y2="${cy - cap + 2}" stroke="#f6f6fa" stroke-width="2" stroke-linecap="round"/>
+    </g>
   </svg><span>${el.dataset.label}</span>`;
   el.style.color = 'var(--c)';
   const arc = $('.arc', el), ptr = $('.ptr', el);
-  const toAng = (v) => -135 + ((v - min) / (max - min)) * 270;
-  const pt = (a) => [cx + r * Math.sin((a * Math.PI) / 180), cy - r * Math.cos((a * Math.PI) / 180)];
   let last = null;
   el.render = () => {
     const v = get();
     if (v === last) return; last = v;
     const a0 = toAng(center), a1 = toAng(v);
-    const [x0, y0] = pt(Math.min(a0, a1)), [x1, y1] = pt(Math.max(a0, a1));
-    arc.setAttribute('d', Math.abs(a1 - a0) < 0.5 ? '' : `M${x0} ${y0} A${r} ${r} 0 ${Math.abs(a1 - a0) > 180 ? 1 : 0} 1 ${x1} ${y1}`);
+    arc.setAttribute('d', Math.abs(a1 - a0) < 0.5 ? '' : sweep(Math.min(a0, a1), Math.max(a0, a1)));
     ptr.setAttribute('transform', `rotate(${a1} ${cx} ${cy})`);
   };
   let drag = null;
