@@ -6,7 +6,7 @@ import { VOL_MAX, volOfDb } from '../engine.js';
 
 // ------------------------------------------------------------------ deck layout (ui.deckLayout): stacked | classic
 // One set of markup for both. The decks switch in CSS alone (body[data-layout]). The mixer needs three things moved,
-// listeners and all: the per-deck FX controls (FX block ⇄ channel strip), the master volume (MASTER section ⇄ header)
+// listeners and all: the per-deck FX controls (the strip's FX slot ⇄ loose in the strip), the master volume (MASTER section ⇄ header)
 // and the sampler pads (beside the chop keyboard ⇄ under the crossfader).
 export const mixerEls = (deck, sel) => $$(`.mixer [data-deck="${deck}"] ${sel}`); // a deck's controls, in its strip or its FX row
 
@@ -16,9 +16,9 @@ function applyLayout() {
   document.body.dataset.layout = layout;
   const stacked = layout === 'stacked';
   for (const strip of $$('.strip')) {
-    const deck = strip.dataset.deck, row = $(`.fxrow[data-deck="${deck}"]`);
+    const deck = strip.dataset.deck, slot = $('.fxslot', strip);
     const [sel] = mixerEls(deck, '.fxsel'), [echo] = mixerEls(deck, '.k[data-ctl="echo"]'), [fx] = mixerEls(deck, '.k[data-ctl="fx"]');
-    if (stacked) row.append(sel, echo, fx);
+    if (stacked) { $('.fxpair', slot).append(echo, fx); slot.prepend(sel); }
     else $('.faderwrap', strip).before(echo, fx, sel);
   }
   const vol = $('.mastervol');

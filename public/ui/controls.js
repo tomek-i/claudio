@@ -84,6 +84,8 @@ export function wireControls() {
   }
   $('#xfader').oninput = (e) => mixer.xfader.set(Number(e.target.value));
   $('#xfader').ondblclick = () => mixer.xfader.set(0.5); // the centre: both sides at full
+  // crossfader assign for A and B, as switches at the ends of the crossfader (C and D keep the menu on their deck)
+  for (const b of $$('.xfsw button')) b.onclick = () => mixer.decks[b.parentElement.dataset.deck].setXfSide(b.dataset.side);
   // the master level: a knob in the stacked layout, the slider in the classic one. Both are the same fader travel
   // (0 dB at 1, +6 dB at VOL_MAX), so the knob's arc starts at the 0 dB mark.
   makeKnob($('#masterKnob'), { min: 0, max: VOL_MAX, center: 1, get: () => +faderOfMaster(mixer.master.value()).toFixed(3), set: (v) => mixer.master.set(masterOfFader(v)) });
@@ -105,6 +107,16 @@ export function wireControls() {
       if (!e.shiftKey) d.loopStep(f); else if (d.loop) d.moveLoop(f < 1 ? -1 : 1);
     });
     $('.lsize', el).onclick = () => d.setLoop(d.loop ? 0 : d.loopSize, undefined, 'block');
+    $('.lin', el).onclick = () => { if (d.buffer) { d.loopIn(); el.classList.add('loop-armed'); } };
+    $('.lout', el).onclick = () => warn(() => { d.loopOut(); el.classList.remove('loop-armed'); });
+    // beat jump: the playhead moves by whole beats, so it lands in phase
+    // (a running loop would pull the playhead straight back, so the jump lets go of it first)
+    for (const b of $$('.bj', el)) b.onclick = () => {
+      if (!d.buffer) return;
+      const to = Math.max(0, Math.min(d.duration - 0.05, d.position() + Number(b.dataset.beats) * d.beatLen));
+      if (d.loop) d.setLoop(0);
+      d.seek(to);
+    };
     // loops: click = loop the block you are in (snapped to the loop length) · hold = momentary · shift+click = from the next bar
     for (const b of $$('.loops button[data-loop]', el)) {
       let downAt = 0, armed = false;

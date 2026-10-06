@@ -1,6 +1,6 @@
 /* ---------- narrow screens (loaded last: these override the component files) ---------- */
 @media (max-width: 1100px) {
-  .rig, .rig.four { grid-template-columns: 1fr 1fr; }
+  .rig, .rig.four, body[data-layout="stacked"] .rig, body[data-layout="stacked"] .rig.four { grid-template-columns: 1fr 1fr; }
   .mixer { grid-column: 1 / -1; order: 3; }
   .lower { grid-template-columns: 1fr; grid-template-rows: auto; flex: none; }
   body { height: auto; overflow: auto; }
@@ -10,15 +10,19 @@
   body[data-layout="stacked"] .rig { flex: none; }
   body[data-layout="stacked"] .lower { flex: none; }
   body[data-layout="stacked"] .deck:not(.compact) > .jog { min-height: 240px; }
-  body[data-layout="stacked"] .strips > .strip, body[data-layout="stacked"] .rig.four .strips > .strip { flex: 1 1 0; }
+  body[data-layout="stacked"] .mixer { min-height: 520px; }
 }
 @media (max-width: 700px) {
   .deck { --jog: 120px; }
-  .rig, .rig.four, .rig2 { grid-template-columns: 1fr; }
+  .rig, .rig.four, .rig2, body[data-layout="stacked"] .rig, body[data-layout="stacked"] .rig.four { grid-template-columns: 1fr; }
+  /* a phone has no room for the stem panel beside the wheel: it goes under it */
+  body[data-layout="stacked"] .deck:not(.compact) { grid-template-columns: 76px minmax(0, 1fr) 56px; grid-template-rows: repeat(9, auto) 1fr repeat(4, auto); }
+  body[data-layout="stacked"] .deck:not(.compact) .tempo { grid-column: 3; }
+  body[data-layout="stacked"] .deck:not(.compact) .keyshift { grid-column: 1 / -1; grid-row: 13; }
+  body[data-layout="stacked"] .deck:not(.compact) .stems { grid-column: 1 / -1; grid-row: 14; }
+  body[data-layout="stacked"] .deck:not(.compact) .stems input { min-height: 90px; }
   .rig2 .deck[data-deck="D"] { grid-column: 1; }
   .top { flex-wrap: wrap; gap: 10px; }
   .keys { flex-direction: column; }
   .keys > .pads { width: auto; }
-  body[data-layout="stacked"] .mixer, body[data-layout="stacked"] .rig.four .mixer { grid-template: "strips" auto "fx" auto "master" auto "xf" auto / minmax(0, 1fr); }
-  body[data-layout="stacked"] .mastermeters { flex-basis: 80px; }
 }

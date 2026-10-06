@@ -72,4 +72,4 @@ tr.loaded td.name { color: var(--claude); }
 .starter .btn { background: var(--a); border-color: var(--a); color: #000; }
 .starter .btn:disabled { opacity: 0.5; cursor: default; }
 .starter small { font-size: 11px; color: var(--faint); }
-.stemtag { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; color: var(--ok); border: 1px solid #2f5a3a; border-radius: 4px; padding: 0 3px; vertical-align: middle; }
+.stemtag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ok); border: 1px solid #2f5a3a; border-radius: 4px; padding: 0 3px; vertical-align: middle; }

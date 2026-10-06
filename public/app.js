@@ -38,6 +38,7 @@ let lastLive = null, lastSlow = 0;
 // a slider follows the engine except while the pointer holds it (not merely while it has focus: a double-click
 // reset, a `dj` command or an automation moves a slider that was just used)
 const held = (el) => el.matches(':active');
+const setText = (el, txt) => { if (el.textContent !== txt) el.textContent = txt; };
 let clipUntil = 0; // the master CLIP light is on until then
 function frame() {
   if (!mixer) return;
@@ -64,7 +65,11 @@ function frame() {
     $('.remain', el).textContent = dur ? `-${mmss((dur - pos) / d.rate)}` : '-0:00';
     if (t) {
       const beats = d.beatAt(pos);
-      $('.bar', el).textContent = `bar ${Math.floor(beats / 4) + 1}.${(((Math.floor(beats) % 4) + 4) % 4) + 1}`;
+      const bar = Math.floor(beats / 4), beat = ((Math.floor(beats) % 4) + 4) % 4;
+      setText($('.barn', el), `bar ${bar + 1}.${beat + 1}`);
+      $$('.beats b', el).forEach((b, i) => b.classList.toggle('on', i === beat));
+      // the 8-bar phrase the playhead is in, as a bar that fills
+      $('.phrase b', el).style.width = `${((((beats / 4) % 8) + 8) % 8) / 8 * 100}%`;
       const toOut = (t.mixOut - pos) / d.rate;
       const mo = $('.mixout', el);
       mo.textContent = d.playing ? (toOut > 0 ? `mix-out ${mmss(toOut)}` : 'in outro') : '';
@@ -76,9 +81,12 @@ function frame() {
     // ½ / ×2 go dark at a limit; the readout names a length the four buttons cannot show
     const size = lp ? lp.beats : d.loopSize;
     for (const b of $$('.lscale', el)) { const f = Number(b.dataset.scale); b.disabled = lp ? !!d.loopLimit(f) : size * f < LOOP_MIN || size * f > LOOP_MAX; }
-    const ls = $('.lsize', el), txt = [4, 8, 16, 32].includes(size) ? '' : ({ 0.0625: '1/16', 0.125: '⅛', 0.25: '¼', 0.5: '½' }[size] || String(size));
-    if (ls.textContent !== txt) ls.textContent = txt;
-    ls.classList.toggle('on', !!lp && txt !== '');
+    // LOOP is the on / off; it names a length the four buttons cannot show (2, 1, ½ … 64, or one set with IN / OUT)
+    const odd = [4, 8, 16, 32].includes(size) ? '' : ({ 0.0625: '1/16', 0.125: '⅛', 0.25: '¼', 0.5: '½' }[size] || String(size));
+    const ls = $('.lsize', el);
+    setText(ls, odd ? `LOOP ${odd}` : 'LOOP');
+    ls.classList.toggle('on', !!lp);
+    if (lp) el.classList.remove('loop-armed');
     const rate = $('.rate', el); if (!held(rate)) rate.value = d.rate;
     $('.keylock', el).classList.toggle('on', d.keylock);
     $('.ksv', el).textContent = d.keyShift > 0 ? `+${d.keyShift}` : String(d.keyShift);
@@ -96,7 +104,7 @@ function frame() {
   for (const strip of $$('.strip')) {
     const d = mixer.decks[strip.dataset.deck];
     if (strip.classList.contains('extra')) {
-      strip.classList.toggle('shown', !!d.track); $(`.fxrow[data-deck="${d.name}"]`).classList.toggle('shown', !!d.track);
+      strip.classList.toggle('shown', !!d.track);
       if (!d.track) continue;
     }
     for (const k of mixerEls(d.name, '.k')) { k.render?.(); k.classList.toggle('auto', !!k.ctlOf?.()?.automating?.()); }
@@ -105,6 +113,7 @@ function frame() {
     drawMeter($('.meter', strip), d.analyser);
   }
   const xf = $('#xfader'); if (!held(xf)) xf.value = mixer.xfader.value();
+  for (const b of $$('.xfsw button')) { const on = String(mixer.decks[b.parentElement.dataset.deck].xfSide === b.dataset.side); if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on); }
   const mv = $('#masterVol'); if (!held(mv)) mv.value = faderOfMaster(mixer.master.value());
   if (document.body.dataset.layout === 'stacked') {
     let peak = -Infinity;

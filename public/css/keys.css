@@ -40,7 +40,7 @@ body.keys-max .piano .pk.b { height: 61%; }
 .piano .pk.w { height: 92px; background: #e9e9ef; color: #333; z-index: 1; }
 .piano .pk.b { height: 56px; background: #1a1a22; color: #ccc; z-index: 2; border-color: #000; }
 .piano .pk i { font-style: normal; font-weight: 700; font-size: 11px; }
-.piano .pk small { font-size: 9px; opacity: 0.6; }
+.piano .pk small { font-size: 10px; opacity: 0.6; }
 .piano .pk.w.on { background: #7ee787; }
 .piano .pk.b.on { background: #3fbf5a; color: #000; }
 .piano .pk:active { transform: translateY(1px); }
@@ -52,8 +52,8 @@ body.keys-max .piano .pk.b { height: 61%; }
 
 /* ---------- sampler pads (beside the keyboard; under the crossfader in the classic layout) ---------- */
 .pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.pad { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 4px 5px; font: 600 9px var(--mono); letter-spacing: 0.06em; color: var(--text); cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.08s; }
-.pad i { display: block; font-style: normal; font-size: 8px; color: var(--faint); }
+.pad { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 4px 5px; font: 600 10px var(--mono); letter-spacing: 0.06em; color: var(--text); cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.08s; }
+.pad i { display: block; font-style: normal; font-size: 10px; color: var(--faint); }
 .pad:hover { border-color: var(--claude); }
 .pad.empty { color: var(--faint); }
 .pad.hit { background: var(--claude); color: #000; }

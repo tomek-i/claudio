@@ -476,6 +476,21 @@ class Deck {
     this._ev([{ t, type: 'loop', loop: { start, end, beats } }]);
     this.loopSize = beats;
   }
+  // loop in / out by hand: IN marks the beat nearest the playhead; OUT closes the loop on the beat nearest it then (one
+  // beat at least) and the playhead carries on inside it
+  loopIn() { this.loopInBeat = Math.round(this.beatAt(this.position())); return this.loopInBeat; }
+  loopOut() {
+    if (this.loopInBeat == null) throw new Error(`press IN on deck ${this.name} first, where the loop should start`);
+    const now = this.ctx.currentTime, pos = this.position(now), here = this.beatAt(pos);
+    if (here < this.loopInBeat - 0.5) throw new Error(`the loop start on deck ${this.name} is ahead of the playhead: press IN again`);
+    const beats = clamp(Math.round(here) - this.loopInBeat, 1, LOOP_MAX);
+    const start = this.posOfBeat(this.loopInBeat), end = this.posOfBeat(this.loopInBeat + beats), len = end - start;
+    const ev = [{ t: now, type: 'loop', loop: { start, end, beats } }];
+    if (pos >= end || pos < start) ev.push({ t: now, type: 'seek', pos: start + ((((pos - start) % len) + len) % len) });
+    this._ev(ev);
+    this.loopSize = beats;
+    return { start, end, beats };
+  }
   // ---- changing a running loop: it stays on the beat grid and the playhead stays inside it
   loopAt(t) { const l = this.model.stateAt(t).loop; return l ? { start: l.start, end: l.end, beats: l.beats } : null; }
   // why the loop cannot be halved (factor 0.5) or doubled (2) at time t; null when it can

@@ -7,7 +7,7 @@
 .mixer [data-deck="B"] { --c: var(--b); }
 .mixer [data-deck="C"] { --c: var(--cc); }
 .mixer [data-deck="D"] { --c: var(--dc); }
-.k { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; letter-spacing: 0.14em; color: var(--dim); user-select: none; }
+.k { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; letter-spacing: 0.14em; color: var(--dim); user-select: none; }
 .k svg { cursor: ns-resize; display: block; overflow: visible; }
 .k svg .arc { filter: drop-shadow(0 0 2px currentColor); }
 .k:active svg .ptr line { stroke: #fff; }
@@ -21,8 +21,8 @@
 input.fader { position: relative; writing-mode: vertical-lr; direction: rtl; height: 120px; width: 26px; --cap-len: 16px; --cap-wide: 26px; --grip: 180deg; }
 /* the dB scale (built in ui/layout.js): numbers and ticks between the meter and the fader, spanning the travel of the
    cap's centre. 0 is a track at its normal level, in the deck colour. */
-.fadertrack { position: relative; display: flex; margin-left: 14px; }
-.fscale { position: absolute; inset-block: 8px; right: calc(100% - 3px); width: 22px; pointer-events: none; font: 7px/1 var(--mono); color: var(--dim); }
+.fadertrack { position: relative; display: flex; margin-left: 20px; }
+.fscale { position: absolute; inset-block: 8px; right: calc(100% - 3px); width: 28px; pointer-events: none; font: 10px/1 var(--mono); color: var(--dim); }
 .fscale i, .mscale i { position: absolute; right: 0; transform: translateY(50%); display: flex; align-items: center; gap: 2px; font-style: normal; white-space: nowrap; }
 .fscale i::after { content: ''; width: 4px; height: 1px; background: currentColor; opacity: 0.7; }
 .fscale i.zero, .mscale i.zero { color: var(--c, var(--text)); font-weight: 600; }
@@ -40,52 +40,66 @@ input.fader { position: relative; writing-mode: vertical-lr; direction: rtl; hei
 /* ---------- mixer: strip names, FX slot, 4 channels ---------- */
 .sname { grid-column: 1 / -1; font: 600 10px var(--mono); color: var(--c); letter-spacing: 0.2em; }
 .strip .fxsel { grid-column: 1 / -1; width: 100%; }
-:is(.strip, .fxrow).extra:not(.shown) { display: none; }
-/* classic layout: no TRIM slot, FX block or MASTER section (ui/layout.js moves their controls back into the strips and the header) */
-.k.trim, .fxblock, .master { display: none; }
+.strip.extra:not(.shown) { display: none; }
+/* classic layout: no TRIM slot, FX slot or MASTER section (ui/layout.js moves their controls into the strips and the header) */
+.k.trim, .master, .fxslot, .xfsw { display: none; }
 
 /* ---------- hardware-style mixer (ui.deckLayout: stacked) ----------
-   one column per channel in signal order (TRIM slot, HI, MID, LOW, FILTER, fader), the per-deck effects in their own
-   block, a MASTER section, the crossfader last. Two channels: FX and MASTER sit beside the strips. Four: underneath. */
-body[data-layout="stacked"] .mixer { display: grid; grid-template: "strips fx" auto "strips master" 1fr "xf xf" auto / auto minmax(0, 1fr); gap: 12px; }
-body[data-layout="stacked"] .strips { grid-area: strips; }
-body[data-layout="stacked"] .strips > .strip { flex: 0 0 62px; }
-body[data-layout="stacked"] .strip { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+   A channel strip either side in signal order (TRIM, HI, MID, LOW, FILTER, the effect, then the fader with its meter),
+   the MASTER between them (level, CLIP, the two meters), the crossfader underneath with each deck's side switch at its
+   end. Four channels: C A · master · B D. */
+body[data-layout="stacked"] .rig { grid-template-columns: 1fr 340px 1fr; }
+body[data-layout="stacked"] .rig.four { grid-template-columns: 1fr 480px 1fr; }
+body[data-layout="stacked"] .mixer { display: grid; grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 10px 8px; }
+body[data-layout="stacked"] .strips { display: contents; }
+body[data-layout="stacked"] .strip { grid-row: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
+body[data-layout="stacked"] .strip[data-deck="A"] { grid-column: 1; }
+body[data-layout="stacked"] .strip[data-deck="B"] { grid-column: 3; }
+body[data-layout="stacked"] .master { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; min-height: 0; padding: 0 4px 2px; border-inline: 1px solid var(--line); }
+body[data-layout="stacked"] .master > .sname { color: var(--dim); text-align: center; }
 body[data-layout="stacked"] .k.trim { display: flex; }
 body[data-layout="stacked"] .strip .k { flex: none; }
-body[data-layout="stacked"] .faderwrap { flex: 1 1 auto; height: auto; min-height: 132px; align-items: stretch; }
+body[data-layout="stacked"] .strip > .k svg { width: 30px; height: 30px; }
+/* the effect: its menu, then echo and amount side by side */
+body[data-layout="stacked"] .fxslot { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; max-width: 104px; padding: 4px 4px 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+body[data-layout="stacked"] .fxslot .fxsel { width: 100%; min-width: 0; height: var(--h-sm); padding: 0 2px; }
+body[data-layout="stacked"] .fxpair { display: flex; gap: 8px; }
+body[data-layout="stacked"] .fxpair .k svg { width: 28px; height: 28px; }
+body[data-layout="stacked"] .faderwrap { flex: 1 1 auto; height: auto; min-height: 110px; align-items: stretch; }
 body[data-layout="stacked"] .faderwrap .meter, body[data-layout="stacked"] input.fader { height: auto; }
 body[data-layout="stacked"] .fadertrack { align-self: stretch; }
-body[data-layout="stacked"] .fxblock { grid-area: fx; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-body[data-layout="stacked"] :is(.fxblock, .master) > .sname { color: var(--dim); }
-body[data-layout="stacked"] .fxrow { display: grid; grid-template: "name sel sel" auto ". echo fx" auto / 12px 1fr 1fr; gap: 4px 6px; align-items: center; justify-items: center; }
-body[data-layout="stacked"] .fxname { grid-area: name; font: 600 11px var(--mono); color: var(--c); }
-body[data-layout="stacked"] .fxrow .fxsel { grid-area: sel; width: 100%; min-width: 0; }
-body[data-layout="stacked"] .master { grid-area: master; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+/* the crossfader row: each deck's side switch (left, through, right) at its end */
+body[data-layout="stacked"] .xf { grid-column: 1 / -1; grid-row: 2; }
+body[data-layout="stacked"] .xfsw { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; --c: var(--a); }
+body[data-layout="stacked"] .xfsw[data-deck="B"] { --c: var(--b); }
+.xfsw button { width: 20px; height: var(--h-sm); padding: 0; background: var(--panel2); border: 0; border-right: 1px solid var(--line); color: var(--dim); font: 600 10px var(--mono); cursor: pointer; }
+.xfsw button:last-child { border-right: 0; }
+.xfsw button:hover { color: var(--text); }
+.xfsw button[aria-pressed="true"] { background: var(--c); color: #000; }
+/* four channels: C A · master · B D */
+body[data-layout="stacked"] .rig.four .mixer { grid-template-columns: repeat(2, minmax(0, 1fr)) 96px repeat(2, minmax(0, 1fr)); }
+body[data-layout="stacked"] .rig.four .strip[data-deck="C"] { grid-column: 1; }
+body[data-layout="stacked"] .rig.four .strip[data-deck="A"] { grid-column: 2; }
+body[data-layout="stacked"] .rig.four .master { grid-column: 3; }
+body[data-layout="stacked"] .rig.four .strip[data-deck="B"] { grid-column: 4; }
+body[data-layout="stacked"] .rig.four .strip[data-deck="D"] { grid-column: 5; }
+body[data-layout="stacked"] .rig.four .fxpair { gap: 2px; }
 /* the master level is a knob here (the slider is the classic layout's, in the header): LEVEL with -inf, 0 dB and +6 dB
    marked round it where the knob points at them, and a CLIP light under it */
 body[data-layout="stacked"] .master .mastervol { display: none; }
 .mlevel { position: relative; align-self: center; width: 84px; padding-top: 10px; display: flex; justify-content: center; --c: var(--text); }
 .mlevel .k svg { width: 56px; height: 56px; }
-.mlevel > i { position: absolute; transform: translate(-50%, -50%); font: 7px/1 var(--mono); font-style: normal; color: var(--dim); white-space: nowrap; }
+.mlevel > i { position: absolute; transform: translate(-50%, -50%); font: 10px/1 var(--mono); font-style: normal; color: var(--dim); white-space: nowrap; }
 .mlevel > i.inf { left: 14px; top: 64px; }
 .mlevel > i.zero { left: 70px; top: 9px; color: var(--text); font-weight: 600; }
 .mlevel > i.max { left: 71px; top: 64px; }
-.clip { align-self: center; padding: 2px 7px; border: 1px solid #3a1217; border-radius: 3px; background: #1a0b0d; font: 600 8px/1 var(--mono); letter-spacing: 0.12em; color: #6a2a31; }
+.clip { align-self: center; padding: 2px 7px; border: 1px solid #3a1217; border-radius: 3px; background: #1a0b0d; font: 600 10px/1 var(--mono); letter-spacing: 0.12em; color: #6a2a31; }
 .clip.on { background: #ff4d5e; border-color: #ff4d5e; color: #1a0508; box-shadow: 0 0 8px #ff4d5e; }
-.mastermeters { flex: 1 1 60px; display: flex; justify-content: center; gap: 6px; min-height: 60px; }
-.mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 9px var(--mono); color: var(--dim); }
-.mm .meter { flex: 1 1 0; height: 0; min-height: 0; }
+.mastermeters { flex: 1 1 60px; align-self: stretch; display: flex; justify-content: center; gap: 4px; min-height: 60px; }
+.mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 10px var(--mono); color: var(--dim); }
+.mm .meter { flex: 1 1 0; width: 14px; height: 0; min-height: 0; }
 /* the same scale between the two master meters; its hidden-height footer matches the L / R letters under them */
-.mscale { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 20px; font: 7px/1 var(--mono); color: var(--dim); }
+.mscale { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 24px; font: 10px/1 var(--mono); color: var(--dim); }
 .mscale span { flex: 1 1 0; position: relative; }
-.mscale small { font-size: 9px; line-height: normal; text-align: center; color: var(--faint); }
+.mscale small { font-size: 10px; line-height: normal; text-align: center; color: var(--faint); }
 .mscale i { left: 0; justify-content: center; }
-body[data-layout="stacked"] .xf { grid-area: xf; }
-/* four channels (C A B D): the strips take the full width, one-line FX rows under them with MASTER beside */
-body[data-layout="stacked"] .rig.four .mixer { grid-template: "strips strips" 1fr "fx master" auto "xf xf" auto / minmax(0, 1fr) 84px; }
-body[data-layout="stacked"] .rig.four .strips > .strip { flex: 1 1 0; }
-body[data-layout="stacked"] .rig.four .fxblock { gap: 4px; }
-body[data-layout="stacked"] .rig.four .fxrow { grid-template: "name sel echo fx" auto / 12px minmax(0, 1fr) auto auto; }
-body[data-layout="stacked"] .rig.four .fxrow .k { flex-direction: row; gap: 3px; font-size: 8px; letter-spacing: 0.08em; }
-body[data-layout="stacked"] .rig.four .fxrow .k svg { width: 28px; height: 28px; }

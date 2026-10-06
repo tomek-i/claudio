@@ -45,17 +45,18 @@
         <div class="title">No track</div>
         <div class="artist">Load something from the crate</div>
       </div>
+      <div class="clock" title="Time remaining · elapsed"><span class="remain">-0:00</span><span class="time">0:00</span></div>
       <div class="bpmbox"><span class="bpm">—</span><span class="pitch">0.0%</span></div>
     </div>
-    <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip time">0:00</span><span class="chip remain">-0:00</span><span class="chip bar">bar —</span><span class="chip mixout"></span></div>
+    <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip bar" title="Bar, and the beat within it"><span class="barn">bar —</span><i class="beats"><b></b><b></b><b></b><b></b></i></span><span class="chip phrase" title="Where the track is in its 8-bar phrase"><span>phrase</span><i><b></b></i></span><span class="chip mixout"></span></div>
     <canvas class="overview" height="64"></canvas>
     <div class="transport">
       <button class="btn cue">CUE</button>
       <button class="btn play">▶</button>
       <button class="btn sync">SYNC</button>
-      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop length in beats · click = loop this length / release"></button></div>
-      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button></div>
-      <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span><span class="pitch tpitch">0.0%</span></label>
+      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
+      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
+      <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span></label>
     </div>
     <div class="hotcues" title="Hot cues: click = jump on the beat · shift+click = set here"></div>
     <div class="deckx">
@@ -72,7 +73,8 @@
     </div>
   </section>
 
-  <!-- authored in the stacked layout; ui/layout.js moves the FX controls, the master volume and the pads for the classic one -->
+  <!-- authored in the stacked layout; ui/layout.js moves the FX controls, the master volume and the pads for the classic one.
+       Signal order down a strip: trim, EQ, filter, effect, fader. The master sits between the channels. -->
   <section class="mixer">
     <div class="strips">
       <div class="strip" data-deck="A">
@@ -82,6 +84,7 @@
         <div class="k" data-ctl="mid" data-label="MID"></div>
         <div class="k" data-ctl="low" data-label="LOW"></div>
         <div class="k" data-ctl="filter" data-label="FILTER"></div>
+        <div class="fxslot"><select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO"></div><div class="k" data-ctl="fx" data-label="FX"></div></div></div>
         <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
       </div>
       <div class="strip" data-deck="B">
@@ -91,22 +94,8 @@
         <div class="k" data-ctl="mid" data-label="MID"></div>
         <div class="k" data-ctl="low" data-label="LOW"></div>
         <div class="k" data-ctl="filter" data-label="FILTER"></div>
+        <div class="fxslot"><select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO"></div><div class="k" data-ctl="fx" data-label="FX"></div></div></div>
         <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
-      </div>
-    </div>
-    <div class="fxblock">
-      <div class="sname">FX</div>
-      <div class="fxrow" data-deck="A">
-        <span class="fxname">A</span>
-        <select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select>
-        <div class="k" data-ctl="echo" data-label="ECHO"></div>
-        <div class="k" data-ctl="fx" data-label="FX"></div>
-      </div>
-      <div class="fxrow" data-deck="B">
-        <span class="fxname">B</span>
-        <select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select>
-        <div class="k" data-ctl="echo" data-label="ECHO"></div>
-        <div class="k" data-ctl="fx" data-label="FX"></div>
       </div>
     </div>
     <div class="master">
@@ -123,7 +112,7 @@
         <div class="mm"><canvas class="meter" data-side="R" width="8" height="120"></canvas><small>R</small></div>
       </div>
     </div>
-    <div class="xf"><span>A·C</span><span class="xftrack"><input type="range" id="xfader" min="0" max="1" step="0.005" value="0" title="Crossfader: each side stays at full level until the fader passes the centre line · double-click = centre"></span><span>B·D</span></div>
+    <div class="xf"><span class="xfsw" data-deck="A" role="group" aria-label="Crossfader side for deck A" title="Which side of the crossfader deck A is on · T = through: not on the crossfader"><button data-side="left">L</button><button data-side="thru">T</button><button data-side="right">R</button></span><span>A·C</span><span class="xftrack"><input type="range" id="xfader" min="0" max="1" step="0.005" value="0" title="Crossfader: each side stays at full level until the fader passes the centre line · double-click = centre"></span><span>B·D</span><span class="xfsw" data-deck="B" role="group" aria-label="Crossfader side for deck B" title="Which side of the crossfader deck B is on · T = through: not on the crossfader"><button data-side="left">L</button><button data-side="thru">T</button><button data-side="right">R</button></span></div>
   </section>
 
   <section class="deck" data-deck="B">
@@ -134,17 +123,18 @@
         <div class="title">No track</div>
         <div class="artist">Load something from the crate</div>
       </div>
+      <div class="clock" title="Time remaining · elapsed"><span class="remain">-0:00</span><span class="time">0:00</span></div>
       <div class="bpmbox"><span class="bpm">—</span><span class="pitch">0.0%</span></div>
     </div>
-    <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip time">0:00</span><span class="chip remain">-0:00</span><span class="chip bar">bar —</span><span class="chip mixout"></span></div>
+    <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip bar" title="Bar, and the beat within it"><span class="barn">bar —</span><i class="beats"><b></b><b></b><b></b><b></b></i></span><span class="chip phrase" title="Where the track is in its 8-bar phrase"><span>phrase</span><i><b></b></i></span><span class="chip mixout"></span></div>
     <canvas class="overview" height="64"></canvas>
     <div class="transport">
       <button class="btn cue">CUE</button>
       <button class="btn play">▶</button>
       <button class="btn sync">SYNC</button>
-      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop length in beats · click = loop this length / release"></button></div>
-      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button></div>
-      <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span><span class="pitch tpitch">0.0%</span></label>
+      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
+      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
+      <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span></label>
     </div>
     <div class="hotcues" title="Hot cues: click = jump on the beat · shift+click = set here"></div>
     <div class="deckx">

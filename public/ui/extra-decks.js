@@ -11,10 +11,6 @@ import { $, $$ } from './util.js';
     st.dataset.deck = n; st.classList.add('extra');
     $('.sname', st).textContent = n;
     if (n === 'C') $('.strips').prepend(st); else $('.strips').append(st);
-    const fx = $(`.fxrow[data-deck="${tpl}"]`).cloneNode(true);
-    fx.dataset.deck = n; fx.classList.add('extra');
-    $('.fxname', fx).textContent = n;
-    if (n === 'C') $('.fxrow').before(fx); else $('.fxblock').append(fx);
   }
   for (const el of $$('.deck')) $('.xfa', el).value = el.dataset.deck === 'A' || el.dataset.deck === 'C' ? 'left' : 'right';
 })();
