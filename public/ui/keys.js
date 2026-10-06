@@ -162,29 +162,32 @@ export function renderKeys() {
   const wrap = $('#keysMain'); if (!wrap || !mixer?.sampler) return; // not #keys itself: the pads can live in there too
   const L = KB.loop, p = mixer.sampler.pads[KB.pad - 1];
   const opt = (vals, cur, fmt = (v) => v) => vals.map((v) => `<option value="${v}"${String(v) === String(cur) ? ' selected' : ''}>${fmt(v)}</option>`).join('');
+  // three named groups: where the sound comes from, how it is played, and the loop recorder. The pad the keyboard
+  // plays is picked on the pads themselves (the ring on a pad).
   wrap.innerHTML = `
-    <div class="krow">
-      <span class="klabel">KEYS</span>
-      <label>pad <select id="kbPad">${opt([1, 2, 3, 4, 5, 6, 7, 8], KB.pad)}</select></label>
-      <span class="kchop" title="what is on the pad">${p?.buffer ? esc(p.name) : 'empty'}</span>
-      <span class="ksep"></span>
-      <label>grab <select id="kbBeats">${opt([0.5, 1, 2, 4], KB.grabBeats, (v) => `${v} beat${v === 1 ? '' : 's'}`)}</select></label>
-      <label><select id="kbStem">${opt(['vocals', 'mix', 'drums', 'bass', 'other'], KB.grabStem)}</select></label>
-      ${['A', 'B', 'C', 'D'].map((d) => `<button class="btn sm kgrab" data-deck="${d}" title="grab from deck ${d} at its playhead">↓ ${d}</button>`).join('')}
-      <span class="ksep"></span>
-      <label>quant <select id="kbQuant">${opt(['off', '16', 'beat'], KB.quant, (v) => (v === '16' ? '1/16' : v))}</select></label>
-      <button class="btn sm ${KB.hold ? 'on' : ''}" id="kbHold" title="hold: the chop stops when you release the key">HOLD</button>
-      <button class="btn sm ${KB.scale === 'on' ? 'on' : ''}" id="kbScale" title="scale lock: notes snap to the live track's key (needs the chop's root, detected on grab)">SCALE</button>
-      <span class="khud" id="kbHud">—</span>
-      <span class="koct" title="${esc([hint('chop.octave.down'), hint('chop.octave.up')].filter(Boolean).join(' / '))}">oct ${KB.octave >= 0 ? '+' : ''}${KB.octave}</span>
-      <label>vol <input type="range" id="kbGain" min="0" max="1.5" step="0.01" value="${KB.gain}"></label>
-      <span class="ksep"></span>
-      <label>loop <select id="kbBars">${opt([1, 2, 4, 8], L.bars, (v) => `${v} bar${v === 1 ? '' : 's'}`)}</select></label>
-      <button class="btn sm ${L.rec ? 'rec' : ''}" id="kbRec">● REC</button>
-      <button class="btn sm ${L.on && !L.rec ? 'on' : ''}" id="kbPlay">▶ LOOP</button>
-      <button class="btn sm" id="kbStop">■</button>
-      <button class="btn sm" id="kbClear">CLR</button>
-      <span class="kevents">${L.events.length ? `${L.events.length} notes` : ''}</span>
+    <div class="kgroups">
+      <div class="kg"><h4>SOURCE <span class="kchop" title="the pad the keyboard plays, and what is on it">pad ${KB.pad} · ${p?.buffer ? esc(p.name) : 'empty'}</span></h4>
+        <div class="krow">
+          <label>grab <select id="kbBeats">${opt([0.5, 1, 2, 4], KB.grabBeats, (v) => `${v} beat${v === 1 ? '' : 's'}`)}</select></label>
+          <label>of <select id="kbStem">${opt(['vocals', 'mix', 'drums', 'bass', 'other'], KB.grabStem)}</select></label>
+          ${['A', 'B', 'C', 'D'].map((d) => `<button class="btn sm kgrab" data-deck="${d}" title="grab from deck ${d} at its playhead, into pad ${KB.pad}">↓ ${d}</button>`).join('')}
+        </div></div>
+      <div class="kg"><h4>PLAY <span class="khud" id="kbHud">—</span></h4>
+        <div class="krow">
+          <label>quant <select id="kbQuant">${opt(['off', '16', 'beat'], KB.quant, (v) => (v === '16' ? '1/16' : v))}</select></label>
+          <button class="btn sm ${KB.hold ? 'on' : ''}" id="kbHold" title="hold: the chop stops when you release the key">HOLD</button>
+          <button class="btn sm ${KB.scale === 'on' ? 'on' : ''}" id="kbScale" title="scale lock: notes snap to the live track's key (needs the chop's root, detected on grab)">SCALE</button>
+          <span class="koct" title="${esc([hint('chop.octave.down'), hint('chop.octave.up')].filter(Boolean).join(' / '))}">oct ${KB.octave >= 0 ? '+' : ''}${KB.octave}</span>
+          <label>vol <input type="range" id="kbGain" min="0" max="1.5" step="0.01" value="${KB.gain}"></label>
+        </div></div>
+      <div class="kg"><h4>LOOP <span class="kevents">${L.events.length ? `${L.events.length} notes` : ''}</span></h4>
+        <div class="krow">
+          <label><select id="kbBars">${opt([1, 2, 4, 8], L.bars, (v) => `${v} bar${v === 1 ? '' : 's'}`)}</select></label>
+          <button class="btn sm ${L.rec ? 'rec' : ''}" id="kbRec">● REC</button>
+          <button class="btn sm ${L.on && !L.rec ? 'on' : ''}" id="kbPlay">▶ LOOP</button>
+          <button class="btn sm" id="kbStop">■</button>
+          <button class="btn sm" id="kbClear">CLR</button>
+        </div></div>
     </div>
     <div class="piano">${[...Array(18).keys()].map((s) => {
       const white = WHITES.includes(s);
@@ -192,7 +195,6 @@ export function renderKeys() {
       const style = white ? `left:${(wi * 100) / WHITES.length}%;width:${100 / WHITES.length}%` : `left:${(wi * 100) / WHITES.length - 100 / WHITES.length / 3.4}%;width:${100 / WHITES.length / 1.7}%`;
       return `<button class="pk ${white ? 'w' : 'b'}" data-semis="${s}" style="${style}" title="${NOTE_NAMES[s % 12]}"><i>${esc(hint(`chop.note.${s}`))}</i>${white ? `<small>${NOTE_NAMES[s % 12]}</small>` : ''}</button>`;
     }).join('')}</div>`;
-  $('#kbPad').onchange = (e) => { KB.pad = Number(e.target.value); renderKeys(); };
   $('#kbBeats').onchange = (e) => (KB.grabBeats = Number(e.target.value));
   $('#kbStem').onchange = (e) => (KB.grabStem = e.target.value);
   $('#kbQuant').onchange = (e) => (KB.quant = e.target.value);
@@ -218,11 +220,15 @@ export function renderKeys() {
 export function renderPads() {
   const wrap = $('#pads');
   if (!mixer?.sampler) return;
-  wrap.innerHTML = mixer.sampler.pads.map((p) => `<button class="pad${p.buffer ? '' : ' empty'}" data-pad="${p.pad}" title="${p.buffer ? `pad ${p.pad}: ${esc(p.name)} (click = now, shift+click = next beat)` : `pad ${p.pad} is empty — dj sampler ${p.pad} --load <trackId> --from <sec> --beats 2`}"><i>${p.pad}</i>${esc(p.name)}</button>`).join('');
+  // a pad fires on a click; the ring in its corner makes it the one the chop keyboard plays and grabs into
+  wrap.innerHTML = mixer.sampler.pads.map((p) => `<div class="pad${p.buffer ? '' : ' empty'}${p.pad === KB.pad ? ' sel' : ''}" role="button" tabindex="0" data-pad="${p.pad}" title="${p.buffer ? `pad ${p.pad}: ${esc(p.name)} (click = now, shift+click = next beat)` : `pad ${p.pad} is empty — grab into it from a deck, or: dj sampler ${p.pad} --load <trackId> --from <sec> --beats 2`}"><i>${p.pad}</i><span>${esc(p.name)}</span><button class="padsel" aria-pressed="${p.pad === KB.pad}" title="${p.pad === KB.pad ? 'The chop keyboard plays this pad' : 'Play this pad from the chop keyboard'}"></button></div>`).join('');
   for (const b of $$('.pad', wrap)) {
-    b.onclick = (e) => {
+    const fire = (e) => {
+      if (e.target.closest('.padsel')) { KB.pad = Number(b.dataset.pad); renderPads(); renderKeys(); return; }
       try { const t = mixer.quantTime(e.shiftKey ? 'beat' : 'now'); mixer.sampler.trigger(Number(b.dataset.pad), t); }
       catch (err) { addFeed({ ts: Date.now(), kind: 'system', text: err.message }); }
     };
+    b.onclick = fire;
+    b.onkeydown = (e) => { if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); fire(e); } };
   }
 }

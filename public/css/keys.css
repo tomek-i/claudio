@@ -11,6 +11,12 @@ body.lower-max[data-dock="sampler"] .piano { max-width: none; height: min(42vh, 
 body.lower-max[data-dock="sampler"] .piano .pk.w { height: 100%; }
 body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .keys-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* the controls in three named boxes: SOURCE, PLAY, LOOP */
+.kgroups { display: flex; flex-wrap: wrap; gap: 8px; }
+.kg { display: flex; flex-direction: column; gap: 6px; padding: 7px 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+.kg h4 { margin: 0; display: flex; align-items: baseline; gap: 10px; font: 700 10px var(--mono); letter-spacing: 0.12em; color: var(--text); }
+.kg h4 span { font-weight: 400; letter-spacing: 0; }
+.kg select, .kg .btn.sm { height: var(--h-sm); }
 .keys .krow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .keys .klabel { font-weight: 700; color: var(--text); letter-spacing: 0.08em; }
 .keys .ksep { width: 1px; height: 18px; background: var(--line); margin: 0 2px; }
@@ -21,7 +27,7 @@ body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .keys .kevents { color: #f2cc60; }
 .keys .btn.sm.rec { background: #ff4d6d; color: #000; }
 .keys input[type="range"] { width: 80px; }
-.piano { position: relative; height: 92px; width: 100%; max-width: 760px; }
+.piano { position: relative; height: 92px; width: 100%; }
 .piano .pk { position: absolute; top: 0; margin: 0; border: 1px solid #111; border-radius: 0 0 5px 5px; cursor: pointer; font-family: var(--mono); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; padding-bottom: 5px; user-select: none; }
 .piano .pk.w { height: 92px; background: #e9e9ef; color: #333; z-index: 1; }
 .piano .pk.b { height: 56px; background: #1a1a22; color: #ccc; z-index: 2; border-color: #000; }
@@ -40,9 +46,17 @@ body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .pad { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 4px 5px; font: 600 10px var(--mono); letter-spacing: 0.06em; color: var(--text); cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.08s; }
 .pad i { display: block; font-style: normal; font-size: 10px; color: var(--faint); }
+.pad { position: relative; user-select: none; }
+.pad span { display: block; overflow: hidden; text-overflow: ellipsis; }
+/* the ring: the pad the chop keyboard plays */
+.padsel { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; padding: 0; border-radius: 50%; border: 1.5px solid var(--faint); background: none; cursor: pointer; }
+.padsel:hover { border-color: var(--text); }
+.padsel[aria-pressed="true"] { border-color: var(--ok); background: radial-gradient(circle, var(--ok) 0 40%, #0000 46%); }
+.pad.sel { border-color: var(--ok); }
 .pad:hover { border-color: var(--claude); }
 .pad.empty { color: var(--faint); }
 .pad.hit { background: var(--claude); color: #000; }
-.keys > .pads { flex: none; width: 300px; align-content: start; }
+.keys > .pads { flex: none; width: 360px; align-content: start; gap: 6px; }
+.keys > .pads .pad { padding: 12px 6px 11px; font-size: 11px; }
 .keys > .pads:empty { display: none; }
 .keys > .pads::before { content: 'SAMPLER'; grid-column: 1 / -1; font: 700 11px var(--mono); letter-spacing: 0.08em; color: var(--text); line-height: 18px; }
