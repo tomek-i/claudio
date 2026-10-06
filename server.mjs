@@ -174,6 +174,7 @@ function applyLiveSettings() {
   if (sequencer && config.autoDJ) {
     sequencer.auto.enabled = config.autoDJ.enabled !== false;
     if (Number(config.autoDJ.leadSec)) sequencer.auto.leadSec = Number(config.autoDJ.leadSec);
+    broadcast('autodj', { enabled: sequencer.auto.enabled });
   }
   broadcast('ui', uiSettings(config));
 }
@@ -474,6 +475,7 @@ sequencer = new Sequencer({
   addLog, sessionLog: (f, o) => sessionLog(f, o),
   hotcue, savedloop,
   say: (text) => addLog('claude', text),
+  onAuto: (enabled) => broadcast('autodj', { enabled }), // the AUTO DJ switch in the page header follows it
 });
 
 // ---------------------------------------------------------------- flight recorder
@@ -531,7 +533,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/events') {
       const id = q.client || `c${Date.now()}`;
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
-      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), recording: !!session, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
+      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, recording: !!session, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
       clients.set(id, res);
       const ka = setInterval(() => res.write(': ka\n\n'), 15000);
       req.on('close', () => {
@@ -636,7 +638,12 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: !r.missing.length, ...r, ...(r.missing.length ? { error: `no track matches: ${r.missing.join(', ')}` } : {}) });
     }
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
-    if (p === '/api/autodj' && req.method === 'POST') { const b = await readBody(req); sequencer.setAuto(b.enabled !== false, b.leadSec); return send(res, 200, sequencer.summary(liveState()).autoDJ); }
+    if (p === '/api/autodj' && req.method === 'POST') {
+      const b = await readBody(req); sequencer.setAuto(b.enabled !== false, b.leadSec);
+      // save: keep it across restarts (the switch in the page header); without it the change lasts until the server stops
+      if (b.save) { config.autoDJ = { ...config.autoDJ, enabled: sequencer.auto.enabled }; fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n'); }
+      return send(res, 200, sequencer.summary(liveState()).autoDJ);
+    }
     if (p === '/api/autodj') return send(res, 200, sequencer.summary(liveState()).autoDJ);
     if (p === '/api/rate' && req.method === 'POST') {
       const b = await readBody(req);
@@ -734,7 +741,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/ytdlp/install' && req.method === 'POST') return send(res, 200, { path: await downloader.ensure() });
 
-    // --- health: one green/red entry per system (JSON here, the page at /health)
+    // --- health: one green/amber/red entry per system (JSON here, the page at /health)
     if (p === '/api/health') {
       // runs only when asked for (no timers); the tool probes are async and cached for a minute
       const [ffmpeg, ffprobe, ytdlpOnPath] = await Promise.all([toolVersion('ffmpeg'), toolVersion('ffprobe'), toolVersion(process.platform === 'win32' ? 'where' : 'which', ['yt-dlp'])]);

@@ -10,6 +10,7 @@ const es = new EventSource(`/api/events?client=${clientId}`);
 es.addEventListener('hello', (e) => {
   const h = JSON.parse(e.data);
   receiveUi(h.ui);
+  showAuto(h.autoDJ);
   $('#feed').innerHTML = '';
   h.log.forEach(addFeed);
   $('#lbFeed').classList.remove('unread'); // the replayed log is not news
@@ -27,6 +28,22 @@ es.addEventListener('log', (e) => {
 es.addEventListener('job', (e) => renderJob(JSON.parse(e.data)));
 es.addEventListener('starter', (e) => renderStarter(JSON.parse(e.data)));
 es.addEventListener('ui', (e) => receiveUi(JSON.parse(e.data)));
+// ---- the AUTO DJ switch in the header. The server says what it is (`hello`, then `autodj` whenever it changes, also
+// from `dj autodj on|off`); a click switches it now and saves it as the autoDJ.enabled setting.
+const autoBtn = $('#autoDjBtn');
+function showAuto(on) {
+  autoBtn.setAttribute('aria-pressed', String(!!on));
+  $('b', autoBtn).textContent = on ? 'ON' : 'OFF';
+  autoBtn.title = on ? 'Auto-DJ is on: Claude cues and mixes in the next track by itself when the music is about to run out. Click to switch it off.'
+    : 'Auto-DJ is off: nothing is cued or mixed unless you or Claude ask for it. Click to switch it on.';
+}
+es.addEventListener('autodj', (e) => showAuto(JSON.parse(e.data).enabled));
+autoBtn.onclick = async () => {
+  const enabled = autoBtn.getAttribute('aria-pressed') !== 'true';
+  showAuto(enabled);
+  try { await post('/api/autodj', { enabled, save: true }); }
+  catch { showAuto(!enabled); }
+};
 let libTimer;
 es.addEventListener('library', () => { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); });
 es.addEventListener('engine', (e) => {

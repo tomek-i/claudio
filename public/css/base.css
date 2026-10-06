@@ -56,6 +56,13 @@ a.status:hover, a.status:focus-visible { color: var(--text); }
 /* health (GET /api/health): amber for an optional system with a fault, red for a required one */
 .status.limited .led { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
 .status.bad .led { background: #ff5566; box-shadow: 0 0 8px #ff5566; }
+/* an on / off switch in the header (AUTO DJ): a control light and its state */
+.switch { display: flex; align-items: center; gap: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px 4px 10px; font: 600 11px var(--mono); letter-spacing: 0.1em; color: var(--dim); cursor: pointer; }
+.switch:hover { border-color: var(--dim); }
+.switch b { min-width: 3ch; color: var(--faint); }
+.switch[aria-pressed="true"] { color: var(--text); }
+.switch[aria-pressed="true"] b { color: var(--ok); }
+.switch[aria-pressed="true"] .led { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
 .transition { font-family: var(--mono); font-size: 12px; color: var(--claude); }
 .spacer { flex: 1; }
 .toplink { font-size: 12px; letter-spacing: 0.08em; color: var(--dim); text-decoration: none; }
