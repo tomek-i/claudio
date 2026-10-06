@@ -10,7 +10,7 @@ let fields = []; // last schema + values from the server
 const CATEGORIES = [
   { id: 'decks', label: 'Decks & mixer', groups: ['Decks', 'Waveform', 'Mixer'] },
   { id: 'library', label: 'Library', groups: ['Library', 'Stem separation'] },
-  { id: 'page', label: 'Page layout', groups: ['Crate and booth', 'Sampler and keys'] },
+  { id: 'page', label: 'Page layout', groups: ['Bottom panel'] },
   { id: 'claude', label: 'Claude', groups: ['Auto-DJ', 'Safety nets'] },
   { id: 'keys', label: 'Key bindings', groups: ['Key bindings'] },
   { id: 'system', label: 'System', groups: ['Server', 'Recording'] }, // and any group not named above

@@ -24,6 +24,8 @@
   <button class="switch" id="autoDjBtn" aria-pressed="false" title="Auto-DJ"><span class="led"></span>AUTO DJ <b>OFF</b></button>
   <div class="transition" id="transitionInfo"></div>
   <div class="spacer"></div>
+  <div class="presets" id="presets" role="group" aria-label="Page layout" title="Set the whole page layout in one click"><button data-preset="mix" title="Decks with the library under them">Mix</button><button data-preset="browse" title="The library full size, with a slim strip of the decks on top">Browse</button><button data-preset="perform" title="Decks with the sampler and chop keyboard under them">Perform</button></div>
+  <div class="spacer"></div>
   <button class="toplink" id="keysBtn" title="Keyboard shortcuts" aria-haspopup="dialog">⌨ Keys</button>
   <a class="toplink" href="/settings" target="_blank" rel="noopener">Settings</a>
 </header>
@@ -153,20 +155,20 @@
 </main>
 
 <section class="rig2" id="rig2"></section>
-<section class="keys" id="keys">
-  <button class="keys-toggle" id="keysToggle" aria-expanded="false" aria-controls="keysMain"><span id="keysLabel"></span><b id="keysArrow">▸</b></button>
-  <button class="keys-maxbtn" id="keysMax" aria-pressed="false" title="Maximise the sampler and chop keyboard">⤢</button>
-  <div class="pads" id="pads" title="Sampler"></div>
-  <div class="keys-main" id="keysMain" title="Chop keyboard: grab a beat from a deck, play it from the keyboard, record a loop"></div>
-</section>
-
-<div class="lowerbar" id="lowerBar" role="separator" aria-orientation="horizontal" aria-controls="lower" aria-label="Crate and booth divider" tabindex="0" title="Drag to resize the crate and booth · double-click = automatic height · arrow keys resize">
-  <button class="lb-crate" id="lbCrate" title="Show the crate">CRATE <span id="lbCount"></span></button>
+<div class="deckstrip" id="deckStrip" aria-label="Decks"></div>
+<!-- the bottom panel: one bar of tabs, and under it the open tab (the booth can stay pinned beside it). ui/lower.js -->
+<div class="lowerbar" id="lowerBar" aria-label="Bottom panel" title="Drag to resize the bottom panel · double-click = automatic height">
+  <div class="tabs" role="tablist" aria-label="Bottom panel">
+    <button class="tab" role="tab" data-tab="library">Library <span id="lbCount"></span></button>
+    <button class="tab" role="tab" data-tab="sampler">Sampler &amp; keys</button>
+    <button class="tab" role="tab" data-tab="booth" id="boothTab">Booth</button>
+  </div>
   <span class="lb-jobs" id="lbJobs"></span>
-  <span class="lb-grip"></span>
   <button class="lb-feed" id="lbFeed" title="Show the booth"></button>
-  <button class="lb-max" id="lowerMax" aria-pressed="false" title="Maximise the crate and booth">⤢</button>
-  <button class="lb-toggle" id="lowerToggle" aria-expanded="true" aria-controls="lower" title="Hide the crate and booth">▾</button>
+  <span class="lb-grip"></span>
+  <span class="lb-sizes" role="group" aria-label="Panel height"><button data-h="300" title="Small">S</button><button data-h="440" title="Medium">M</button><button data-h="620" title="Large">L</button></span>
+  <button class="lb-max" id="lowerMax" aria-pressed="false" title="Maximise the bottom panel">⤢</button>
+  <button class="lb-toggle" id="lowerToggle" aria-expanded="true" aria-controls="lower" title="Hide the bottom panel">▾</button>
 </div>
 <section class="lower" id="lower">
   <section class="crate">
@@ -198,8 +200,13 @@
     </div>
   </section>
 
+  <section class="keys" id="keys">
+    <div class="pads" id="pads" title="Sampler"></div>
+    <div class="keys-main" id="keysMain" title="Chop keyboard: grab a beat from a deck, play it from the keyboard, record a loop"></div>
+  </section>
+
   <aside class="booth">
-    <h2>The booth <small>Claude's decisions, live</small></h2>
+    <h2>The booth <small>Claude's decisions, live</small><button class="pin" id="boothPin" aria-pressed="true" title="Keep the booth beside the open tab">pin</button></h2>
     <div id="feed"></div>
     <form id="ask">
       <input id="askInput" placeholder="Request a track or a vibe for Claude…" autocomplete="off">

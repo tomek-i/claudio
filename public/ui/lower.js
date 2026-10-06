@@ -1,12 +1,14 @@
-import { $ } from './util.js';
+import { $, $$ } from './util.js';
 import { ui } from './state.js';
 import { onUi, saveUi } from './prefs.js';
 import { hint, onBindings } from './bindings.js';
 
-// ------------------------------------------------------------------ the lower row (crate + booth): hide / show / resize
-// ui.lowerCollapsed and ui.lowerHeight (0 = automatic) hold the saved state. The bar above the row is the divider:
-// drag it to resize, double-click for the automatic height, and collapsed it carries the summary (track count,
-// downloads, the latest booth line). `peek` shows the row without saving that, for when it opens by itself.
+// ------------------------------------------------------------------ the bottom panel: tabs · hide / show / resize
+// One bar of tabs (Library, Sampler & keys, Booth) with the open tab under it: ui.dockTab. The booth can stay pinned
+// as a column beside the other two (ui.boothPinned). ui.lowerCollapsed and ui.lowerHeight (0 = automatic) hold the
+// rest. The bar is also the divider: drag it to resize, double-click for the automatic height, S / M / L set a
+// height. Hidden, the bar still carries the track count, downloads and the latest booth line. `peek` shows the
+// panel without saving that, for when it opens by itself.
 const MIN = 300, SNAP = 60, STEP = 24; // MIN is the row's automatic minimum in crate.css: the page scrolls before the crate gets shorter
 const bar = $('#lowerBar'), row = $('#lower'), toggle = $('#lowerToggle');
 const maxHeight = () => Math.round(innerHeight * 0.6);
@@ -26,10 +28,35 @@ function applyLower() {
   toggle.setAttribute('aria-expanded', String(!collapsed));
   toggle.textContent = collapsed ? '▴' : '▾';
   const k = hint('lower.toggle');
-  toggle.title = `${collapsed ? 'Show' : 'Hide'} the crate and booth${k ? ` (${k})` : ''}`;
-  bar.title = `Drag to resize the crate and booth · double-click = automatic height · arrow keys resize${k ? ` · ${k} = hide / show` : ''}`;
-  if (was && !collapsed) { $('#lbFeed').classList.remove('unread'); document.dispatchEvent(new Event('lower:open')); }
+  toggle.title = `${collapsed ? 'Show' : 'Hide'} the bottom panel${k ? ` (${k})` : ''}`;
+  bar.title = `Drag to resize the bottom panel · double-click = automatic height${k ? ` · ${k} = hide / show` : ''}`;
+  applyDock();
+  if (was && !collapsed) document.dispatchEvent(new Event('lower:open'));
 }
+// ---- which tab is open, and whether the booth is pinned beside it
+const TABS = ['library', 'sampler', 'booth'];
+export const dockTab = () => (TABS.includes(ui.dockTab) ? ui.dockTab : 'library');
+export const boothShown = () => !document.body.classList.contains('lower-collapsed') && (dockTab() === 'booth' || ui.boothPinned !== false);
+function applyDock() {
+  const tab = dockTab(), pinned = ui.boothPinned !== false, was = document.body.dataset.dock;
+  document.body.dataset.dock = tab;
+  document.body.classList.toggle('booth-pinned', pinned);
+  for (const b of $$('.lowerbar .tab')) b.setAttribute('aria-selected', String(b.dataset.tab === tab && !document.body.classList.contains('lower-collapsed')));
+  const pin = $('#boothPin'); pin.setAttribute('aria-pressed', String(pinned)); pin.textContent = pinned ? 'pinned' : 'pin';
+  pin.title = pinned ? 'The booth stays beside the open tab · click to make it a tab of its own' : 'Keep the booth beside the open tab';
+  const k = hint('keys.toggle'); $('.lowerbar .tab[data-tab="sampler"]').title = `Sampler pads and the chop keyboard${k ? ` (${k})` : ''}`;
+  for (const b of $$('.lb-sizes button')) b.setAttribute('aria-pressed', String(!document.body.classList.contains('lower-collapsed') && Number(b.dataset.h) === ui.lowerHeight));
+  if (boothShown()) { $('#lbFeed').classList.remove('unread'); $('#boothTab').classList.remove('unread'); }
+  if (was && was !== tab) document.dispatchEvent(new Event('lower:open')); // a tab that was not on screen may be stale
+}
+// open a tab (and the panel, if it was hidden)
+export function showTab(tab) {
+  peek = false; last = false;
+  saveUi({ dockTab: TABS.includes(tab) ? tab : 'library', lowerCollapsed: false });
+}
+for (const b of $$('.lowerbar .tab')) b.onclick = () => showTab(b.dataset.tab);
+$('#boothPin').onclick = () => saveUi({ boothPinned: ui.boothPinned === false, dockTab: ui.boothPinned === false && dockTab() === 'booth' ? 'library' : dockTab() });
+for (const b of $$('.lb-sizes button')) b.onclick = () => { peek = false; last = false; saveUi({ lowerCollapsed: false, lowerHeight: Number(b.dataset.h) }); };
 onUi(applyLower);
 onBindings(applyLower);
 
@@ -41,7 +68,7 @@ export function toggleLower(collapsed = !document.body.classList.contains('lower
 document.addEventListener('lower:peek', () => { if (ui.lowerCollapsed && !peek) { peek = true; applyLower(); } });
 
 toggle.onclick = () => toggleLower();
-$('#lbCrate').onclick = $('#lbFeed').onclick = () => toggleLower(false);
+$('#lbFeed').onclick = () => showTab(ui.boothPinned !== false ? dockTab() : 'booth');
 
 // ---- the divider
 let drag = null;

@@ -13,7 +13,7 @@ es.addEventListener('hello', (e) => {
   showAuto(h.autoDJ);
   $('#feed').innerHTML = '';
   h.log.forEach(addFeed);
-  $('#lbFeed').classList.remove('unread'); // the replayed log is not news
+  $('#lbFeed').classList.remove('unread'); $('#boothTab').classList.remove('unread'); // the replayed log is not news
   h.jobs.forEach(renderJob);
   if (h.recording && isEngine) startRecording();
   // server restarted while we were the engine: quietly re-claim

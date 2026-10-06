@@ -38,6 +38,10 @@ test('coerce: types and ranges', () => {
   assert.match(coerce(field('ui.meterStyle'), 'vu').error, /one of: Smooth bar, LED ladder/);
   assert.match(coerce(field('ui.waveGuard'), 'yes').error, /on or off/);
   assert.deepEqual(coerce(field('ui.lowerCollapsed'), true), { value: true });
+  assert.deepEqual(coerce(field('ui.dockTab'), 'sampler'), { value: 'sampler' });
+  assert.match(coerce(field('ui.dockTab'), 'attic').error, /one of: Library, Sampler & keys, Booth/);
+  assert.deepEqual(coerce(field('ui.boothPinned'), false), { value: false });
+  assert.deepEqual(coerce(field('ui.layoutPreset'), 'browse'), { value: 'browse' });
   assert.deepEqual(coerce(field('ui.waveGuard'), false), { value: false });
   assert.match(coerce(field('ui.waveInertia'), 1).error, /on or off/);
   assert.deepEqual(coerce(field('ui.waveZoom'), 220.5), { value: 220.5 });
@@ -53,7 +57,7 @@ test('coerce: types and ranges', () => {
 });
 
 test('uiSettings: what the DJ page is sent, defaults included', () => {
-  const defaults = { deckLayout: 'stacked', deckStyle: 'cdj', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
+  const defaults = { deckLayout: 'stacked', deckStyle: 'cdj', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, dockTab: 'library', boothPinned: true, layoutPreset: 'mix', meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
   assert.deepEqual(uiSettings(base()), defaults);
   assert.deepEqual(uiSettings({ ...base(), ui: { jogRing: 'small', deckLayout: 'classic', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 } }),
     { ...defaults, deckLayout: 'classic', jogRing: 'small', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 });

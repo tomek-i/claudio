@@ -1,4 +1,5 @@
 import { $, post, esc } from './util.js';
+import { boothShown } from './lower.js';
 
 // ------------------------------------------------------------------ booth
 export function addFeed(e) {
@@ -13,7 +14,7 @@ export function addFeed(e) {
   // the collapsed bar carries the latest line, marked unread while the feed is hidden
   const line = $('#lbFeed');
   line.textContent = e.text;
-  if (document.body.classList.contains('lower-collapsed')) line.classList.add('unread');
+  if (!boothShown()) { line.classList.add('unread'); $('#boothTab').classList.add('unread'); }
 }
 $('#ask').onsubmit = async (e) => {
   e.preventDefault();

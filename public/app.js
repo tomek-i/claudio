@@ -11,7 +11,7 @@ import { drawOverview, drawScroll, drawJog, drawMeter } from './ui/canvas.js';
 import { loadLibrary, refreshHistory, renderLibrary } from './ui/crate.js';
 import { mixerEls } from './ui/layout.js';
 import './ui/lower.js';
-import './ui/maximize.js';
+import { renderDeckStrip } from './ui/maximize.js';
 import './ui/wave.js';
 import './ui/dragdrop.js';
 
@@ -123,6 +123,7 @@ function frame() {
     const now = performance.now(); if (peak >= -0.3) clipUntil = now + 1000;
     $('#masterClip').classList.toggle('on', now < clipUntil);
   }
+  renderDeckStrip();
   const tr = mixer.transition;
   $('#transitionInfo').textContent = tr ? `⟶ ${tr.style.toUpperCase()} ${tr.from}→${tr.to} · ${Math.max(0, (tr.endAt - Date.now()) / 1000).toFixed(0)}s` : '';
   const nowMs = Date.now();

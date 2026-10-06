@@ -22,7 +22,7 @@ let lastLibKey = '';
 let stale = false; // the table was not rendered while the row was hidden
 document.addEventListener('lower:open', () => { if (stale) renderLibrary(true); });
 export function renderLibrary(force) {
-  if (document.body.classList.contains('lower-collapsed')) { stale = true; return; }
+  if (document.body.classList.contains('lower-collapsed') || document.body.dataset.dock !== 'library') { stale = true; return; }
   stale = false;
   const q = $('#search').value.trim().toLowerCase();
   const live = mixer?.xfader ? liveDeck() : null;

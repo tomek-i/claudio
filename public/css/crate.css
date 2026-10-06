@@ -1,35 +1,60 @@
-/* ---------- lower: crate + booth ---------- */
-.lower { display: grid; grid-template-columns: 1fr 380px; grid-template-rows: minmax(0, 1fr); gap: 1px; background: var(--line); flex: 1 0 300px; min-height: 300px; }
-/* ---------- the bar above the lower row: divider when open, summary when the row is hidden ---------- */
-.lowerbar { flex: none; display: flex; align-items: center; gap: 16px; height: 14px; padding: 0 12px; background: var(--panel2); border-block: 1px solid var(--line); cursor: row-resize; touch-action: none; user-select: none; font: 11px var(--mono); color: var(--dim); }
-.lowerbar:focus-visible { outline: 1px solid var(--dim); outline-offset: -2px; }
+/* ---------- the bottom panel: a bar of tabs, the open tab under it, the booth pinned beside it or a tab itself ---------- */
+.lower { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1px; background: var(--line); flex: 1 0 300px; min-height: 300px; }
+body.booth-pinned:not([data-dock="booth"]) .lower { grid-template-columns: minmax(0, 1fr) 380px; }
+body:not([data-dock="library"]) .lower > .crate, body:not([data-dock="sampler"]) .lower > .keys, body:not(.booth-pinned):not([data-dock="booth"]) .lower > .booth { display: none; }
+.lowerbar { flex: none; display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 10px 0 8px; background: var(--panel2); border-block: 1px solid var(--line); cursor: row-resize; touch-action: none; user-select: none; font: 11px var(--mono); color: var(--dim); }
 .lowerbar button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .lowerbar button:hover { color: var(--text); }
+.tabs { display: flex; gap: 2px; align-self: stretch; align-items: flex-end; }
+.lowerbar .tab { display: flex; align-items: center; gap: 8px; height: 27px; padding: 0 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; font: 600 12px var(--sans); letter-spacing: 0.02em; color: var(--dim); }
+.lowerbar .tab[aria-selected="true"] { background: var(--panel); border-color: var(--line); color: var(--text); box-shadow: inset 0 2px 0 var(--claude); }
+.lowerbar .tab span { font: 400 11px var(--mono); color: var(--faint); }
+.lowerbar .tab.unread::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+body.booth-pinned:not(.lower-collapsed) #boothTab { display: none; } /* pinned, the booth is always there: it needs no tab */
 .lb-grip { flex: 1; align-self: stretch; background: linear-gradient(var(--faint), var(--faint)) center / 44px 2px no-repeat; }
-.lb-toggle, .lb-max { font-size: 13px; line-height: 1; width: 22px; }
-.lb-max { margin-right: -10px; }
-.lb-crate, .lb-jobs, .lb-feed { display: none; }
-body.lower-collapsed .lowerbar { height: 30px; }
-body.lower-collapsed .lower { display: none; }
-body.lower-collapsed :is(.lb-crate, .lb-jobs, .lb-feed) { display: block; }
-.lb-crate { letter-spacing: 0.16em; }
-.lb-crate span { letter-spacing: 0; color: var(--faint); margin-left: 6px; }
-.lb-jobs:empty { display: none !important; }
+.lb-sizes { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.lowerbar .lb-sizes button { width: 24px; height: var(--h-sm); border-right: 1px solid var(--line); font-weight: 600; }
+.lowerbar .lb-sizes button:last-child { border-right: 0; }
+.lowerbar .lb-sizes button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+.lowerbar :is(.lb-toggle, .lb-max) { width: 28px; height: var(--h-sm); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; line-height: 1; }
+.lowerbar :is(.lb-toggle, .lb-max):hover { border-color: var(--dim); }
+.lb-jobs:empty { display: none; }
 .lb-jobs.bad { color: #ff8080; }
-.lb-feed { flex: 0 1 46%; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--claude); font-family: var(--sans); font-size: 12px; }
+/* the latest booth line, while the booth itself is not on screen */
+.lb-feed { display: none; flex: 0 1 40%; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--claude); font-family: var(--sans); font-size: 12px; }
+body.lower-collapsed .lb-feed, body:not(.booth-pinned):not([data-dock="booth"]) .lb-feed { display: block; }
+.lowerbar .lb-feed { color: var(--claude); font-family: var(--sans); font-size: 12px; }
 .lb-feed.unread::before { content: '●'; color: var(--warn); margin-right: 6px; }
-/* maximised (ui/maximize.js): the bar and the row cover the page until the button is clicked again */
-body.lower-max .lowerbar { position: fixed; inset: 0 0 auto 0; z-index: 8; height: 30px; cursor: default; }
-body.lower-max .lower { position: fixed; inset: 30px 0 0 0; z-index: 8; overflow: auto; }
-body.lower-max .lb-toggle { display: none; }
+body.lower-collapsed .lower { display: none; }
+body.lower-collapsed .lb-sizes { display: none; }
+/* maximised (ui/maximize.js): a slim strip of the decks, the bar, and the panel cover the page until the button is
+   clicked again */
+.deckstrip { display: none; }
+body.lower-max .deckstrip { position: fixed; inset: 0 0 auto 0; z-index: 8; height: 46px; display: flex; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+.ds { position: relative; flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: var(--panel); font-family: var(--mono); font-size: 12px; --c: var(--a); }
+.ds[hidden] { display: none; }
+.ds[data-deck="B"] { --c: var(--b); } .ds[data-deck="C"] { --c: var(--cc); } .ds[data-deck="D"] { --c: var(--dc); }
+.ds-letter { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: var(--c); color: #000; font-weight: 700; }
+.ds-title { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px var(--sans); }
+.ds-time { font-size: 15px; font-weight: 600; }
+.ds-bpm { color: var(--c); min-width: 44px; text-align: right; }
+.ds button { height: var(--h); min-width: 40px; padding: 0 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; font: 600 11px var(--mono); cursor: pointer; }
+.ds.playing .ds-play { background: var(--c); border-color: var(--c); color: #000; }
+.ds-bar { position: absolute; inset: auto 0 0 0; height: 3px; background: #ffffff0d; }
+.ds-bar b { display: block; height: 100%; width: 0; background: var(--c); }
+body.lower-max .lowerbar { position: fixed; inset: 46px 0 auto 0; z-index: 8; cursor: default; }
+body.lower-max .lower { position: fixed; inset: 81px 0 0 0; z-index: 8; overflow: auto; }
+body.lower-max :is(.lb-toggle, .lb-sizes) { display: none; }
 body.lower-max .lb-grip { background: none; }
-body.lower-max .lb-max { margin-right: 4px; font-size: 16px; }
 /* the freed height (row hidden, or set shorter by hand) goes to the rig */
 body:is(.lower-collapsed, .lower-sized) .rig { flex: 1 0 auto; }
 /* stacked decks are taller: the lower row shares any spare height with the jog wheels, and on a short window the
    page scrolls before the crate loses its rows */
 body[data-layout="stacked"] .lower { flex: 1 1 300px; min-height: 300px; }
 .crate, .booth { background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; overflow: hidden; }
+.booth h2 { display: flex; align-items: baseline; }
+.booth .pin { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 99px; padding: 1px 9px; font: 10px var(--mono); letter-spacing: 0.04em; text-transform: none; color: var(--dim); cursor: pointer; }
+.booth .pin[aria-pressed="true"] { color: var(--claude); border-color: var(--claude); }
 .crate > *, .booth > * { flex: none; }
 .crate.drop-over { box-shadow: inset 0 0 0 2px var(--claude); }
 /* the card that follows the pointer while a track is dragged */
