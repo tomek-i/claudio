@@ -18,11 +18,6 @@
 .deck > .jog { grid-column: 1; grid-row: 1 / span 4; width: var(--jog); height: var(--jog); align-self: center; position: relative; }
 .jog > .jogwheel { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; cursor: grab; touch-action: none; }
 .jog > .jogwheel:active { cursor: grabbing; }
-/* the size toggle sits on the corner of the box, off the wheel */
-.jogsize { position: absolute; top: 0; right: 0; z-index: 3; width: 22px; height: 22px; padding: 0; border-radius: 6px; background: #0c0c11d0; border: 1px solid var(--line); color: var(--dim); font-size: 13px; line-height: 1; cursor: pointer; }
-.jogsize:hover { color: var(--text); border-color: var(--dim); }
-.jogsize[aria-pressed="true"] { color: var(--c); border-color: var(--c); }
-.deck.jog-large { --jog: min(300px, 20vw); }
 .deck[data-deck="B"] { grid-template-columns: minmax(0, 1fr) var(--jog); }
 .deck[data-deck="B"] > * { grid-column: 1; }
 .deck[data-deck="B"] > .jog { grid-column: 2; }
@@ -97,9 +92,7 @@ body.touch-drag { user-select: none; -webkit-user-select: none; }
 .rig2.shown { display: grid; }
 .deck.compact:not(.shown) { display: none; }
 .deck.compact { --jog: 96px; row-gap: 6px; padding: 8px 12px; }
-.deck.compact.jog-large { --jog: min(170px, 14vw); }
 .deck.compact > .jog { grid-row: 1 / span 5; }
-.deck.compact .jogsize { width: 18px; height: 18px; font-size: 11px; }
 .deck.compact .overview { height: 30px; }
 .deck.compact .title { font-size: 14px; }
 .deck.compact .bpmbox .bpm { font-size: 18px; }
@@ -152,9 +145,6 @@ body[data-layout="stacked"] .deck:not(.compact) .loops { grid-row: 5; grid-colum
 body[data-layout="stacked"] .deck:not(.compact) .jumps { grid-row: 5; grid-column: 2 / -1; justify-self: end; }
 /* the wheel takes the height that is left over, never less than the classic 170 px */
 body[data-layout="stacked"] .deck:not(.compact) > .jog { grid-column: 2; grid-row: 6 / 10; width: auto; height: auto; min-width: 170px; min-height: 170px; align-self: stretch; }
-/* large: the wheel claims its height instead of waiting for leftovers (the lower row gives way): as much as the
-   page can give without scrolling, up to twice the normal size */
-body[data-layout="stacked"] .deck.jog-large:not(.compact) > .jog { min-height: clamp(170px, 100vh - 1000px, 340px); }
 body[data-layout="stacked"] .deck:not(.compact) .slip { grid-column: 1; grid-row: 6; }
 body[data-layout="stacked"] .deck:not(.compact) .cue { grid-column: 1; grid-row: 9; }
 body[data-layout="stacked"] .deck:not(.compact) .play { grid-column: 1; grid-row: 10; min-width: 0; }

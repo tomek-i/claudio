@@ -762,7 +762,7 @@ const server = http.createServer(async (req, res) => {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
         applyLiveSettings();
         restartPending = [...new Set([...restartPending, ...r.restart])];
-        // what the page saves about itself (jog size, the divider) is not booth news
+        // what the page saves about itself (the divider, the zoom) is not booth news
         if (r.changed.some((k) => !k.startsWith('ui.'))) addLog('system', `⚙ Settings saved (${r.changed.join(', ')})${r.restart.length ? ' — restart the server to apply ' + r.restart.join(', ') : ''}`);
       }
       return send(res, 200, { ...r, fields: describeSettings(config), restartPending });

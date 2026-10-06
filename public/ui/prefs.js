@@ -4,7 +4,7 @@ import { ui } from './state.js';
 // ------------------------------------------------------------------ the ui.* settings, on the page
 // The server is the source of truth (config.json, sent in the `hello` and `ui` events). A copy in localStorage lets
 // the page come up in its last state on first paint, before `hello` arrives. Modules register an apply function with
-// onUi(); anything the page itself changes (jog size, the lower row) goes through saveUi(), which writes it back.
+// onUi(); anything the page itself changes (the lower row, the waveform zoom) goes through saveUi(), which writes it back.
 const LS = 'djUi';
 try { Object.assign(ui, JSON.parse(localStorage.getItem(LS) || '{}')); } catch { /* no stored copy */ }
 

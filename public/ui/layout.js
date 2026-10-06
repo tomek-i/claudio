@@ -1,7 +1,7 @@
 import './extra-decks.js'; // decks C + D and their strips must exist before anything here looks for them
 import { $, $$ } from './util.js';
-import { ui, mixer } from './state.js';
-import { onUi, saveUi } from './prefs.js';
+import { ui } from './state.js';
+import { onUi } from './prefs.js';
 import { VOL_MAX, volOfDb } from '../engine.js';
 
 // ------------------------------------------------------------------ deck layout (ui.deckLayout): stacked | classic
@@ -36,19 +36,4 @@ for (const t of $$('.fadertrack')) t.insertAdjacentHTML('afterbegin', `<span cla
 $('#masterVol').insertAdjacentHTML('afterend', `<b class="hscale" aria-hidden="true">${marks.replaceAll('bottom:', 'left:')}</b>`);
 $('.mastermeters .mm')?.insertAdjacentHTML('afterend', `<div class="mscale" aria-hidden="true"><span>${marks}</span><small>dB</small></div>`);
 
-// ------------------------------------------------------------------ jog wheel size (ui.jogLarge: the decks shown large)
-function applyJogSize() {
-  for (const el of $$('.deck')) {
-    const large = ui.jogLarge.includes(el.dataset.deck), b = $('.jogsize', el);
-    el.classList.toggle('jog-large', large);
-    b.setAttribute('aria-pressed', String(large));
-    b.title = large ? 'Back to the normal jog wheel size' : 'Enlarge the jog wheel';
-  }
-}
-for (const el of $$('.deck')) $('.jogsize', el).onclick = () => {
-  const deck = el.dataset.deck;
-  if (mixer?.decks[deck].handActive) return; // mid-scratch: wait for the wheel to be let go
-  saveUi({ jogLarge: ui.jogLarge.includes(deck) ? ui.jogLarge.filter((d) => d !== deck) : [...ui.jogLarge, deck].sort() });
-};
 onUi(applyLayout);
-onUi(applyJogSize);
