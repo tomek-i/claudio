@@ -11,6 +11,6 @@ export default ({ api, rest, fail, out, JSON_OUT }) => ({
     const r = await api('/api/settings', { [key]: collapsed });
     if (r.ok === false) return fail(Object.values(r.errors || {})[0] || 'could not change the setting');
     if (JSON_OUT) return out({ ok: true, collapsed });
-    console.log(`✓ crate and booth ${collapsed ? 'hidden' : 'shown'}${collapsed === now ? ' (already)' : ''}`);
+    console.log(`✓ bottom panel ${collapsed ? 'hidden' : 'shown'}${collapsed === now ? ' (already)' : ''}`);
   },
 });

@@ -42,7 +42,7 @@ function applyDock() {
   document.body.dataset.dock = tab;
   document.body.classList.toggle('booth-pinned', pinned);
   for (const b of $$('.lowerbar .tab')) b.setAttribute('aria-selected', String(b.dataset.tab === tab && !document.body.classList.contains('lower-collapsed')));
-  const pin = $('#boothPin'); pin.setAttribute('aria-pressed', String(pinned)); pin.textContent = pinned ? 'pinned' : 'pin';
+  const pin = $('#boothPin'); pin.setAttribute('aria-pressed', String(pinned));
   pin.title = pinned ? 'The booth stays beside the open tab · click to make it a tab of its own' : 'Keep the booth beside the open tab';
   const k = hint('keys.toggle'); $('.lowerbar .tab[data-tab="sampler"]').title = `Sampler pads and the chop keyboard${k ? ` (${k})` : ''}`;
   for (const b of $$('.lb-sizes button')) b.setAttribute('aria-pressed', String(!document.body.classList.contains('lower-collapsed') && Number(b.dataset.h) === ui.lowerHeight));

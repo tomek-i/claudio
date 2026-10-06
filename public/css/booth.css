@@ -1,4 +1,20 @@
 /* ---------- booth ---------- */
+/* now and next: pinned above the log */
+.nownext { display: flex; flex-direction: column; gap: 4px; padding: 9px 11px; border: 1px solid #3a2a22; border-radius: 10px; background: #1f1714; font-size: 13px; }
+.nn { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.nn b { flex: 0 0 34px; font: 600 10px var(--mono); letter-spacing: 0.1em; color: var(--claude); }
+.nn span { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.nn-sub { display: flex; align-items: center; gap: 6px; padding-left: 44px; font: 11px var(--mono); color: var(--dim); }
+.nn-sub span { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nn-sub button { height: 20px; padding: 0 9px; background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; color: var(--dim); font: 10px var(--mono); cursor: pointer; }
+.nn-sub button:hover { color: var(--text); border-color: var(--dim); }
+.nn-sub button[hidden] { display: none; }
+/* which lines of the log are shown */
+.feedfilters { display: flex; gap: 3px; margin-left: 10px; letter-spacing: 0; text-transform: none; }
+.feedfilters button { height: 20px; padding: 0 6px; background: none; border: 1px solid var(--line); border-radius: 99px; color: var(--dim); font: 10px var(--mono); cursor: pointer; }
+.feedfilters button:hover { color: var(--text); }
+.feedfilters button[aria-pressed="true"] { background: var(--line); color: var(--text); }
+#feed[data-show="main"] > .msg.action, #feed[data-show="claude"] > .msg:not(.claude, .crowd), #feed[data-show="action"] > .msg:not(.action), #feed[data-show="system"] > .msg:not(.system) { display: none; }
 .booth #feed { flex: 1 1 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; min-height: 0; padding-right: 4px; }
 #feed > .msg { flex: none; }
 .msg { font-size: 13px; line-height: 1.45; }

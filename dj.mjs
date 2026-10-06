@@ -258,7 +258,7 @@ SET       plan add '<json>'|show|clear   queue add <id…>|show|clear   autodj o
 TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status]   vocals <id>
           hotcue <deck> [set <n> [bar:N]] | <n>     savedloop <deck> [set <name> <beats>] | <name>
 KEYS      keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (see cli-ext/keys.mjs)
-PAGE      crate hide|show|toggle   hide or show the crate and booth on every open page (e.g. before recording)
+PAGE      crate hide|show|toggle   hide or show the bottom panel (library, sampler, booth) on every open page (e.g. before recording)
 ENGINE    keylock, key, stem, xfassign, sample(r), deckfx, scratch: see  dj help-engine
 GLOBAL    --why "reason"   shows your reasoning in the booth feed      --json   raw output`);
   },

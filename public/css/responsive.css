@@ -4,6 +4,7 @@
   .mixer { grid-column: 1 / -1; order: 3; }
   .lower, body.booth-pinned:not([data-dock="booth"]) .lower { grid-template-columns: 1fr; grid-template-rows: auto; flex: none; }
   .presets { display: none; }
+  .upnext { display: none; }
   body { height: auto; overflow: auto; }
   .crate, .booth { height: 460px; }
   .lowerbar { cursor: default; }

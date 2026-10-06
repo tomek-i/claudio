@@ -172,12 +172,20 @@
 </div>
 <section class="lower" id="lower">
   <section class="crate">
+   <div class="crate-main">
     <div class="crate-head">
-      <h2>Crate</h2>
       <input id="search" placeholder="Search artist, title, 6A, 128…" autocomplete="off">
+      <div class="filters" id="libFilters" role="group" aria-label="Filters">
+        <button data-f="bpm" aria-pressed="false" title="Only tracks within 6% of the live deck's tempo (double and half time count)">BPM ±6%</button>
+        <button data-f="key" aria-pressed="false" title="Only tracks in a key that mixes with the live deck">Key match</button>
+        <button data-f="energy" aria-pressed="false" title="Energy: click to step through any, low (1–4), mid (5–7), high (8–10)">Energy</button>
+        <button data-f="fresh" aria-pressed="false" title="Hide tracks already played in this set">Unplayed</button>
+      </div>
+      <label class="sortby">Sort <select id="libSort"><option value="added">newest</option><option value="title">title</option><option value="bpm">BPM</option><option value="key">key</option><option value="energy">energy</option></select></label>
       <span class="count" id="libCount"></span>
+      <button class="btn sm" id="addBtn" aria-expanded="false" aria-controls="grabRow" title="Fetch a track from YouTube or SoundCloud, or import files">+ Add music</button>
     </div>
-    <div class="grab">
+    <div class="grab" id="grabRow" hidden>
       <input id="grabInput" placeholder="Paste a YouTube / SoundCloud URL, or type “artist - title” to fetch it" autocomplete="off">
       <label class="pl"><input type="checkbox" id="grabPlaylist"> playlist</label>
       <button class="btn" id="grabBtn">GET</button>
@@ -187,17 +195,22 @@
     <div id="jobs"></div>
     <div class="tablewrap">
       <table id="lib">
-        <thead><tr><th></th><th>Track</th><th>BPM</th><th>Key</th><th>Energy</th><th>Len</th><th>Load</th></tr></thead>
+        <thead><tr><th></th><th>Load</th><th data-sort="title">Track</th><th data-sort="bpm">BPM</th><th data-sort="key">Key</th><th data-sort="energy">Energy</th><th>Len</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="empty" id="libEmpty">
-        Your crate is empty. Fetch a track above, drop audio into <code>library/</code>, or ask Claude: <em>“grab some 2008 hardstyle classics”</em>.
+        Your crate is empty. Use “Add music” above, drop audio into <code>library/</code>, or ask Claude: <em>“grab some 2008 hardstyle classics”</em>.
         <div class="starter">
           <button class="btn" id="starterBtn">Download demo tracks</button>
           <small id="starterMsg">Free to use: Creative Commons tracks across hip-hop, house, techno and drum &amp; bass.</small>
         </div>
       </div>
     </div>
+   </div>
+    <aside class="upnext" aria-label="Up next">
+      <h3>Up next <button id="queueClear" title="Empty the queue" hidden>clear</button></h3>
+      <div id="upnext"></div>
+    </aside>
   </section>
 
   <section class="keys" id="keys">
@@ -206,13 +219,21 @@
   </section>
 
   <aside class="booth">
-    <h2>The booth <small>Claude's decisions, live</small><button class="pin" id="boothPin" aria-pressed="true" title="Keep the booth beside the open tab">pin</button></h2>
-    <div id="feed"></div>
+    <h2 title="The booth: Claude's decisions, live">Booth <div class="feedfilters" id="feedFilters" role="group" aria-label="Show in the log"><button data-show="main" title="Everything except the raw commands">Main</button><button data-show="claude" title="What Claude says, and requests to Claude">Claude</button><button data-show="action" title="The raw commands sent to the decks">Actions</button><button data-show="system">System</button><button data-show="all">All</button></div><button class="pin" id="boothPin" aria-pressed="true" title="Keep the booth beside the open tab">pin</button></h2>
+    <!-- what is playing and what comes next, pinned above the log (ui/booth.js) -->
+    <div class="nownext" id="nowNext">
+      <div class="nn"><b>NOW</b><span id="nnNow">—</span></div>
+      <div class="nn"><b>NEXT</b><span id="nnNext">—</span></div>
+      <div class="nn-sub"><span id="nnSub">nothing planned</span>
+        <button id="nnSkip" title="Drop this pick: the next one in the queue, or another choice by auto-DJ, takes its place" hidden>skip</button>
+        <button id="nnChange" title="Ask Claude for a different next track" hidden>change</button></div>
+    </div>
+    <div id="feed" data-show="main"></div>
     <form id="ask">
       <input id="askInput" placeholder="Request a track or a vibe for Claude…" autocomplete="off">
       <button class="btn">SEND</button>
+      <label class="tts" title="Let Claude talk on the mic"><input type="checkbox" id="ttsToggle" checked> mic</label>
     </form>
-    <label class="tts"><input type="checkbox" id="ttsToggle" checked> let Claude talk on the mic</label>
   </aside>
 </section>
 

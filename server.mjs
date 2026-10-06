@@ -639,7 +639,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
     if (p === '/api/autodj' && req.method === 'POST') {
-      const b = await readBody(req); sequencer.setAuto(b.enabled !== false, b.leadSec);
+      const b = await readBody(req);
+      if (b.skip) return send(res, 200, { ok: true, skipped: sequencer.skipNext(), ...sequencer.summary(liveState()).autoDJ }); // the booth's "skip"
+      sequencer.setAuto(b.enabled !== false, b.leadSec);
       // save: keep it across restarts (the switch in the page header); without it the change lasts until the server stops
       if (b.save) { config.autoDJ = { ...config.autoDJ, enabled: sequencer.auto.enabled }; fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n'); }
       return send(res, 200, sequencer.summary(liveState()).autoDJ);
