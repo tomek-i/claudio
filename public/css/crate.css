@@ -1,0 +1,67 @@
+/* ---------- lower: crate + booth ---------- */
+.lower { display: grid; grid-template-columns: 1fr 380px; grid-template-rows: minmax(0, 1fr); gap: 1px; background: var(--line); flex: 1 0 300px; min-height: 300px; }
+/* ---------- the bar above the lower row: divider when open, summary when the row is hidden ---------- */
+.lowerbar { flex: none; display: flex; align-items: center; gap: 16px; height: 14px; padding: 0 12px; background: var(--panel2); border-block: 1px solid var(--line); cursor: row-resize; touch-action: none; user-select: none; font: 11px var(--mono); color: var(--dim); }
+.lowerbar:focus-visible { outline: 1px solid var(--dim); outline-offset: -2px; }
+.lowerbar button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.lowerbar button:hover { color: var(--text); }
+.lb-grip { flex: 1; align-self: stretch; background: linear-gradient(var(--faint), var(--faint)) center / 44px 2px no-repeat; }
+.lb-toggle { font-size: 13px; line-height: 1; width: 22px; }
+.lb-crate, .lb-jobs, .lb-feed { display: none; }
+body.lower-collapsed .lowerbar { height: 30px; }
+body.lower-collapsed .lower { display: none; }
+body.lower-collapsed :is(.lb-crate, .lb-jobs, .lb-feed) { display: block; }
+.lb-crate { letter-spacing: 0.16em; }
+.lb-crate span { letter-spacing: 0; color: var(--faint); margin-left: 6px; }
+.lb-jobs:empty { display: none !important; }
+.lb-jobs.bad { color: #ff8080; }
+.lb-feed { flex: 0 1 46%; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--claude); font-family: var(--sans); font-size: 12px; }
+.lb-feed.unread::before { content: '●'; color: var(--warn); margin-right: 6px; }
+/* the freed height (row hidden, or set shorter by hand) goes to the rig */
+body:is(.lower-collapsed, .lower-sized) .rig { flex: 1 0 auto; }
+/* stacked decks are taller: the lower row gives way first, and shares any spare height with the jog wheels */
+body[data-layout="stacked"] .lower { flex: 1 1 200px; min-height: 150px; }
+.crate, .booth { background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; overflow: hidden; }
+.crate > *, .booth > * { flex: none; }
+.crate.drop-over { box-shadow: inset 0 0 0 2px var(--claude); }
+/* the card that follows the pointer while a track is dragged */
+.dragchip { position: fixed; z-index: 30; pointer-events: none; display: flex; gap: 10px; align-items: center; max-width: 300px; padding: 6px 10px; background: var(--panel2); border: 1px solid var(--claude); border-radius: 8px; font: 12px var(--mono); white-space: nowrap; box-shadow: 0 6px 18px #000a; }
+.dragchip b { font: 600 13px var(--sans); overflow: hidden; text-overflow: ellipsis; }
+.dragchip.ghost { left: -1000px; top: -1000px; }
+.crate-head { display: flex; gap: 14px; align-items: center; }
+#search { flex: 1; max-width: 360px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.count { color: var(--faint); font-family: var(--mono); font-size: 11px; }
+.grab { display: flex; gap: 8px; align-items: center; }
+.grab #grabInput { flex: 1; background: #0e0e13; border: 1px dashed #34344a; border-radius: 8px; padding: 8px 10px; }
+.pl { font-size: 11px; color: var(--dim); display: flex; gap: 4px; align-items: center; }
+#jobs { display: flex; flex-direction: column; gap: 4px; }
+.job { font-family: var(--mono); font-size: 11px; color: var(--dim); display: grid; grid-template-columns: 1fr 120px 90px; gap: 10px; align-items: center; }
+.job .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.job .bar i { display: block; height: 100%; background: var(--b); }
+.job.error { color: #ff8080; }
+.job.ready .bar i { background: var(--ok); }
+.tablewrap { overflow: auto; flex: 1 1 0; min-height: 0; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 500; font-size: 10px; letter-spacing: 0.14em; color: var(--faint); padding: 6px 8px; position: sticky; top: 0; background: var(--panel); text-transform: uppercase; }
+td { padding: 6px 8px; border-top: 1px solid #1c1c25; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+td.name { font-family: var(--sans); font-size: 13px; white-space: normal; }
+td.name small { color: var(--dim); display: block; }
+tr.match td.fit::before { content: '●'; color: var(--ok); }
+tr.near td.fit::before { content: '●'; color: var(--warn); }
+tr.played { opacity: 0.45; }
+tr.loaded td.name { color: var(--claude); }
+.keychip { padding: 1px 7px; border-radius: 99px; color: #000; font-weight: 600; }
+.ebar { display: inline-block; width: 60px; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; vertical-align: middle; }
+.ebar i { display: block; height: 100%; background: linear-gradient(90deg, #4a8, #fc5, #f55); }
+.ld { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; cursor: pointer; font-family: var(--mono); font-weight: 600; margin-right: 2px; }
+.ld.a:hover { background: var(--a); color: #000; }
+.ld.b:hover { background: var(--b); color: #000; }
+.ld.c:hover { background: var(--cc); color: #000; }
+.ld.d:hover { background: var(--dc); color: #000; }
+#libEmpty { color: var(--dim); padding: 30px 10px; text-align: center; line-height: 1.7; }
+#libEmpty.hide { display: none; }
+.starter { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.starter .btn { background: var(--a); border-color: var(--a); color: #000; }
+.starter .btn:disabled { opacity: 0.5; cursor: default; }
+.starter small { font-size: 11px; color: var(--faint); }
+.stemtag { font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em; color: var(--ok); border: 1px solid #2f5a3a; border-radius: 4px; padding: 0 3px; vertical-align: middle; }

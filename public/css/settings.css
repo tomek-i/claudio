@@ -1,0 +1,68 @@
+/* ---------- settings page (/settings) ---------- */
+body.settings { height: auto; min-height: 100vh; }
+.settings .disc { box-shadow: none; }
+.settings a.btn { text-decoration: none; }
+.settings .btn.sm { font-size: 12px; padding: 6px 12px; }
+.settings main { width: 100%; max-width: 760px; margin: 0 auto; padding: 28px 18px 110px; display: flex; flex-direction: column; gap: 16px; }
+.settings form { display: flex; flex-direction: column; gap: 16px; }
+.settings fieldset { margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
+.settings legend { float: left; width: 100%; padding: 12px 14px 10px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+.field { clear: both; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 4px 16px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); }
+legend + .field { border-top: 0; }
+.field .name { font-weight: 600; }
+.field .input { justify-self: end; width: 100%; display: flex; justify-content: flex-end; }
+.field .help, .field .err { grid-column: 1; margin: 0; font-size: 12px; line-height: 1.5; color: var(--dim); }
+.field .help:empty, .field .err:empty { display: none; }
+.field .err { color: #ff8080; }
+.field.bad input, .field.bad textarea, .field.bad select { border-color: #ff5050; }
+.field.paths, .field.text { grid-template-columns: minmax(0, 1fr); }
+.field.paths .input, .field.text .input { justify-self: stretch; }
+.tag { margin-left: 6px; padding: 1px 7px; border: 1px solid var(--line); border-radius: 99px; font: 500 11px var(--mono); color: var(--warn); white-space: nowrap; }
+.settings input[type=text], .settings input[type=number], .settings textarea, .settings select { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 13px var(--mono); color: var(--text); width: 100%; }
+.settings textarea { resize: vertical; line-height: 1.5; }
+.settings input[type=number] { width: 110px; text-align: right; }
+.settings input:focus-visible, .settings textarea:focus-visible, .settings select:focus-visible, .settings .btn:focus-visible { outline: 2px solid var(--b); outline-offset: 2px; }
+.num { display: inline-flex; align-items: center; gap: 8px; }
+.unit { font: 12px var(--mono); color: var(--dim); min-width: 56px; }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font: 12px var(--mono); color: var(--dim); }
+.switch input { width: 18px; height: 18px; accent-color: var(--ok); }
+.switch span { min-width: 24px; }
+.notice { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); line-height: 1.5; }
+.notice.restart { border-color: var(--warn); color: var(--warn); }
+.notice.bad { border-color: #ff5050; }
+.actions { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; background: var(--panel); border-top: 1px solid var(--line); }
+.actions .btn:disabled { opacity: 0.4; cursor: default; }
+.actions #save:not(:disabled) { background: var(--a); border-color: var(--a); color: #000; }
+.actions .result { font: 12px var(--mono); color: var(--dim); min-width: 200px; }
+@media (max-width: 600px) {
+  .field { grid-template-columns: minmax(0, 1fr); }
+  .field .input { justify-self: start; justify-content: flex-start; }
+  .actions { flex-wrap: wrap; }
+}
+/* ---------- key bindings editor ---------- */
+.field.keypresets { display: none; }
+.field.keys { display: block; }
+.field.keys > .name { display: none; }
+.keysui h3 { margin: 18px 0 6px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+.kbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.kbar .kgroup { display: inline-flex; gap: 6px; align-items: center; }
+.kbar input[type=search], .kbar select { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; color: var(--text); padding: 5px 8px; font: 12px var(--mono); }
+.kbar input[type=search] { flex: 1 1 180px; min-width: 140px; }
+.kbar .btn:disabled { opacity: 0.4; cursor: default; }
+.kmsg { margin: 12px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--panel2); }
+.kmsg.bad { border-color: var(--warn); }
+.kmsg .btn { margin-left: 6px; }
+.krow { display: grid; grid-template-columns: minmax(0, 1fr) 150px 26px 26px; gap: 6px; align-items: center; padding: 3px 0; border-top: 1px solid #1c1c25; }
+.krow .kname { font-size: 13px; }
+.krow .kname i { color: var(--warn); font-style: normal; font-weight: 700; }
+.kkey { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: 600 12px var(--mono); color: var(--text); cursor: pointer; text-align: center; }
+.kkey:hover { border-color: var(--dim); }
+.kkey .none { color: var(--faint); font-weight: 400; }
+.krow.changed .kkey { border-color: var(--warn); }
+.krow.waiting .kkey { border-color: var(--ok); color: var(--ok); }
+.kbtn { background: none; border: 1px solid var(--line); border-radius: 6px; width: 26px; height: 26px; padding: 0; color: var(--dim); cursor: pointer; font-size: 13px; }
+.kbtn:hover:not(:disabled) { color: var(--text); border-color: var(--dim); }
+.kbtn:disabled { opacity: 0.25; cursor: default; }
+.decks { display: inline-flex; gap: 14px; font: 12px var(--mono); color: var(--dim); }
+.decks label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.decks input { width: 16px; height: 16px; accent-color: var(--ok); }

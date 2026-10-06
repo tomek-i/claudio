@@ -1,0 +1,25 @@
+/* ---------- narrow screens (loaded last: these override the component files) ---------- */
+@media (max-width: 1100px) {
+  .rig, .rig.four { grid-template-columns: 1fr 1fr; }
+  .mixer { grid-column: 1 / -1; order: 3; }
+  .lower { grid-template-columns: 1fr; grid-template-rows: auto; flex: none; }
+  body { height: auto; overflow: auto; }
+  .crate, .booth { height: 460px; }
+  .lowerbar { cursor: default; }
+  /* the page scrolls here, so there is no leftover height to size the wheel from */
+  body[data-layout="stacked"] .rig { flex: none; }
+  body[data-layout="stacked"] .lower { flex: none; }
+  body[data-layout="stacked"] .deck:not(.compact) > .jog { min-height: 240px; }
+  body[data-layout="stacked"] .strips > .strip, body[data-layout="stacked"] .rig.four .strips > .strip { flex: 1 1 0; }
+}
+@media (max-width: 700px) {
+  .deck { --jog: 120px; }
+  .deck.jog-large { --jog: 180px; }
+  .rig, .rig.four, .rig2 { grid-template-columns: 1fr; }
+  .rig2 .deck[data-deck="D"] { grid-column: 1; }
+  .top { flex-wrap: wrap; gap: 10px; }
+  .keys { flex-direction: column; }
+  .keys > .pads { width: auto; }
+  body[data-layout="stacked"] .mixer, body[data-layout="stacked"] .rig.four .mixer { grid-template: "strips" auto "fx" auto "master" auto "xf" auto / minmax(0, 1fr); }
+  body[data-layout="stacked"] .mastermeters { flex-basis: 80px; }
+}

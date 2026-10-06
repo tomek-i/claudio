@@ -1,0 +1,13 @@
+/* ---------- booth ---------- */
+.booth #feed { flex: 1 1 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; min-height: 0; padding-right: 4px; }
+#feed > .msg { flex: none; }
+.msg { font-size: 13px; line-height: 1.45; }
+.msg time { font-family: var(--mono); font-size: 10px; color: var(--faint); margin-right: 6px; }
+.msg.claude { background: #1f1714; border: 1px solid #3a2a22; border-radius: 10px 10px 10px 2px; padding: 8px 10px; }
+.msg.claude::before { content: '✳ Claude'; display: block; font-size: 10px; letter-spacing: 0.12em; color: var(--claude); margin-bottom: 2px; }
+.msg.action { font-family: var(--mono); font-size: 11px; color: #b7b6c8; padding-left: 12px; border-left: 2px solid #34344a; }
+.msg.crowd { align-self: flex-end; background: #13232a; border: 1px solid #1d3a44; border-radius: 10px 10px 2px 10px; padding: 7px 10px; max-width: 85%; }
+.msg.system { font-size: 11px; color: var(--faint); }
+#ask { display: flex; gap: 8px; }
+#askInput { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.tts { font-size: 11px; color: var(--faint); display: flex; gap: 6px; align-items: center; }

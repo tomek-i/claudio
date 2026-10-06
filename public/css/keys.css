@@ -1,0 +1,39 @@
+/* ---------- chop keyboard ---------- */
+/* the section holds the keyboard (#keysMain, re-rendered by keys.js) and, in the stacked layout, the sampler pads beside it */
+.keys { display: flex; gap: 18px; padding: 8px 12px 10px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
+.keys-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.keys .krow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.keys .klabel { font-weight: 700; color: var(--text); letter-spacing: 0.08em; }
+.keys .ksep { width: 1px; height: 18px; background: var(--line); margin: 0 2px; }
+.keys label { display: flex; align-items: center; gap: 4px; }
+.keys select { background: var(--panel2); color: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 3px 4px; font-family: var(--mono); font-size: 11px; }
+.keys .kchop { color: #7ee787; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.keys .koct { min-width: 46px; }
+.keys .kevents { color: #f2cc60; }
+.keys .btn.sm.rec { background: #ff4d6d; color: #000; }
+.keys input[type="range"] { width: 80px; }
+.piano { position: relative; height: 92px; width: 100%; max-width: 760px; }
+.piano .pk { position: absolute; top: 0; margin: 0; border: 1px solid #111; border-radius: 0 0 5px 5px; cursor: pointer; font-family: var(--mono); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; padding-bottom: 5px; user-select: none; }
+.piano .pk.w { height: 92px; background: #e9e9ef; color: #333; z-index: 1; }
+.piano .pk.b { height: 56px; background: #1a1a22; color: #ccc; z-index: 2; border-color: #000; }
+.piano .pk i { font-style: normal; font-weight: 700; font-size: 11px; }
+.piano .pk small { font-size: 9px; opacity: 0.6; }
+.piano .pk.w.on { background: #7ee787; }
+.piano .pk.b.on { background: #3fbf5a; color: #000; }
+.piano .pk:active { transform: translateY(1px); }
+.keys .khud { color: #b392f0; font-size: 11px; white-space: nowrap; }
+.piano .pk.w.scale { background: #f7f7ff; box-shadow: inset 0 -4px 0 #b392f0; }
+.piano .pk.b.scale { box-shadow: inset 0 -4px 0 #b392f0; }
+.piano .pk.chord { box-shadow: inset 0 -6px 0 #f2cc60; }
+.piano .pk.w.on, .piano .pk.b.on { box-shadow: none; }
+
+/* ---------- sampler pads (beside the keyboard; under the crossfader in the classic layout) ---------- */
+.pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.pad { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 4px 5px; font: 600 9px var(--mono); letter-spacing: 0.06em; color: var(--text); cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.08s; }
+.pad i { display: block; font-style: normal; font-size: 8px; color: var(--faint); }
+.pad:hover { border-color: var(--claude); }
+.pad.empty { color: var(--faint); }
+.pad.hit { background: var(--claude); color: #000; }
+.keys > .pads { flex: none; width: 300px; align-content: start; }
+.keys > .pads:empty { display: none; }
+.keys > .pads::before { content: 'SAMPLER'; grid-column: 1 / -1; font: 700 11px var(--mono); letter-spacing: 0.08em; color: var(--text); line-height: 18px; }

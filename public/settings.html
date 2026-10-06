@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJ Claude · Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/settings.css">
+</head>
+<body class="settings">
+<header class="top">
+  <div class="brand"><span class="disc"></span>DJ<span class="dot">·</span>CLAUDE</div>
+  <span class="spacer"></span>
+  <a class="btn sm" href="/health">Health</a>
+  <a class="btn sm" href="/">Back to the decks</a>
+</header>
+<main>
+  <h2>Settings <small>saved to config.json</small></h2>
+  <p class="notice restart" id="restart" hidden></p>
+  <form id="form" novalidate></form>
+  <div class="actions">
+    <button class="btn" id="save" form="form" disabled>Save changes</button>
+    <button class="btn" id="revert" type="button" disabled>Discard</button>
+    <span class="result" id="result" role="status"></span>
+  </div>
+</main>
+<script type="module" src="ui/settings.js"></script>
+</body>
+</html>

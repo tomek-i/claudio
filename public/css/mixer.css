@@ -1,0 +1,56 @@
+/* ---------- mixer ---------- */
+.mixer { display: flex; flex-direction: column; gap: 12px; }
+.strips { display: flex; gap: 10px; }
+.strips > .strip { flex: 1 1 0; min-width: 0; }
+.strip { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 4px; align-items: start; justify-items: center; }
+.mixer [data-deck="A"] { --c: var(--a); }
+.mixer [data-deck="B"] { --c: var(--b); }
+.mixer [data-deck="C"] { --c: var(--cc); }
+.mixer [data-deck="D"] { --c: var(--dc); }
+.k { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; letter-spacing: 0.14em; color: var(--dim); user-select: none; }
+.k svg { cursor: ns-resize; display: block; }
+.k.auto svg .arc { stroke: var(--claude); }
+.faderwrap { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; height: 124px; }
+.meter { width: 8px; height: 120px; background: #0b0b10; border-radius: 3px; }
+input.fader { writing-mode: vertical-lr; direction: rtl; height: 120px; width: 26px; --cap-len: 16px; --cap-wide: 26px; --grip: 180deg; }
+.xf { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.xf input { flex: 1; --cap-len: 16px; --cap-wide: 26px; }
+
+/* ---------- mixer: strip names, FX slot, 4 channels ---------- */
+.sname { grid-column: 1 / -1; font: 600 10px var(--mono); color: var(--c); letter-spacing: 0.2em; }
+.strip .fxsel { grid-column: 1 / -1; width: 100%; }
+:is(.strip, .fxrow).extra:not(.shown) { display: none; }
+/* classic layout: no TRIM slot, FX block or MASTER section (ui/layout.js moves their controls back into the strips and the header) */
+.k.trim, .fxblock, .master { display: none; }
+
+/* ---------- hardware-style mixer (ui.deckLayout: stacked) ----------
+   one column per channel in signal order (TRIM slot, HI, MID, LOW, FILTER, fader), the per-deck effects in their own
+   block, a MASTER section, the crossfader last. Two channels: FX and MASTER sit beside the strips. Four: underneath. */
+body[data-layout="stacked"] .mixer { display: grid; grid-template: "strips fx" auto "strips master" 1fr "xf xf" auto / auto minmax(0, 1fr); gap: 12px; }
+body[data-layout="stacked"] .strips { grid-area: strips; }
+body[data-layout="stacked"] .strips > .strip { flex: 0 0 52px; }
+body[data-layout="stacked"] .strip { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+body[data-layout="stacked"] .k.trim { display: flex; }
+body[data-layout="stacked"] .strip .k { flex: none; }
+body[data-layout="stacked"] .faderwrap { flex: 1 1 auto; height: auto; min-height: 132px; align-items: stretch; }
+body[data-layout="stacked"] .faderwrap .meter, body[data-layout="stacked"] input.fader { height: auto; }
+body[data-layout="stacked"] .fxblock { grid-area: fx; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+body[data-layout="stacked"] :is(.fxblock, .master) > .sname { color: var(--dim); }
+body[data-layout="stacked"] .fxrow { display: grid; grid-template: "name sel sel" auto ". echo fx" auto / 12px 1fr 1fr; gap: 4px 6px; align-items: center; justify-items: center; }
+body[data-layout="stacked"] .fxname { grid-area: name; font: 600 11px var(--mono); color: var(--c); }
+body[data-layout="stacked"] .fxrow .fxsel { grid-area: sel; width: 100%; min-width: 0; }
+body[data-layout="stacked"] .master { grid-area: master; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+body[data-layout="stacked"] .master .mastervol { flex-direction: column; align-items: stretch; gap: 2px; font-size: 9px; }
+body[data-layout="stacked"] .master .mastervol span { display: none; }
+body[data-layout="stacked"] .master .mastervol::before { content: 'VOL'; }
+.mastermeters { flex: 1 1 60px; display: flex; justify-content: center; gap: 6px; min-height: 60px; }
+.mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 9px var(--mono); color: var(--dim); }
+.mm .meter { flex: 1 1 0; height: 0; min-height: 0; }
+body[data-layout="stacked"] .xf { grid-area: xf; }
+/* four channels (C A B D): the strips take the full width, one-line FX rows under them with MASTER beside */
+body[data-layout="stacked"] .rig.four .mixer { grid-template: "strips strips" 1fr "fx master" auto "xf xf" auto / minmax(0, 1fr) 84px; }
+body[data-layout="stacked"] .rig.four .strips > .strip { flex: 1 1 0; }
+body[data-layout="stacked"] .rig.four .fxblock { gap: 4px; }
+body[data-layout="stacked"] .rig.four .fxrow { grid-template: "name sel echo fx" auto / 12px minmax(0, 1fr) auto auto; }
+body[data-layout="stacked"] .rig.four .fxrow .k { flex-direction: row; gap: 3px; font-size: 8px; letter-spacing: 0.08em; }
+body[data-layout="stacked"] .rig.four .fxrow .k svg { width: 28px; height: 28px; }

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJ Claude · Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/health.css">
+</head>
+<body class="health">
+<header class="top">
+  <div class="brand"><span class="disc"></span>DJ<span class="dot">·</span>CLAUDE</div>
+  <div class="status" id="overall"><span class="led"></span><span class="txt">checking…</span></div>
+  <span class="spacer"></span>
+  <a class="btn sm" href="/settings">Settings</a>
+  <a class="btn sm" href="/">Back to the decks</a>
+</header>
+<main>
+  <h2>System health <small id="checkedAt"></small></h2>
+  <ul id="checks" aria-live="polite"></ul>
+  <p><button class="btn sm" id="recheck">Check again</button></p>
+  <p class="hint">Checked once when this page opens; nothing runs in the background. The same data as JSON: <a href="/api/health"><code>/api/health</code></a></p>
+</main>
+<script type="module">
+import { $, esc } from './ui/util.js';
+
+const LABEL = { ok: 'OK', fail: 'Problem', off: 'Off' };
+async function refresh() {
+  let h;
+  try { h = await fetch('/api/health').then((r) => r.json()); }
+  catch { h = { ok: false, checkedAt: Date.now(), checks: [{ id: 'server', name: 'Server', status: 'fail', detail: 'not reachable: start it with node dj.mjs start' }] }; }
+  const bad = h.checks.filter((c) => c.status === 'fail').length;
+  $('#overall').className = `status ${h.ok ? 'on' : 'bad'}`;
+  $('#overall .txt').textContent = h.ok ? 'all systems go' : `${bad} system${bad === 1 ? '' : 's'} need attention`;
+  $('#checkedAt').textContent = `checked ${new Date(h.checkedAt).toLocaleTimeString()}`;
+  $('#checks').innerHTML = h.checks.map((c) => `<li class="check ${c.status}">
+    <span class="dot" role="img" aria-label="${LABEL[c.status]}"></span>
+    <span class="name">${esc(c.name)}</span>
+    <span class="state">${LABEL[c.status]}</span>
+    <span class="detail">${esc(c.detail)}</span></li>`).join('');
+}
+$('#recheck').onclick = refresh;
+refresh();
+</script>
+</body>
+</html>
