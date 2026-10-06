@@ -1,5 +1,6 @@
 import { $, $$, camelotColor, post, esc } from './util.js';
-import { mixer } from './state.js';
+import { mixer, ui } from './state.js';
+import { onUi } from './prefs.js';
 import { addFeed } from './booth.js';
 
 // ------------------------------------------------------------------ rendering
@@ -17,17 +18,23 @@ export function renderDeckMeta(d) {
 // auto-filled by lib/cues.mjs: 1 start · 2 first vocal · 3 first chorus · 4 first drop · 5 first breakdown · 6 mix-out; 7 and 8 are free
 export const CUE_COLORS = ['#e8e8f0', '#7ec3e7', '#7ee787', '#f2cc60', '#b392f0', '#f59e8b', '#ff7ab6', '#4fd1c5'];
 export const hotcuesOf = (t) => (t ? t.hotcues || t.cues?.hotcues || {} : {});
-// one thin row each: number, name (if it has one), bar. All 8 are always there; d is null before the engine starts
+// ui.hotcues picks the look: 'pad' (number, name, bar over a line that lights up when the cue is set), 'pad2' (the same
+// with the name on its own line), 'slim' (one thin row) or 'letters' (pads marked A to H and nothing else). The styles
+// are in css/deck.css under body[data-hotcues]. All 8 are always there; d is null before the engine starts.
+const CUE_LETTERS = 'ABCDEFGH';
 function renderHotcues(d, el) {
   const wrap = $('.hotcues', el); if (!wrap) return;
   const hc = hotcuesOf(d?.track);
-  const key = (d?.track?.id || '') + JSON.stringify(hc);
+  const letters = ui.hotcues === 'letters';
+  const key = (d?.track?.id || '') + letters + JSON.stringify(hc);
   if (wrap.dataset.key === key) return;
   wrap.dataset.key = key;
   wrap.innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
     const c = hc[n];
     const label = c ? String(c.label || '').replace(/\s*\(auto\)$/, '') : '';
-    const tip = c ? `hot cue ${n}${label ? `: ${label}` : ''} · bar ${c.bar} · click = jump on the beat · shift+click = set here` : `hot cue ${n} is empty · shift+click = set it here`;
+    const name = letters ? `${CUE_LETTERS[n - 1]} (${n})` : n;
+    const tip = c ? `hot cue ${name}${label ? `: ${label}` : ''} · bar ${c.bar} · click = jump on the beat · shift+click = set here` : `hot cue ${name} is empty · shift+click = set it here`;
+    if (letters) return `<button class="hc${c ? '' : ' empty'}" data-n="${n}" style="--hc:${CUE_COLORS[n - 1]}" title="${esc(tip)}"><i>${CUE_LETTERS[n - 1]}</i></button>`;
     return `<button class="hc${c ? '' : ' empty'}" data-n="${n}" style="--hc:${CUE_COLORS[n - 1]}" title="${esc(tip)}"><i>${n}</i>${label ? `<span>${esc(label)}</span>` : ''}${c ? `<small>${c.bar}</small>` : ''}</button>`;
   }).join('');
   for (const b of $$('.hc', wrap)) b.onclick = async (e) => {
@@ -44,7 +51,11 @@ function renderHotcues(d, el) {
     } catch (err) { addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${err.message}` }); }
   };
 }
-for (const el of $$('.deck')) renderHotcues(null, el); // the empty row, before anything is loaded
+// the empty row before anything is loaded, and again whenever the look changes
+onUi(() => {
+  document.body.dataset.hotcues = ['pad', 'pad2', 'slim', 'letters'].includes(ui.hotcues) ? ui.hotcues : 'pad';
+  for (const el of $$('.deck')) renderHotcues(mixer?.decks[el.dataset.deck] || null, el);
+});
 export function renderKeyChip(d, el) {
   const t = d.track, key = $('.key', el);
   const eff = t ? d.effectiveCamelot() || t.camelot : null;

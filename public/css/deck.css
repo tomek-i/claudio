@@ -122,6 +122,13 @@ body.touch-drag { user-select: none; -webkit-user-select: none; }
 .hotcues .hc:active { transform: translateY(1px); }
 .hotcues .hc.empty { opacity: 0.35; border-left-color: var(--line); }
 .deck.compact .hotcues .hc span { display: none; }
+/* pads (ui.hotcues: pad, pad2, letters; 'slim' keeps the row above): the label at the top and a line near the bottom
+   that lights up in the cue colour when the cue is set */
+body:not([data-hotcues="slim"]) .hotcues .hc { position: relative; height: 28px; align-items: flex-start; padding: 4px 6px; border-left: 1px solid var(--line); }
+body:not([data-hotcues="slim"]) .hotcues .hc::after { content: ''; position: absolute; left: 7px; right: 7px; bottom: 5px; height: 2px; border-radius: 2px; background: var(--line); }
+body:not([data-hotcues="slim"]) .hotcues .hc:not(.empty)::after { background: var(--hc); box-shadow: 0 0 6px var(--hc); }
+body[data-hotcues="pad2"] .deck:not(.compact) .hotcues .hc { height: 38px; flex-wrap: wrap; align-content: flex-start; row-gap: 3px; }
+body[data-hotcues="pad2"] .deck:not(.compact) .hotcues .hc span { flex: 1 0 100%; order: 3; }
 
 /* ---------- section jumps ---------- */
 .jumps { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
