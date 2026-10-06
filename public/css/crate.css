@@ -6,7 +6,8 @@
 .lowerbar button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .lowerbar button:hover { color: var(--text); }
 .lb-grip { flex: 1; align-self: stretch; background: linear-gradient(var(--faint), var(--faint)) center / 44px 2px no-repeat; }
-.lb-toggle { font-size: 13px; line-height: 1; width: 22px; }
+.lb-toggle, .lb-max { font-size: 13px; line-height: 1; width: 22px; }
+.lb-max { margin-right: -10px; }
 .lb-crate, .lb-jobs, .lb-feed { display: none; }
 body.lower-collapsed .lowerbar { height: 30px; }
 body.lower-collapsed .lower { display: none; }
@@ -17,6 +18,12 @@ body.lower-collapsed :is(.lb-crate, .lb-jobs, .lb-feed) { display: block; }
 .lb-jobs.bad { color: #ff8080; }
 .lb-feed { flex: 0 1 46%; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--claude); font-family: var(--sans); font-size: 12px; }
 .lb-feed.unread::before { content: '●'; color: var(--warn); margin-right: 6px; }
+/* maximised (ui/maximize.js): the bar and the row cover the page until the button is clicked again */
+body.lower-max .lowerbar { position: fixed; inset: 0 0 auto 0; z-index: 8; height: 30px; cursor: default; }
+body.lower-max .lower { position: fixed; inset: 30px 0 0 0; z-index: 8; overflow: auto; }
+body.lower-max .lb-toggle { display: none; }
+body.lower-max .lb-grip { background: none; }
+body.lower-max .lb-max { margin-right: 4px; font-size: 16px; }
 /* the freed height (row hidden, or set shorter by hand) goes to the rig */
 body:is(.lower-collapsed, .lower-sized) .rig { flex: 1 0 auto; }
 /* stacked decks are taller: the lower row shares any spare height with the jog wheels, and on a short window the

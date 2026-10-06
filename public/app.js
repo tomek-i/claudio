@@ -11,6 +11,7 @@ import { drawOverview, drawScroll, drawJog, drawMeter } from './ui/canvas.js';
 import { loadLibrary, refreshHistory, renderLibrary } from './ui/crate.js';
 import { mixerEls } from './ui/layout.js';
 import './ui/lower.js';
+import './ui/maximize.js';
 import './ui/wave.js';
 import './ui/dragdrop.js';
 

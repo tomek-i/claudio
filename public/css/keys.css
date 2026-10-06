@@ -2,15 +2,28 @@
 /* the section holds the keyboard (#keysMain, re-rendered by keys.js) and, in the stacked layout, the sampler pads beside it */
 .keys { display: flex; gap: 18px; padding: 8px 12px 10px; background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
 /* the hide / show button (ui.keysCollapsed): a corner arrow when open, the whole slim bar when hidden */
-.keys { position: relative; padding-right: 40px; }
+.keys { position: relative; padding-right: 64px; }
 .keys-toggle { position: absolute; top: 6px; right: 10px; display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 2px 4px; color: var(--dim); font: 11px var(--mono); letter-spacing: 0.16em; cursor: pointer; }
-.keys-toggle:hover { color: var(--text); }
+.keys-maxbtn { position: absolute; top: 6px; right: 36px; background: none; border: 0; padding: 2px 4px; color: var(--dim); font: 13px/1 var(--mono); cursor: pointer; }
+.keys-toggle:hover, .keys-maxbtn:hover { color: var(--text); }
 .keys-toggle b { font-weight: 400; font-size: 13px; line-height: 1; letter-spacing: 0; }
 .keys-toggle span { display: none; }
 body.keys-collapsed .keys { padding: 0; }
-body.keys-collapsed .keys > :not(.keys-toggle) { display: none; }
+body.keys-collapsed .keys > :not(.keys-toggle, .keys-maxbtn) { display: none; }
+body.keys-collapsed .keys-maxbtn { position: static; order: 1; padding: 0 12px 0 4px; }
 body.keys-collapsed .keys-toggle { position: static; flex: 1; min-height: 26px; padding: 0 12px; justify-content: space-between; }
 body.keys-collapsed .keys-toggle span { display: inline; }
+/* maximised (ui/maximize.js): the section covers the page, pads on top, a bigger keyboard under them */
+body.keys-max .keys { position: fixed; inset: 0; z-index: 8; flex-direction: column; gap: 22px; padding: 44px 24px 24px; overflow: auto; border: 0; }
+body.keys-max .keys-toggle { display: none; }
+body.keys-max .keys-maxbtn { top: 12px; right: 16px; font-size: 16px; }
+body.keys-max .keys > .pads { width: auto; gap: 10px; }
+body.keys-max .pad { padding: 26px 8px; font-size: 13px; }
+body.keys-max .pad i { font-size: 11px; }
+body.keys-max .keys-main { flex: none; gap: 14px; }
+body.keys-max .piano { max-width: none; height: min(42vh, 340px); }
+body.keys-max .piano .pk.w { height: 100%; }
+body.keys-max .piano .pk.b { height: 61%; }
 .keys-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .keys .krow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .keys .klabel { font-weight: 700; color: var(--text); letter-spacing: 0.08em; }
