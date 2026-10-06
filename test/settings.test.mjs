@@ -31,6 +31,8 @@ test('coerce: types and ranges', () => {
   assert.deepEqual(coerce(field('ui.deckLayout'), 'classic'), { value: 'classic' });
   assert.deepEqual(coerce(field('ui.meterStyle'), 'led'), { value: 'led' });
   assert.deepEqual(coerce(field('ui.hotcues'), 'letters'), { value: 'letters' });
+  assert.deepEqual(coerce(field('ui.jogHint'), 'spot'), { value: 'spot' });
+  assert.match(coerce(field('ui.jogHint'), 'loud').error, /one of: A line of light on its edge/);
   assert.match(coerce(field('ui.hotcues'), 'emoji').error, /one of: Numbers \(pads\)/);
   assert.match(coerce(field('ui.meterStyle'), 'vu').error, /one of: Smooth bar, LED ladder/);
   assert.match(coerce(field('ui.waveGuard'), 'yes').error, /on or off/);
@@ -50,7 +52,7 @@ test('coerce: types and ranges', () => {
 });
 
 test('uiSettings: what the DJ page is sent, defaults included', () => {
-  const defaults = { deckLayout: 'stacked', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
+  const defaults = { deckLayout: 'stacked', jogRing: 'large', lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
   assert.deepEqual(uiSettings(base()), defaults);
   assert.deepEqual(uiSettings({ ...base(), ui: { jogRing: 'small', deckLayout: 'classic', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 } }),
     { ...defaults, deckLayout: 'classic', jogRing: 'small', lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 });

@@ -281,10 +281,42 @@ function jogLayerFor(canvas, d, color) {
   return jog.cv;
 }
 
+// ---- which part of the wheel the pointer is on (ui.jogHint): the ring nudges, the vinyl scratches, and they look
+// alike. jogHand holds, per wheel, the part under the pointer, whether it is held, and where the pointer is (canvas
+// pixels from the centre); wireJog keeps it current. 'edge' lights the edge of that part: a pale line on the wheel's
+// outer edge for the ring (deck colour while nudging), a brighter deck light for the vinyl (which it already gets
+// while scratching). 'spot' is a soft pool of light under the pointer, kept inside the part.
+const jogHand = new WeakMap();
+function drawJogHint(g, canvas, d, color) {
+  const h = jogHand.get(canvas), mode = ui.jogHint;
+  if (!h || !d.buffer || (mode !== 'edge' && mode !== 'spot')) return;
+  const W = canvas.width, k = W / 340, R = W * plateR(), D = W * DISPLAY, RO = R < W * PLATE.small ? W * 0.465 : R + 11 * k;
+  const ring = h.zone === 'ring', disc = (r) => { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); };
+  g.save(); g.translate(W / 2, W / 2);
+  if (mode === 'edge') {
+    if (ring) {
+      g.strokeStyle = h.held ? color : '#d8d8e2'; g.globalAlpha = h.held ? 0.95 : 0.55;
+      g.shadowColor = h.held ? color : '#ffffff'; g.shadowBlur = (h.held ? 12 : 6) * k;
+      g.lineWidth = (h.held ? 2.5 : 1.5) * k; disc(RO - 1.5 * k); g.stroke();
+    } else if (!h.held) { // held, the layer already draws the light at its brightest
+      g.strokeStyle = color; g.shadowColor = color; g.shadowBlur = 14 * k; g.lineWidth = 3.5 * k; disc(R - 4 * k); g.stroke();
+    }
+  } else {
+    const [r0, r1] = ring ? [R + 2 * k, RO] : [D + 3 * k, R - 6 * k];
+    g.beginPath(); g.arc(0, 0, r1, 0, Math.PI * 2); g.arc(0, 0, r0, 0, Math.PI * 2, true); g.clip();
+    const rad = (ring ? 62 : 70) * k, spot = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, rad);
+    const [cr, cg, cb] = h.held ? [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16)) : [255, 255, 255];
+    spot.addColorStop(0, `rgba(${cr},${cg},${cb},${h.held ? 0.34 : 0.2})`); spot.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    g.fillStyle = spot; g.fillRect(h.x - rad, h.y - rad, 2 * rad, 2 * rad);
+  }
+  g.restore();
+}
+
 export function drawJog(canvas, d, color) {
   const g = canvas.getContext('2d'), W = canvas.width, c = W / 2, k = W / 340;
   g.clearRect(0, 0, W, W);
   g.drawImage(jogLayerFor(canvas, d, color), 0, 0);
+  drawJogHint(g, canvas, d, color);
   // needle: straight up at position 0
   const ang = d.position() * RPS * Math.PI * 2 - Math.PI / 2, r = W * DISPLAY * 0.88;
   g.strokeStyle = d.track ? '#fff' : '#55546a'; g.lineWidth = 5 * k;
@@ -298,6 +330,13 @@ export function wireJog(canvas, d) {
   // the wheel is the square in the middle of the box; a drag keeps the centre it started with
   const centre = () => { const r = canvas.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, half: Math.min(r.width, r.height) / 2 }; };
   const geo = (e, c = drag?.c || centre()) => ({ a: Math.atan2(e.clientY - c.y, e.clientX - c.x), rr: Math.hypot(e.clientX - c.x, e.clientY - c.y) / c.half });
+  // for the hint drawn by drawJogHint: the part under the pointer, or the part that is held
+  const hand = (e, held = false) => {
+    const c = drag?.c || centre(), g = geo(e, c), s = canvas.width / 2 / c.half;
+    const zone = drag ? (drag.mode === 'nudge' ? 'ring' : 'plate') : g.rr > 1 ? null : g.rr > 2 * plateR() ? 'ring' : 'plate';
+    if (zone) jogHand.set(canvas, { zone, held, x: (e.clientX - c.x) * s, y: (e.clientY - c.y) * s }); else jogHand.delete(canvas);
+  };
+  canvas.addEventListener('pointerleave', () => { if (!drag) jogHand.delete(canvas); });
   canvas.addEventListener('pointerdown', (e) => {
     if (!d.buffer) return;
     const g = geo(e), mode = g.rr > 2 * plateR() ? 'nudge' : 'scratch';
@@ -305,8 +344,10 @@ export function wireJog(canvas, d) {
     if (mode === 'scratch' && !takeHold(d)) return;
     drag = { mode, a: g.a, t: performance.now(), bend: mode === 'nudge' ? bend(d) : null, c: centre() };
     canvas.setPointerCapture(e.pointerId);
+    hand(e, true);
   });
   canvas.addEventListener('pointermove', (e) => {
+    hand(e, !!drag);
     if (!drag) return;
     const g = geo(e), now = performance.now();
     let da = g.a - drag.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
@@ -315,10 +356,11 @@ export function wireJog(canvas, d) {
     else drag.bend.by((da / dt) * 0.02);
     drag.a = g.a; drag.t = now;
   });
-  const end = () => {
+  const end = (e) => {
     if (!drag) return;
     if (drag.mode === 'scratch') letGo(d); else drag.bend.end();
     drag = null;
+    if (e.pointerType === 'mouse' && e.type === 'pointerup') hand(e); else jogHand.delete(canvas); // a finger lifted is gone; the mouse is still there
   };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
 }
