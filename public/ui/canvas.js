@@ -195,7 +195,7 @@ export function drawScroll(canvas) {
 // ---- jog wheels (CDJ style): the wheel stays put and the needle on its centre display turns with the
 // playback position (33⅓ rpm at 1x), so loops, rolls, spinbacks and scratches are visible on it.
 // everything but the needle is drawn once into a layer and rebuilt only when something it shows changes.
-// the outer ring comes in two sizes (settings): wide with big finger dimples, or slim with a beaded edge.
+// the outer ring comes in two sizes (settings): wide with finger pockets, or slim with a beaded edge.
 const PLATE = { large: 0.36, small: 0.42 }, DISPLAY = 0.2352; // top plate and centre display radius, as fractions of the canvas width (keyed by ui.jogRing: a large ring leaves a smaller plate)
 const plateR = () => PLATE[ui.jogRing] || PLATE.large;
 const jogLayers = new WeakMap();
@@ -209,30 +209,58 @@ function jogLayerFor(canvas, d, color) {
   jog = { key, cv: layer(W, W) };
   const g = jog.cv.getContext('2d'), disc = (r) => { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); };
   g.translate(c, c);
-  // outer ring (drag it to nudge) with its finger dimples: pockets shaded at the top, catching light at the bottom
-  const large = R < W * PLATE.small, RO = large ? W * 0.465 : R + 11 * k, n = large ? 24 : 60, m = (R + RO) / 2, dr = (RO - R) * (large ? 0.33 : 0.31);
+  // outer ring (drag it to nudge): matte black, bevelled at both edges. Wide: elongated finger pockets lying along the
+  // ring with a row of small beads at each edge. Slim: one row of beads. Pockets are shaded at the top and catch the
+  // light at the bottom.
+  const large = R < W * PLATE.small, RO = large ? W * 0.465 : R + 11 * k, m = (R + RO) / 2;
   const rim = g.createRadialGradient(0, 0, R, 0, 0, RO);
-  rim.addColorStop(0, '#2a2a33'); rim.addColorStop(0.5, '#3a3a45'); rim.addColorStop(1, '#1c1c23');
+  rim.addColorStop(0, '#101014'); rim.addColorStop(0.18, '#23232a'); rim.addColorStop(0.55, '#2c2c34'); rim.addColorStop(0.9, '#1a1a20'); rim.addColorStop(1, '#0c0c0f');
   g.fillStyle = rim; disc(RO); g.fill();
-  g.strokeStyle = '#34343f'; g.lineWidth = 1; g.stroke(); // the wheel's own edge: it sits straight on the deck, no plinth
-  g.strokeStyle = '#000000a0';
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2, x = Math.cos(a) * m, y = Math.sin(a) * m;
-    const pocket = g.createLinearGradient(0, y - dr, 0, y + dr);
-    pocket.addColorStop(0, '#08080b'); pocket.addColorStop(0.55, '#1b1b22'); pocket.addColorStop(1, '#484855');
-    g.fillStyle = pocket; g.beginPath(); g.arc(x, y, dr, 0, Math.PI * 2); g.fill(); g.stroke();
+  const edge = g.createLinearGradient(0, -RO, 0, RO);
+  edge.addColorStop(0, '#5a5a66'); edge.addColorStop(0.5, '#1c1c22'); edge.addColorStop(1, '#3a3a44');
+  g.strokeStyle = edge; g.lineWidth = 1.5 * k; disc(RO - 0.75 * k); g.stroke();
+  const bead = (x, y, r) => {
+    const b = g.createLinearGradient(0, y - r, 0, y + r); b.addColorStop(0, '#050507'); b.addColorStop(1, '#55555f');
+    g.fillStyle = b; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  };
+  if (large) {
+    const n = 18, ry = (RO - R) * 0.27, rx = ((2 * Math.PI * m) / n) * 0.36;
+    g.strokeStyle = '#000000b0'; g.lineWidth = 1;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, x = Math.cos(a) * m, y = Math.sin(a) * m;
+      const pocket = g.createLinearGradient(0, y - ry * 1.3, 0, y + ry * 1.3);
+      pocket.addColorStop(0, '#050507'); pocket.addColorStop(0.5, '#15151b'); pocket.addColorStop(1, '#4a4a57');
+      g.fillStyle = pocket; g.beginPath(); g.ellipse(x, y, rx, ry, a + Math.PI / 2, 0, Math.PI * 2); g.fill(); g.stroke();
+    }
+    for (const [rr, nb] of [[RO - (RO - R) * 0.1, 96], [R + (RO - R) * 0.11, 80]]) for (let i = 0; i < nb; i++) {
+      const a = ((i + 0.5) / nb) * Math.PI * 2; bead(Math.cos(a) * rr, Math.sin(a) * rr, 1.15 * k);
+    }
+  } else {
+    for (let i = 0; i < 72; i++) { const a = (i / 72) * Math.PI * 2; bead(Math.cos(a) * m, Math.sin(a) * m, (RO - R) * 0.26); }
   }
-  // top plate (drag it to scratch), brushed
-  const plate = g.createRadialGradient(0, -R * 0.45, R * 0.1, 0, 0, R);
-  plate.addColorStop(0, '#2c2c36'); plate.addColorStop(1, '#121217');
+  // top plate (drag it to scratch): a vinyl record, near black with fine grooves and the light catching it in two
+  // opposite wedges
+  const plate = g.createRadialGradient(0, 0, D, 0, 0, R);
+  plate.addColorStop(0, '#0d0d11'); plate.addColorStop(1, '#060608');
   g.fillStyle = plate; disc(R); g.fill();
-  g.lineWidth = 1;
-  for (let r = D + 8 * k; r < R - 6 * k; r += 3.2 * k) { g.strokeStyle = `rgba(255,255,255,${0.02 + (r % 9 < 3 ? 0.018 : 0)})`; disc(r); g.stroke(); }
-  // light ring in the deck colour: dim when stopped, lit when playing, brightest under the hand
+  g.lineWidth = Math.max(0.6, 0.7 * k);
+  for (let r = D + 9 * k, i = 0; r < R - 5 * k; r += 1.7 * k, i++) { g.strokeStyle = `rgba(255,255,255,${i % 7 === 0 ? 0.07 : 0.028})`; disc(r); g.stroke(); }
+  g.save(); disc(R - 3 * k); g.clip();
+  const shine = g.createConicGradient(-Math.PI * 0.78, 0, 0), clear = 'rgba(255,255,255,0)';
+  shine.addColorStop(0, clear); shine.addColorStop(0.06, 'rgba(255,255,255,0.13)'); shine.addColorStop(0.13, clear);
+  shine.addColorStop(0.5, clear); shine.addColorStop(0.56, 'rgba(255,255,255,0.1)'); shine.addColorStop(0.63, clear); shine.addColorStop(1, clear);
+  g.fillStyle = shine; g.fillRect(-R, -R, 2 * R, 2 * R);
+  g.restore();
+  // a slim chrome bezel where the plate meets the ring
+  const chrome = g.createLinearGradient(-R, -R, R, R);
+  chrome.addColorStop(0, '#f4f4f8'); chrome.addColorStop(0.3, '#8a8a96'); chrome.addColorStop(0.5, '#e6e6ec'); chrome.addColorStop(0.72, '#5c5c68'); chrome.addColorStop(1, '#d8d8e0');
+  g.strokeStyle = chrome; g.lineWidth = 2 * k; disc(R + 0.5 * k); g.stroke();
+  g.strokeStyle = '#00000090'; g.lineWidth = 1; disc(R + 2 * k); g.stroke();
+  // light ring in the deck colour, just inside the bezel: dim when stopped, lit when playing, brightest under the hand
   g.save();
   g.strokeStyle = t ? color : '#3a3a46'; g.globalAlpha = !t || d.handActive ? 1 : d.playing ? 0.9 : 0.4;
   if (t && (d.playing || d.handActive)) { g.shadowColor = color; g.shadowBlur = (d.handActive ? 16 : 9) * k; }
-  g.lineWidth = (d.handActive ? 4 : 3) * k; disc(R - 2 * k); g.stroke();
+  g.lineWidth = (d.handActive ? 4 : 3) * k; disc(R - 4 * k); g.stroke();
   g.restore();
   // centre display with the needle's track and the cue point on it
   g.fillStyle = '#050507'; disc(D); g.fill();
