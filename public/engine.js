@@ -103,7 +103,16 @@ export class Ctl {
 const dbToGain = (db) => Math.pow(10, db / 20);
 export const LOOP_MIN = 1 / 16, LOOP_MAX = 64; // beats
 const eqDb = (v) => (v < 0 ? v * 45 : v * 6);
-const volGain = (v) => Math.pow(clamp(v, 0, 1), 1.6);
+// channel fader: 1 is unity (0 dB), where a fader normally sits; above it is headroom, up to +6 dB at VOL_MAX.
+// volOfDb: where the fader sits for a gain in dB. The printed scale and the level meters use it too, so a meter
+// reading lines up with the same mark as the fader.
+export const volOfDb = (db) => Math.pow(10, db / 32); // the inverse of volGain, in dB: 20 * log10(v ^ 1.6)
+export const VOL_MAX = volOfDb(6);
+export const volGain = (v) => Math.pow(clamp(v, 0, VOL_MAX), 1.6);
+// The master volume is a plain gain (`dj master 0.9`), and MASTER_UNITY is its normal level: the 0 dB mark of the
+// master fader on the page, which has the same travel and +6 dB of headroom as a channel fader.
+export const MASTER_UNITY = 0.9, MASTER_MAX = MASTER_UNITY * volGain(VOL_MAX);
+export const masterOfFader = (v) => MASTER_UNITY * volGain(v), faderOfMaster = (g) => Math.pow(Math.max(0, g) / MASTER_UNITY, 1 / 1.6);
 // "dipless" crossfader: each side stays at full until the fader crosses the centre
 const xfGainA = (x) => (x <= 0.5 ? 1 : Math.cos((x - 0.5) * Math.PI));
 const xfGainB = (x) => (x >= 0.5 ? 1 : Math.cos((0.5 - x) * Math.PI));
@@ -271,7 +280,7 @@ class Deck {
     this.fx.output.connect(this.fader).connect(this.xf);
     this.xf.connect(mixer.bus); this.xf.connect(this.send).connect(mixer.echoIn); this.xf.connect(this.analyser);
 
-    this.vol = new Ctl(ctx, 1, [{ param: this.fader.gain, fn: volGain }], [0, 1]);
+    this.vol = new Ctl(ctx, 1, [{ param: this.fader.gain, fn: volGain }], [0, VOL_MAX]);
     this.eq = {
       low: new Ctl(ctx, 0, [{ param: this.low.gain, fn: eqDb }]),
       mid: new Ctl(ctx, 0, [{ param: this.mid.gain, fn: eqDb }]),
@@ -842,7 +851,7 @@ export class Mixer {
     this.out.connect(split);
     this.meters = { L: Object.assign(ctx.createAnalyser(), { fftSize: 1024 }), R: Object.assign(ctx.createAnalyser(), { fftSize: 1024 }) };
     split.connect(this.meters.L, 0); split.connect(this.meters.R, 1);
-    this.master = new Ctl(ctx, 0.9, [{ param: this.masterGain.gain, fn: (v) => v }], [0, 1]);
+    this.master = new Ctl(ctx, MASTER_UNITY, [{ param: this.masterGain.gain, fn: (v) => v }], [0, MASTER_MAX]);
     this.decks = {};
     this.transition = null;
     this.zoomJobs = new Map(); this.zoomSeq = 0;

@@ -1,4 +1,4 @@
-import { DECKS, DECK_COLORS, RPS } from '../engine.js';
+import { DECKS, DECK_COLORS, RPS, VOL_MAX, volOfDb } from '../engine.js';
 import './extra-decks.js'; // decks C + D must exist before the overview canvases are collected below
 import { $, $$ } from './util.js';
 import { mixer, ui, wave } from './state.js';
@@ -309,14 +309,45 @@ export function wireJog(canvas, d) {
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
 }
 
+// ---- level meter. The height is the fader's own dB mapping (volOfDb), so a level reads off the scale printed beside
+// the fader: 0 dB two thirds up, +6 dB at the top. Green, amber for the last 6 dB below 0 dB, red above it (a channel
+// pushed past unity, or a clipping master). The level jumps up and falls back at 30 dB a second.
+// ui.meterStyle: 'bar' is a smooth bar, 'led' a ladder of segments whose highest one stays lit for a second.
+const M_FLOOR = -60, M_FALL = 30, M_HOLD = 1000, M_SEGS = 24;
+const M_POS = (db) => Math.min(1, volOfDb(db) / VOL_MAX), M_AMBER = M_POS(-6), M_RED = M_POS(0);
+const M_LIT = { g: '#3fd27a', a: '#f2cc60', r: '#ff4d5e' }, M_DARK = { g: '#12301f', a: '#33290f', r: '#3a1217' };
+const meterBuf = new Float32Array(2048);
 export function drawMeter(canvas, analyser) {
-  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
-  const buf = new Float32Array(analyser.fftSize);
+  const m = canvas.meter || (canvas.meter = { lvl: M_FLOOR, peak: M_FLOOR, peakAt: 0, at: 0, sized: 0 });
+  const now = performance.now(), dt = Math.min(0.25, (now - m.at) / 1000); m.at = now;
+  if (now - m.sized > 500) { // match the backing store to the size on screen, so the edges stay crisp
+    m.sized = now;
+    const dpr = window.devicePixelRatio || 1, w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+    if (w && h && (canvas.width !== w || canvas.height !== h)) { canvas.width = w; canvas.height = h; }
+  }
+  const buf = analyser.fftSize <= meterBuf.length ? meterBuf.subarray(0, analyser.fftSize) : new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(buf);
-  let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v));
-  const db = 20 * Math.log10(peak + 1e-6), lvl = Math.max(0, Math.min(1, (db + 40) / 40));
+  let peak = 0; for (let i = 0; i < buf.length; i++) { const v = Math.abs(buf[i]); if (v > peak) peak = v; }
+  const db = Math.max(M_FLOOR, 20 * Math.log10(peak + 1e-6));
+  m.lvl = Math.max(db, m.lvl - M_FALL * dt);
+  if (m.lvl >= m.peak) { m.peak = m.lvl; m.peakAt = now; } else if (now - m.peakAt > M_HOLD) m.peak = Math.max(m.lvl, m.peak - M_FALL * dt);
+  const led = ui.meterStyle === 'led', w = canvas.width, h = canvas.height;
+  const lvl = m.lvl <= M_FLOOR ? 0 : M_POS(m.lvl), held = m.peak <= M_FLOOR ? 0 : M_POS(m.peak);
+  const lit = led ? Math.round(lvl * M_SEGS) : Math.round(lvl * h), top = led ? Math.round(held * M_SEGS) : 0;
+  const key = `${led}${lit}/${top}/${h}`; if (m.key === key) return; m.key = key;
+  const g = canvas.getContext('2d');
   g.clearRect(0, 0, w, h);
-  const grd = g.createLinearGradient(0, h, 0, 0);
-  grd.addColorStop(0, '#3fb66b'); grd.addColorStop(0.75, '#f2cc60'); grd.addColorStop(1, '#ff5050');
-  g.fillStyle = grd; g.fillRect(0, h * (1 - lvl), w, h * lvl);
+  if (!led) {
+    const grd = g.createLinearGradient(0, h, 0, 0);
+    grd.addColorStop(0, '#3fb66b'); grd.addColorStop(M_AMBER, '#3fb66b'); grd.addColorStop(M_RED, '#f2cc60'); grd.addColorStop(Math.min(1, M_RED + 0.08), '#ff5050'); grd.addColorStop(1, '#ff5050');
+    g.fillStyle = grd; g.fillRect(0, h - lit, w, lit);
+    return;
+  }
+  const gap = Math.max(1, Math.round(h / 160)), seg = (h + gap) / M_SEGS;
+  for (let i = 0; i < M_SEGS; i++) {
+    const at = (i + 0.5) / M_SEGS, c = at > M_RED ? 'r' : at > M_AMBER ? 'a' : 'g'; // where the middle of this segment sits on the scale
+    const y0 = Math.round(h - (i + 1) * seg + gap), y1 = Math.round(h - i * seg);
+    g.fillStyle = i < lit || (i === top - 1 && top > lit) ? M_LIT[c] : M_DARK[c];
+    g.fillRect(1, y0, w - 2, Math.max(1, y1 - y0));
+  }
 }

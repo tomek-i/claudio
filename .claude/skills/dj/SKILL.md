@@ -87,7 +87,7 @@ eq <deck> <low|mid|high> <-1..1> [--ramp <beats>]
 filter <deck> <-1..1> [--ramp <beats>]
 loop <deck> <beats|off>
 tempo <deck> <bpm|±N%>
-master <0-1>
+master <0-1.8>
 suggest [--from <id>] [--direction up|down|hold]
 library [search]
 get <url|"artist - title">

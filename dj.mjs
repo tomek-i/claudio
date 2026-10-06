@@ -242,9 +242,9 @@ CRATE     library [search] [--bpm 140-150] [--key 8A,9A] [--energy 6-9] [--compa
           starter [--list] [--force]       download the Creative Commons starter crate into library/starter
 DECKS     load <deck> <id|search>   play <deck> [--at bar]   pause <deck>   cue <deck> [sec]   seek <deck> <sec|bar:N>
           sync <deck>   tempo <deck> <bpm|+2%>   loop <deck> <beats|off|half|double>   loop <deck> move <n>   (n loop lengths, -1 = back)
-MIXER     vol <deck> <0-1>   eq <deck> <low|mid|high> <-1..1>   filter <deck> <-1..1>   echo <deck> <0-1>
+MIXER     vol <deck> <0-1.54>  (1 = normal)   eq <deck> <low|mid|high> <-1..1>   filter <deck> <-1..1>   echo <deck> <0-1>
           trim <deck> <-12..12 dB>   (gain before the EQ, on top of the track's analysed gain)
-          xfade <0-1>   master <0-1>          (add --ramp <beats> to any of these to automate)
+          xfade <0-1>   master <0-1.8>  (0.9 = normal)   (add --ramp <beats> to any of these to automate)
 MIX       mix <from> <to> [--track <id>] [--style blend|bassswap|double|fade|filter|echo|cut|brake|spinback]
               [--bars 16] [--at now|bar|phrase] [--in mixin|intro|drop|<sec>|bar:N] [--no-glide]
 TIMING    wait mixout [--seconds 20] | wait remaining <sec> | wait transition | wait end | wait bar <n> | wait time <sec>

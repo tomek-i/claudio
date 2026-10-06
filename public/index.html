@@ -82,7 +82,7 @@
         <div class="k" data-ctl="mid" data-label="MID"></div>
         <div class="k" data-ctl="low" data-label="LOW"></div>
         <div class="k" data-ctl="filter" data-label="FILTER"></div>
-        <div class="faderwrap"><canvas class="meter" width="8" height="120"></canvas><input type="range" class="fader" min="0" max="1" step="0.01" value="1"></div>
+        <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
       </div>
       <div class="strip" data-deck="B">
         <div class="sname">B</div>
@@ -91,7 +91,7 @@
         <div class="k" data-ctl="mid" data-label="MID"></div>
         <div class="k" data-ctl="low" data-label="LOW"></div>
         <div class="k" data-ctl="filter" data-label="FILTER"></div>
-        <div class="faderwrap"><canvas class="meter" width="8" height="120"></canvas><input type="range" class="fader" min="0" max="1" step="0.01" value="1"></div>
+        <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
       </div>
     </div>
     <div class="fxblock">
@@ -111,13 +111,13 @@
     </div>
     <div class="master">
       <div class="sname">MASTER</div>
-      <label class="mastervol"><span>MASTER</span><input type="range" id="masterVol" min="0" max="1" step="0.01" value="0.9" title="Master volume"></label>
+      <label class="mastervol"><span>MASTER</span><input type="range" id="masterVol" min="0" max="1.54" step="0.01" value="1" title="Master volume: 0 on the scale is the normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></label>
       <div class="mastermeters" title="Master level, after the limiter">
         <div class="mm"><canvas class="meter" data-side="L" width="8" height="120"></canvas><small>L</small></div>
         <div class="mm"><canvas class="meter" data-side="R" width="8" height="120"></canvas><small>R</small></div>
       </div>
     </div>
-    <div class="xf"><span>A·C</span><input type="range" id="xfader" min="0" max="1" step="0.005" value="0"><span>B·D</span></div>
+    <div class="xf"><span>A·C</span><span class="xftrack"><input type="range" id="xfader" min="0" max="1" step="0.005" value="0" title="Crossfader: each side stays at full level until the fader passes the centre line · double-click = centre"></span><span>B·D</span></div>
   </section>
 
   <section class="deck" data-deck="B">

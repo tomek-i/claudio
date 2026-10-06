@@ -1,6 +1,6 @@
 // Boot + the per-frame render loop. Everything else lives in ui/*.js.
 
-import { Mixer, DECK_COLORS, LOOP_MIN, LOOP_MAX } from './engine.js';
+import { Mixer, DECK_COLORS, LOOP_MIN, LOOP_MAX, faderOfMaster } from './engine.js';
 import './ui/extra-decks.js';
 import { $, $$, mmss, post } from './ui/util.js';
 import { clientId, mixer, setMixer, setEngine, liveDeck } from './ui/state.js';
@@ -35,6 +35,9 @@ $('#startBtn').onclick = async () => {
 };
 
 let lastLive = null, lastSlow = 0;
+// a slider follows the engine except while the pointer holds it (not merely while it has focus: a double-click
+// reset, a `dj` command or an automation moves a slider that was just used)
+const held = (el) => el.matches(':active');
 function frame() {
   if (!mixer) return;
   const now = performance.now();
@@ -75,7 +78,7 @@ function frame() {
     const ls = $('.lsize', el), txt = [4, 8, 16, 32].includes(size) ? '' : ({ 0.0625: '1/16', 0.125: '⅛', 0.25: '¼', 0.5: '½' }[size] || String(size));
     if (ls.textContent !== txt) ls.textContent = txt;
     ls.classList.toggle('on', !!lp && txt !== '');
-    const rate = $('.rate', el); if (document.activeElement !== rate) rate.value = d.rate;
+    const rate = $('.rate', el); if (!held(rate)) rate.value = d.rate;
     $('.keylock', el).classList.toggle('on', d.keylock);
     $('.ksv', el).textContent = d.keyShift > 0 ? `+${d.keyShift}` : String(d.keyShift);
     $('.slip', el).classList.toggle('on', d.slip);
@@ -83,7 +86,7 @@ function frame() {
     $('.stems', el).classList.toggle('off', !d.stemsLoaded);
     for (const s of $$('.stems input', el)) {
       s.disabled = !d.stemsLoaded;
-      if (document.activeElement !== s) s.value = d.stem[s.dataset.stem].value();
+      if (!held(s)) s.value = d.stem[s.dataset.stem].value();
     }
   }
   const live = liveDeck();
@@ -96,12 +99,12 @@ function frame() {
       if (!d.track) continue;
     }
     for (const k of mixerEls(d.name, '.k')) { k.render?.(); k.classList.toggle('auto', !!k.ctlOf?.()?.automating?.()); }
-    const f = $('.fader', strip); if (document.activeElement !== f) f.value = d.vol.value();
+    const f = $('.fader', strip); if (!held(f)) f.value = d.vol.value();
     const sel = mixerEls(d.name, '.fxsel')[0]; if (document.activeElement !== sel) sel.value = d.fx.type;
     drawMeter($('.meter', strip), d.analyser);
   }
-  const xf = $('#xfader'); if (document.activeElement !== xf) xf.value = mixer.xfader.value();
-  const mv = $('#masterVol'); if (document.activeElement !== mv) mv.value = mixer.master.value();
+  const xf = $('#xfader'); if (!held(xf)) xf.value = mixer.xfader.value();
+  const mv = $('#masterVol'); if (!held(mv)) mv.value = faderOfMaster(mixer.master.value());
   if (document.body.dataset.layout === 'stacked') for (const m of $$('.master .meter')) drawMeter(m, mixer.meters[m.dataset.side]);
   const tr = mixer.transition;
   $('#transitionInfo').textContent = tr ? `⟶ ${tr.style.toUpperCase()} ${tr.from}→${tr.to} · ${Math.max(0, (tr.endAt - Date.now()) / 1000).toFixed(0)}s` : '';

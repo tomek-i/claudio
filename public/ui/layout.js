@@ -2,6 +2,7 @@ import './extra-decks.js'; // decks C + D and their strips must exist before any
 import { $, $$ } from './util.js';
 import { ui, mixer } from './state.js';
 import { onUi, saveUi } from './prefs.js';
+import { VOL_MAX, volOfDb } from '../engine.js';
 
 // ------------------------------------------------------------------ deck layout (ui.deckLayout): stacked | classic
 // One set of markup for both. The decks switch in CSS alone (body[data-layout]). The mixer needs three things moved,
@@ -24,6 +25,16 @@ function applyLayout() {
   if (stacked) $('.master .sname').after(vol); else $('header.top').append(vol);
   if (stacked) $('#keys').prepend($('#pads')); else $('.mixer').append($('#pads'));
 }
+
+// ------------------------------------------------------------------ the dB scale of the mixer
+// Printed beside every channel fader and between the master meters, as on a hardware mixer: 0 is a track at its
+// normal level, the marks above it are the headroom. The fader and the meters share the mapping (volOfDb in
+// engine.js), so a mark means the same level on both.
+const SCALE = [[6, '+6'], [3, '+3'], [0, '0'], [-3, '-3'], [-6, '-6'], [-10, '-10'], [-20, '-20'], [-Infinity, '∞']];
+const marks = SCALE.map(([db, label]) => `<i${db === 0 ? ' class="zero"' : ''} style="bottom:${((volOfDb(db) / VOL_MAX) * 100).toFixed(2)}%">${label}</i>`).join('');
+for (const t of $$('.fadertrack')) t.insertAdjacentHTML('afterbegin', `<span class="fscale" aria-hidden="true">${marks}</span>`);
+$('#masterVol').insertAdjacentHTML('afterend', `<b class="hscale" aria-hidden="true">${marks.replaceAll('bottom:', 'left:')}</b>`);
+$('.mastermeters .mm')?.insertAdjacentHTML('afterend', `<div class="mscale" aria-hidden="true"><span>${marks}</span><small>dB</small></div>`);
 
 // ------------------------------------------------------------------ jog wheel size (ui.jogLarge: the decks shown large)
 function applyJogSize() {

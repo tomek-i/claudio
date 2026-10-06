@@ -14,10 +14,28 @@
 .knobdefs { position: absolute; }
 .k.auto svg .arc { stroke: var(--claude); }
 .faderwrap { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; height: 124px; }
-.meter { width: 8px; height: 120px; background: #0b0b10; border-radius: 3px; }
-input.fader { writing-mode: vertical-lr; direction: rtl; height: 120px; width: 26px; --cap-len: 16px; --cap-wide: 26px; --grip: 180deg; }
+/* LED ladder, drawn by drawMeter() in ui/canvas.js */
+.meter { width: 10px; height: 120px; background: #050508; border-radius: 2px; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #ffffff0d; }
+/* a channel meter covers the travel of the fader cap's centre (half a cap in from each end), so both read off one scale */
+.faderwrap .meter { height: 104px; margin-block: 8px; }
+input.fader { position: relative; writing-mode: vertical-lr; direction: rtl; height: 120px; width: 26px; --cap-len: 16px; --cap-wide: 26px; --grip: 180deg; }
+/* the dB scale (built in ui/layout.js): numbers and ticks between the meter and the fader, spanning the travel of the
+   cap's centre. 0 is a track at its normal level, in the deck colour. */
+.fadertrack { position: relative; display: flex; margin-left: 14px; }
+.fscale { position: absolute; inset-block: 8px; right: calc(100% - 3px); width: 22px; pointer-events: none; font: 7px/1 var(--mono); color: var(--dim); }
+.fscale i, .mscale i { position: absolute; right: 0; transform: translateY(50%); display: flex; align-items: center; gap: 2px; font-style: normal; white-space: nowrap; }
+.fscale i::after { content: ''; width: 4px; height: 1px; background: currentColor; opacity: 0.7; }
+.fscale i.zero, .mscale i.zero { color: var(--c, var(--text)); font-weight: 600; }
+.fscale i.zero::after { height: 2px; opacity: 1; }
 .xf { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .xf input { flex: 1; --cap-len: 16px; --cap-wide: 26px; }
+/* etched on the crossfader: plain ticks every eighth above and below the slot and a brighter centre line, where both
+   sides are at full. They span the travel of the cap's centre; the band of the slot itself is masked out. */
+.xftrack { flex: 1; position: relative; display: flex; }
+.xftrack::before { content: ''; position: absolute; inset: 0 8px; pointer-events: none; border-right: 1px solid #ffffff2e;
+  background: linear-gradient(var(--text), var(--text)) 50% 0 / 2px 100% no-repeat,
+    repeating-linear-gradient(90deg, #ffffff2e 0 1px, #0000 1px calc(100% / 8));
+  -webkit-mask: linear-gradient(#000 0 6px, #0000 6px calc(100% - 6px), #000 calc(100% - 6px)); mask: linear-gradient(#000 0 6px, #0000 6px calc(100% - 6px), #000 calc(100% - 6px)); }
 
 /* ---------- mixer: strip names, FX slot, 4 channels ---------- */
 .sname { grid-column: 1 / -1; font: 600 10px var(--mono); color: var(--c); letter-spacing: 0.2em; }
@@ -31,12 +49,13 @@ input.fader { writing-mode: vertical-lr; direction: rtl; height: 120px; width: 2
    block, a MASTER section, the crossfader last. Two channels: FX and MASTER sit beside the strips. Four: underneath. */
 body[data-layout="stacked"] .mixer { display: grid; grid-template: "strips fx" auto "strips master" 1fr "xf xf" auto / auto minmax(0, 1fr); gap: 12px; }
 body[data-layout="stacked"] .strips { grid-area: strips; }
-body[data-layout="stacked"] .strips > .strip { flex: 0 0 52px; }
+body[data-layout="stacked"] .strips > .strip { flex: 0 0 62px; }
 body[data-layout="stacked"] .strip { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 body[data-layout="stacked"] .k.trim { display: flex; }
 body[data-layout="stacked"] .strip .k { flex: none; }
 body[data-layout="stacked"] .faderwrap { flex: 1 1 auto; height: auto; min-height: 132px; align-items: stretch; }
 body[data-layout="stacked"] .faderwrap .meter, body[data-layout="stacked"] input.fader { height: auto; }
+body[data-layout="stacked"] .fadertrack { align-self: stretch; }
 body[data-layout="stacked"] .fxblock { grid-area: fx; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 body[data-layout="stacked"] :is(.fxblock, .master) > .sname { color: var(--dim); }
 body[data-layout="stacked"] .fxrow { display: grid; grid-template: "name sel sel" auto ". echo fx" auto / 12px 1fr 1fr; gap: 4px 6px; align-items: center; justify-items: center; }
@@ -49,6 +68,18 @@ body[data-layout="stacked"] .master .mastervol::before { content: 'VOL'; }
 .mastermeters { flex: 1 1 60px; display: flex; justify-content: center; gap: 6px; min-height: 60px; }
 .mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 9px var(--mono); color: var(--dim); }
 .mm .meter { flex: 1 1 0; height: 0; min-height: 0; }
+/* and under the master fader, which lies on its side: the marks run left to right over the travel of the cap's centre */
+.hscale { display: none; position: relative; height: 12px; margin-inline: 6px; font: 400 7px/1 var(--mono); color: var(--dim); letter-spacing: 0; }
+body[data-layout="stacked"] .master .hscale { display: block; }
+.hscale i { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; font-style: normal; }
+.hscale i::before { content: ''; width: 1px; height: 3px; background: currentColor; opacity: 0.7; }
+.hscale i.zero { color: var(--text); font-weight: 600; }
+.hscale i.zero::before { width: 2px; opacity: 1; }
+/* the same scale between the two master meters; its hidden-height footer matches the L / R letters under them */
+.mscale { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 20px; font: 7px/1 var(--mono); color: var(--dim); }
+.mscale span { flex: 1 1 0; position: relative; }
+.mscale small { font-size: 9px; line-height: normal; text-align: center; color: var(--faint); }
+.mscale i { left: 0; justify-content: center; }
 body[data-layout="stacked"] .xf { grid-area: xf; }
 /* four channels (C A B D): the strips take the full width, one-line FX rows under them with MASTER beside */
 body[data-layout="stacked"] .rig.four .mixer { grid-template: "strips strips" 1fr "fx master" auto "xf xf" auto / minmax(0, 1fr) 84px; }

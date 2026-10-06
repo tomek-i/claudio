@@ -5,6 +5,7 @@ import { jumpTo } from './deck.js';
 import { wireJog } from './canvas.js';
 import { addFeed } from './booth.js';
 import { mixerEls } from './layout.js';
+import { VOL_MAX, MASTER_UNITY, masterOfFader } from '../engine.js';
 
 // ------------------------------------------------------------------ knobs
 // A knob is drawn like a pot on a mixer: a groove around it that fills with the deck colour from the centre position to
@@ -77,10 +78,15 @@ export function wireControls() {
       k.ctlOf = () => ctl;
     }
     $('.fader', strip).oninput = (e) => d.vol.set(Number(e.target.value));
+    $('.fader', strip).ondblclick = () => d.vol.set(1); // back to 0 dB
+    $('.fader', strip).max = d.vol.range[1];
     mixerEls(d.name, '.fxsel')[0].onchange = (e) => d.fx.set(e.target.value, 0.5);
   }
   $('#xfader').oninput = (e) => mixer.xfader.set(Number(e.target.value));
-  $('#masterVol').oninput = (e) => mixer.master.set(Number(e.target.value));
+  $('#xfader').ondblclick = () => mixer.xfader.set(0.5); // the centre: both sides at full
+  $('#masterVol').max = VOL_MAX;
+  $('#masterVol').oninput = (e) => mixer.master.set(masterOfFader(Number(e.target.value)));
+  $('#masterVol').ondblclick = () => mixer.master.set(MASTER_UNITY); // back to 0 dB
   for (const el of $$('.deck')) {
     const d = mixer.decks[el.dataset.deck];
     $('.play', el).onclick = () => (d.playing ? d.pause() : d.buffer && d.play());

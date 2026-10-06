@@ -21,9 +21,9 @@ DECKS   load <deck> <id|search>   play <deck> [--at bar]   pause <deck>   cue <d
         seek <deck> <sec|bar:N>   sync <deck>   tempo <deck> <bpm|±N%>
         loop <deck> <beats|off|half|double>   start a loop, release it (off or 0), halve or double the running loop
         loop <deck> move <n>               move the running loop by n of its own lengths (-1 = back one)
-MIXER   vol <deck> <0-1>   eq <deck> <low|mid|high> <-1..1>   filter <deck> <-1..1>   echo <deck> <0-1>
+MIXER   vol <deck> <0-1.54>  (1 = normal, the 0 dB mark)   eq <deck> <low|mid|high> <-1..1>   filter <deck> <-1..1>   echo <deck> <0-1>
         trim <deck> <-12..12 dB>           gain before the EQ, on top of the track's analysed gain (0 = unchanged)
-        xfade <0-1>   master <0-1>
+        xfade <0-1>   master <0-1.8>  (0.9 = normal, the 0 dB mark)
         --ramp <beats>                     automates vol, eq, filter, echo, trim or xfade on the beat clock
 MIX     mix <from> <to> [--track <id>] [--style blend|bassswap|double|fade|filter|echo|cut|brake|spinback]
             [--bars N] [--at now|bar|phrase] [--in mixin|intro|drop|<sec>|bar:N] [--no-glide]
