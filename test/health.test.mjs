@@ -1,4 +1,5 @@
-// Health report: one check per system, red only for real faults, 'off' for things switched off on purpose.
+// Health report: one check per system, red for a required system that is down, amber for an optional one,
+// 'off' for things switched off on purpose.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildHealth, toolVersion } from '../lib/health.mjs';
@@ -14,11 +15,13 @@ const byId = (h) => Object.fromEntries(h.checks.map((c) => [c.id, c]));
 test('a healthy rig is all green', () => {
   const h = buildHealth(healthy());
   assert.equal(h.ok, true);
+  assert.equal(h.level, 'ok');
+  assert.deepEqual(h.checks.filter((c) => c.required).map((c) => c.id), ['server', 'engine', 'ffmpeg', 'ffprobe']);
   assert.deepEqual(h.checks.map((c) => c.id), ['server', 'engine', 'library', 'ffmpeg', 'ffprobe', 'ytdlp', 'downloads', 'stems', 'disk']);
   assert.ok(h.checks.every((c) => c.status === 'ok' && c.detail));
 });
 
-test('each fault turns its own check red and the report not ok', () => {
+test('each fault lights its own check: red and not ok for a required system, amber for an optional one', () => {
   const cases = {
     engine: (s) => { s.engine = { connected: false }; },
     library: (s) => { s.dirs = [{ dir: '/missing', exists: false }]; },
@@ -31,9 +34,10 @@ test('each fault turns its own check red and the report not ok', () => {
   };
   for (const [id, breakIt] of Object.entries(cases)) {
     const s = healthy(); breakIt(s);
-    const h = buildHealth(s);
-    assert.equal(h.ok, false, id);
-    assert.deepEqual(h.checks.filter((c) => c.status === 'fail').map((c) => c.id), [id]);
+    const h = buildHealth(s), required = ['engine', 'ffmpeg', 'ffprobe'].includes(id);
+    assert.equal(h.ok, !required, id);
+    assert.equal(h.level, required ? 'fail' : 'warn', id);
+    assert.deepEqual(h.checks.filter((c) => c.status !== 'ok').map((c) => [c.id, c.status]), [[id, required ? 'fail' : 'warn']]);
   }
   const stale = healthy(); stale.engine.stale = true;
   assert.equal(byId(buildHealth(stale)).engine.status, 'fail');
@@ -46,6 +50,7 @@ test('stems switched off is "off", not a fault; an older failed download does no
   assert.equal(byId(h).stems.status, 'off');
   assert.equal(byId(h).downloads.status, 'ok');
   assert.equal(h.ok, true);
+  assert.equal(h.level, 'ok');
 });
 
 test('toolVersion: a real binary reports a version line, a missing one is null', async () => {

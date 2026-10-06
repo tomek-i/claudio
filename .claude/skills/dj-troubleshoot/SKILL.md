@@ -16,7 +16,7 @@ node dj.mjs stems status      # separation load and free disk
 node dj.mjs record status     # whether a recording is running
 ```
 
-- The page at http://localhost:4747/health shows one ok, fail or off entry per system. It is the place that checks ffmpeg and ffprobe, which `dj doctor` does not check.
+- The page at http://localhost:4747/health shows one entry per system: ok, warn (an optional system such as stems or downloads has a fault; the decks still play), fail (a required system is down) or off. It is the place that checks ffmpeg and ffprobe, which `dj doctor` does not check.
 - The server log is `.dj/server.log`.
 - The test command is `node --test test/*.test.mjs test/server-*.mjs`. The tests are safe to run during a set; they do not read the library or write `.dj/`.
 - The ⚠ lines in `dj status` are mix warnings, not faults. The dj-mix skill explains each one in "The mix monitor".

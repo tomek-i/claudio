@@ -50,7 +50,7 @@ mouse wheel on it to zoom. A playing deck is locked against waveform drags unles
 | `lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |
 | `lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
 | `lib/sequencer.mjs`, `lib/monitor.mjs`, `lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
-| `lib/settings.mjs`, `lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/fail/off entry per system, checked only on request). |
+| `lib/settings.mjs`, `lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
 | `lib/starter.mjs`, `starter/` | The Creative Commons starter crate behind `dj starter` and the **Download demo tracks** button. |
 | `lib/banner.mjs` | The server's startup banner: one of fifteen animations at random, then an equaliser that follows the live deck's beat. |
 | `lib/stems.mjs` + `lib/separate.py` | Optional stem separation (demucs) so vocals/drums/bass can be muted or swapped live. |
