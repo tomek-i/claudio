@@ -72,7 +72,7 @@ function frame() {
     // ½ / ×2 go dark at a limit; the readout names a length the four buttons cannot show
     const size = lp ? lp.beats : d.loopSize;
     for (const b of $$('.lscale', el)) { const f = Number(b.dataset.scale); b.disabled = lp ? !!d.loopLimit(f) : size * f < LOOP_MIN || size * f > LOOP_MAX; }
-    const ls = $('.lsize', el), txt = [4, 8, 16, 32].includes(size) ? '' : ({ 0.25: '¼', 0.5: '½' }[size] || String(size));
+    const ls = $('.lsize', el), txt = [4, 8, 16, 32].includes(size) ? '' : ({ 0.0625: '1/16', 0.125: '⅛', 0.25: '¼', 0.5: '½' }[size] || String(size));
     if (ls.textContent !== txt) ls.textContent = txt;
     ls.classList.toggle('on', !!lp && txt !== '');
     const rate = $('.rate', el); if (document.activeElement !== rate) rate.value = d.rate;

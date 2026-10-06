@@ -101,7 +101,7 @@ export class Ctl {
 }
 
 const dbToGain = (db) => Math.pow(10, db / 20);
-export const LOOP_MIN = 0.25, LOOP_MAX = 64; // beats
+export const LOOP_MIN = 1 / 16, LOOP_MAX = 64; // beats
 const eqDb = (v) => (v < 0 ? v * 45 : v * 6);
 const volGain = (v) => Math.pow(clamp(v, 0, 1), 1.6);
 // "dipless" crossfader: each side stays at full until the fader crosses the centre
@@ -474,7 +474,7 @@ class Deck {
     const lp = this.loopAt(t);
     if (!lp) return `no loop on deck ${this.name}`;
     const beats = lp.beats * factor;
-    if (beats < LOOP_MIN) return `the loop on ${this.name} is already at the shortest length (${LOOP_MIN} beats)`;
+    if (beats < LOOP_MIN) return `the loop on ${this.name} is already at the shortest length (1/${1 / LOOP_MIN} beat)`;
     if (beats > LOOP_MAX) return `the loop on ${this.name} is already at the longest length (${LOOP_MAX} beats)`;
     if (this.posOfBeat(this.beatAt(lp.start) + beats) > this.duration) return `the loop on ${this.name} would run past the end of the track`;
     return null;

@@ -362,11 +362,13 @@ test('loop halve / double: start kept, limits, end of track, playhead past the n
   assert.ok(A.position() < A.loop.end && A.position() >= start, 'it never escapes');
   assert.equal(B.loop.beats, 4, 'the other deck is untouched');
   A.scaleLoop(2); assert.equal(A.loop.beats, 4); assert.equal(A.loop.start, start);
-  for (let b = 4; b > 0.25; b /= 2) A.scaleLoop(0.5);
-  assert.equal(A.loop.beats, 0.25);
+  for (let b = 4; b > 1 / 16; b /= 2) A.scaleLoop(0.5);
+  assert.equal(A.loop.beats, 1 / 16);
+  render(0.5); agree(A);
+  assert.ok(A.position() < A.loop.end && A.position() >= start, 'a 1/16 beat loop holds too');
   assert.match(A.loopLimit(0.5), /shortest/); assert.throws(() => A.scaleLoop(0.5), /shortest/);
-  assert.equal(A.loop.beats, 0.25, 'unchanged at the limit');
-  for (let b = 0.25; b < 64; b *= 2) A.scaleLoop(2);
+  assert.equal(A.loop.beats, 1 / 16, 'unchanged at the limit');
+  for (let b = 1 / 16; b < 64; b *= 2) A.scaleLoop(2);
   assert.match(A.loopLimit(2), /longest/);
   A.setLoop(0); render(0.1);
   // near the end of the track a doubled loop would not fit
