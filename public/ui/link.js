@@ -107,8 +107,31 @@ setInterval(() => {
   }
   wdLast = now;
 }, 250);
-export function setStatus(cls, txt) {
+// ---- the status light in the header: this tab's engine state, turned amber by a fault in an optional system
+// (stems, downloads, …) and red by one in a required system (GET /api/health).
+// Clicking it opens /health. The checks are asked for when the engine state changes, when the tab is looked at
+// again and once a minute while it is visible.
+const HEALTH_MS = 60000;
+let status = { cls: '', txt: 'engine offline' }, issues = [];
+function drawStatus() {
   const el = $('#engineStatus');
-  el.className = `status ${cls}`;
-  $('.txt', el).textContent = txt;
+  el.className = `status ${status.cls}${issues.some((c) => c.status === 'fail') ? ' bad' : issues.length ? ' limited' : ''}`;
+  $('.txt', el).textContent = `${status.txt}${issues.length ? ` · ${issues.length} issue${issues.length === 1 ? '' : 's'}` : ''}`;
+  el.title = issues.length ? `${issues.map((c) => `${c.name}: ${c.detail}`).join('\n')}\nClick for the health page` : 'All systems ok · click for the health page';
 }
+export async function refreshHealth() {
+  try {
+    const h = await (await fetch('/api/health')).json();
+    // the engine check is this tab's own state, which the text already says
+    issues = h.checks.filter((c) => ['fail', 'warn'].includes(c.status) && c.id !== 'engine');
+  } catch { issues = []; /* server unreachable: setStatus says so */ }
+  drawStatus();
+}
+export function setStatus(cls, txt) {
+  status = { cls, txt };
+  drawStatus();
+  refreshHealth();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshHealth(); });
+setInterval(() => { if (!document.hidden) refreshHealth(); }, HEALTH_MS);
+refreshHealth();

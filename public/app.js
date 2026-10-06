@@ -89,7 +89,6 @@ function frame() {
   const live = liveDeck();
   for (const el of $$('.deck')) el.classList.toggle('live', live?.name === el.dataset.deck);
   document.body.classList.toggle('playing', anyPlaying);
-  $('#masterBpm').textContent = live ? live.effBpm.toFixed(1) : '—';
   for (const strip of $$('.strip')) {
     const d = mixer.decks[strip.dataset.deck];
     if (strip.classList.contains('extra')) {
