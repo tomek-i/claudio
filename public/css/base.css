@@ -25,6 +25,18 @@ html, body { margin: 0; background: var(--bg); color: var(--text); font-family: 
 body { height: 100vh; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
 .top, .scope, .rig { flex: none; }
 button, input { font: inherit; color: inherit; }
+
+/* ---------- scrollbars: slim, in the panel colours ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border: 2px solid transparent; border-radius: 99px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--faint); }
+::-webkit-scrollbar-thumb:active { background-color: var(--dim); }
+::-webkit-scrollbar-button { display: none; }
+/* Firefox (setting these in Chromium would switch the rules above off) */
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+}
 code { font-family: var(--mono); font-size: 0.9em; background: #1d1d26; padding: 1px 5px; border-radius: 4px; }
 h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); margin: 0; font-weight: 500; }
 h2 small { letter-spacing: 0.02em; text-transform: none; color: var(--faint); margin-left: 6px; }
