@@ -93,6 +93,7 @@ export function wireControls() {
     $('.cue', el).onclick = () => { if (d.playing) { d.pause(); d.startPos = d.cuePoint; } else { d.cuePoint = d.startPos; } };
     $('.sync', el).onclick = () => { try { mixer.sync(d.name); } catch (e) { addFeed({ ts: Date.now(), kind: 'system', text: e.message }); } };
     $('.rate', el).oninput = (e) => d.setRate(Number(e.target.value));
+    $('.rate', el).ondblclick = () => d.setRate(1); // back to 0%
     el.addEventListener('pointerdown', () => (pointer.deck = d.name), true); // the deck the pointer was last used on: what [ ] act on
     const warn = (fn) => { try { fn(); } catch (e) { addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${e.message}` }); } };
     // ½ / ×2: halve or double this deck's loop (or step the next loop's length) · shift+click = move the loop

@@ -78,6 +78,8 @@ body.touch-drag { user-select: none; -webkit-user-select: none; }
 .tempo { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.14em; color: var(--dim); margin-left: auto; }
 .tempo input { width: 120px; }
 .tpitch { display: none; }
+.ratetrack { display: contents; }
+.rscale { display: none; }
 
 .rig.four { grid-template-columns: 1fr 400px 1fr; }
 
@@ -167,6 +169,26 @@ body[data-layout="stacked"] .deck:not(.compact) .stems { grid-column: 2 / -1; gr
 body[data-layout="stacked"] .deck:not(.compact) :is(.slip, .cue, .play, .sync, .keylock) { padding-inline: 4px; }
 /* TEMPO: a vertical fader down the right of the wheel, pitch readout on top. Down is faster, as on the hardware. */
 body[data-layout="stacked"] .deck:not(.compact) .tempo { grid-column: 3; grid-row: 8 / 11; align-self: stretch; margin-left: 0; flex-direction: column; gap: 4px; min-height: 0; }
-body[data-layout="stacked"] .deck:not(.compact) .tempo input { writing-mode: vertical-lr; width: 26px; flex: 1 1 0; min-height: 70px; --cap-len: 16px; --cap-wide: 26px; --grip: 180deg; }
+/* drawn like the pitch fader of a CDJ: a recessed well with the slot down the middle, a wide ridged cap with a white
+   centre line, and beside it the scale: − at the top, a dot every 1%, 0 in the middle, + at the bottom */
+body[data-layout="stacked"] .deck:not(.compact) .ratetrack { position: relative; display: flex; flex-direction: column; flex: 1 1 0; min-height: 90px; margin-left: 14px; }
+body[data-layout="stacked"] .deck:not(.compact) .tempo input { writing-mode: vertical-lr; width: 36px; flex: 1 1 0; min-height: 0; --cap-len: 24px; --cap-wide: 30px; --cap: #f4f4f8;
+  border-radius: 6px; background: linear-gradient(90deg, #0a0a0e, #15151c 30%, #15151c 70%, #0a0a0e); box-shadow: inset 0 2px 5px #000, inset 0 0 0 1px #000, 0 0 0 1px #ffffff14; }
+body[data-layout="stacked"] .deck:not(.compact) .tempo input::-webkit-slider-runnable-track { background: #000; box-shadow: 0 0 0 1px #ffffff0a; }
+body[data-layout="stacked"] .deck:not(.compact) .tempo input::-moz-range-track { background: #000; box-shadow: 0 0 0 1px #ffffff0a; }
+body[data-layout="stacked"] .deck:not(.compact) .tempo input::-webkit-slider-thumb { border-radius: 3px; box-shadow: 0 3px 6px #000d, inset 0 0 0 1px #ffffff2e;
+  background: linear-gradient(180deg, #0000 calc(50% - 1px), var(--cap) calc(50% - 1px) calc(50% + 1px), #0000 calc(50% + 1px)),
+    repeating-linear-gradient(180deg, #00000059 0 1px, #0000 1px 3px), linear-gradient(180deg, #2a2a32, #74748a 14%, #34343e 44%, #34343e 56%, #74748a 86%, #2a2a32); }
+body[data-layout="stacked"] .deck:not(.compact) .tempo input::-moz-range-thumb { border-radius: 3px; box-shadow: 0 3px 6px #000d, inset 0 0 0 1px #ffffff2e;
+  background: linear-gradient(180deg, #0000 calc(50% - 1px), var(--cap) calc(50% - 1px) calc(50% + 1px), #0000 calc(50% + 1px)),
+    repeating-linear-gradient(180deg, #00000059 0 1px, #0000 1px 3px), linear-gradient(180deg, #2a2a32, #74748a 14%, #34343e 44%, #34343e 56%, #74748a 86%, #2a2a32); }
+/* the scale spans the travel of the cap's centre (half a cap in from each end); the dots sit in tiles one step tall */
+body[data-layout="stacked"] .deck:not(.compact) .rscale { display: block; position: absolute; inset-block: 12px; right: calc(100% + 3px); width: 16px; pointer-events: none; font: 600 10px/1 var(--mono); letter-spacing: 0; color: var(--dim); }
+body[data-layout="stacked"] .deck:not(.compact) .rscale::before { content: ''; position: absolute; right: 0; width: 4px; top: calc(-100% / 40); bottom: calc(-100% / 40);
+  background: radial-gradient(circle, #ffffff66 0 0.8px, #0000 1.3px) 0 0 / 4px calc(100% / 21) repeat-y; }
+body[data-layout="stacked"] .deck:not(.compact) .rscale i { position: absolute; right: 7px; transform: translateY(-50%); font-style: normal; }
+body[data-layout="stacked"] .deck:not(.compact) .rscale i:nth-child(1) { top: 0; }
+body[data-layout="stacked"] .deck:not(.compact) .rscale i:nth-child(2) { top: 50%; color: var(--text); }
+body[data-layout="stacked"] .deck:not(.compact) .rscale i:nth-child(3) { top: 100%; }
 body[data-layout="stacked"] .deck:not(.compact) .tlabel { order: 1; }
 body[data-layout="stacked"] .deck:not(.compact) .tpitch { display: block; order: -1; font-family: var(--mono); font-size: 11px; letter-spacing: 0; color: var(--text); }
