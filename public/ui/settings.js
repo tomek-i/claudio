@@ -1,9 +1,25 @@
 // The /settings page: a form generated from the schema the server sends (lib/settings.mjs).
 // Only values that differ from what was loaded are sent on save.
+// The schema's groups are filed under a few categories: the list on the left picks one and only that one is shown.
+// Every field stays in the page all the while (hidden, not removed), because saving reads them all. The search box
+// shows the matching settings of every category instead.
 import { $, $$, esc, post } from './util.js';
 import * as keysUi from './settings-keys.js';
 
 let fields = []; // last schema + values from the server
+const CATEGORIES = [
+  { id: 'decks', label: 'Decks & mixer', groups: ['Decks', 'Waveform', 'Mixer'] },
+  { id: 'library', label: 'Library', groups: ['Library', 'Stem separation'] },
+  { id: 'page', label: 'Page layout', groups: ['Crate and booth', 'Sampler and keys'] },
+  { id: 'claude', label: 'Claude', groups: ['Auto-DJ', 'Safety nets'] },
+  { id: 'keys', label: 'Key bindings', groups: ['Key bindings'] },
+  { id: 'system', label: 'System', groups: ['Server', 'Recording'] }, // and any group not named above
+];
+const categoryOf = (group) => (CATEGORIES.find((c) => c.groups.includes(group)) || CATEGORIES[CATEGORIES.length - 1]).id;
+const LS_CAT = 'djSettingsCat';
+const stored = () => { try { return localStorage.getItem(LS_CAT); } catch { return null; } };
+const known = (id) => (CATEGORIES.some((c) => c.id === id) ? id : null);
+let current = known(location.hash.slice(1)) || known(stored()) || CATEGORIES[0].id;
 const idOf = (key) => `f-${key.replace(/\W/g, '-')}`;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -21,17 +37,52 @@ function control(f) {
 
 function render() {
   const groups = [...new Set(fields.map((f) => f.group))];
-  $('#form').innerHTML = groups.map((g) => `<fieldset${g === 'Key bindings' ? ' id="keys"' : ''}><legend>${esc(g)}</legend>${fields.filter((f) => f.group === g).map((f) => `
-    <div class="field ${f.type}" data-field="${esc(f.key)}">
+  // a category's groups in the order it names them, then any it was not told about
+  const inCategory = (c) => [...c.groups.filter((g) => groups.includes(g)), ...groups.filter((g) => categoryOf(g) === c.id && !c.groups.includes(g))];
+  const fieldset =(g) => `<fieldset><legend>${esc(g)}</legend>${fields.filter((f) => f.group === g).map((f) => `
+    <div class="field ${f.type}" data-field="${esc(f.key)}" data-find="${esc(`${f.label} ${f.help || ''} ${g} ${f.key}${f.live ? '' : ' needs restart'}`.toLowerCase())}">
       <label class="name" for="${idOf(f.key)}">${esc(f.label)}${f.live ? '' : ' <span class="tag">needs restart</span>'}</label>
       <div class="input">${control(f)}</div>
       <p class="help" id="${idOf(f.key)}-help">${esc(f.help || '')}</p>
       <p class="err" id="${idOf(f.key)}-err"></p>
-    </div>`).join('')}</fieldset>`).join('');
+    </div>`).join('')}</fieldset>`;
+  $('#form').innerHTML = CATEGORIES.map((c) => `<section class="cat" data-cat="${c.id}"><h3 class="cattitle">${esc(c.label)}</h3>${inCategory(c).map(fieldset).join('')}</section>`).join('');
+  $('#cats').innerHTML = CATEGORIES.map((c) => `<button type="button" class="catbtn" data-cat="${c.id}">${esc(c.label)}<i class="dot" aria-hidden="true"></i></button>`).join('');
+  for (const b of $$('.catbtn')) b.onclick = () => { $('#find').value = ''; select(b.dataset.cat); };
   const value = (key) => fields.find((f) => f.key === key)?.value;
   if ($('.keysui')) keysUi.mount($('.keysui'), { bindings: value('keys.bindings'), presets: value('keys.presets') }, changed);
+  show();
   changed();
 }
+
+// what is on screen: one category, or with text in the search box every setting that matches it
+function show() {
+  const q = $('#find').value.trim().toLowerCase();
+  document.body.classList.toggle('searching', !!q);
+  let any = false;
+  for (const sec of $$('#form .cat')) {
+    let inSection = false;
+    for (const fs of $$('fieldset', sec)) {
+      let inSet = false;
+      for (const row of $$('.field', fs)) { const hit = !q || (row.dataset.find.includes(q) && !row.classList.contains('keypresets')); row.hidden = !hit; inSet ||= hit; }
+      fs.hidden = !inSet; inSection ||= inSet;
+    }
+    sec.hidden = q ? !inSection : sec.dataset.cat !== current;
+    any ||= !sec.hidden;
+  }
+  $('#nomatch').hidden = any;
+  $('#catname').textContent = q ? 'Search results' : CATEGORIES.find((c) => c.id === current).label;
+  for (const b of $$('.catbtn')) { if (!q && b.dataset.cat === current) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+}
+function select(id) {
+  current = known(id) || current;
+  try { localStorage.setItem(LS_CAT, current); } catch { /* storage is off */ }
+  if (location.hash.slice(1) !== current) history.replaceState(null, '', `#${current}`);
+  show();
+  scrollTo({ top: 0 });
+}
+$('#find').addEventListener('input', show);
+window.addEventListener('hashchange', () => { if (known(location.hash.slice(1))) { $('#find').value = ''; select(location.hash.slice(1)); } });
 
 function read(f) {
   const el = $(`#${idOf(f.key)}`);
@@ -48,7 +99,10 @@ const patch = () => Object.fromEntries(fields.map((f) => [f.key, read(f)]).filte
 
 function changed() {
   for (const el of $$('.switch input')) el.nextElementSibling.textContent = el.checked ? 'On' : 'Off';
-  const dirty = Object.keys(patch()).length > 0;
+  const keys = Object.keys(patch()), dirty = keys.length > 0;
+  // a dot on every category with something unsaved in it
+  const touched = new Set(keys.map((key) => categoryOf(fields.find((f) => f.key === key).group)));
+  for (const b of $$('.catbtn')) b.classList.toggle('dirty', touched.has(b.dataset.cat));
   $('#save').disabled = $('#revert').disabled = !dirty;
   if (dirty) $('#result').textContent = '';
 }
@@ -79,10 +133,15 @@ $('#form').onsubmit = async (e) => {
   try { r = await post('/api/settings', patch()); }
   catch { $('#result').textContent = 'Not saved: the server did not answer.'; changed(); return; }
   if (!r.ok) {
+    let first = null;
     for (const [key, msg] of Object.entries(r.errors || {})) {
       const row = $(`.field[data-field="${key}"]`); if (!row) continue;
       row.classList.add('bad'); $('.err', row).textContent = msg;
+      first ||= row;
     }
+    // the setting at fault may be in a category that is not on screen
+    if (first && first.closest('.cat').hidden) { $('#find').value = ''; select(first.closest('.cat').dataset.cat); }
+    first?.scrollIntoView({ block: 'center' });
     $('#result').textContent = r.error ? `Not saved: ${r.error}` : 'Not saved: fix the highlighted settings.';
     changed();
     return;
@@ -91,4 +150,4 @@ $('#form').onsubmit = async (e) => {
   $('#result').textContent = r.changed.length ? `Saved ${r.changed.length} setting${r.changed.length === 1 ? '' : 's'}.` : 'Nothing to save.';
 };
 
-load().then(() => { if (location.hash === '#keys') $('#keys')?.scrollIntoView(); });
+load();

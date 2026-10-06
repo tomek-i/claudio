@@ -18,9 +18,16 @@
   <a class="btn sm" href="/">Back to the decks</a>
 </header>
 <main>
-  <h2>Settings <small>saved to config.json</small></h2>
-  <p class="notice restart" id="restart" hidden></p>
-  <form id="form" novalidate></form>
+  <nav class="setnav" aria-label="Settings categories">
+    <input type="search" id="find" placeholder="Search settings…" autocomplete="off" aria-label="Search settings">
+    <div class="cats" id="cats"></div>
+  </nav>
+  <div class="setbody">
+    <h2><span id="catname">Settings</span> <small>saved to config.json</small></h2>
+    <p class="notice restart" id="restart" hidden></p>
+    <form id="form" novalidate></form>
+    <p class="notice" id="nomatch" hidden>No setting matches that search.</p>
+  </div>
   <div class="actions">
     <button class="btn" id="save" form="form" disabled>Save changes</button>
     <button class="btn" id="revert" type="button" disabled>Discard</button>

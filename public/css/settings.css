@@ -1,10 +1,26 @@
 /* ---------- settings page (/settings) ---------- */
 body.settings { height: auto; min-height: 100vh; }
 .settings .disc { box-shadow: none; }
-.settings a.btn { text-decoration: none; }
+.settings a.btn { text-decoration: none; color: inherit; }
 .settings .btn.sm { font-size: 12px; padding: 6px 12px; }
-.settings main { width: 100%; max-width: 760px; margin: 0 auto; padding: 28px 18px 110px; display: flex; flex-direction: column; gap: 16px; }
-.settings form { display: flex; flex-direction: column; gap: 16px; }
+/* two panes: the categories on the left (they stay put), the chosen one on the right */
+.settings main { width: 100%; max-width: 1020px; margin: 0 auto; padding: 28px 18px 110px; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; align-items: start; }
+.setnav { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 12px; }
+.setnav input[type=search] { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 13px var(--sans); color: var(--text); width: 100%; }
+.cats { display: flex; flex-direction: column; gap: 2px; }
+.catbtn { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: none; border: 1px solid transparent; border-radius: 8px; color: var(--dim); font: 600 13px var(--sans); text-align: left; cursor: pointer; }
+.catbtn:hover { color: var(--text); background: #ffffff08; }
+.catbtn:focus-visible { outline: 2px solid var(--b); outline-offset: 2px; }
+.catbtn[aria-current] { color: var(--text); background: var(--panel); border-color: var(--line); box-shadow: inset 3px 0 0 var(--a); }
+/* unsaved changes in that category */
+.catbtn .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 6px var(--warn); visibility: hidden; }
+.catbtn.dirty .dot { visibility: visible; }
+.setbody { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.settings form, .settings .cat { display: flex; flex-direction: column; gap: 16px; }
+.settings .cat[hidden], .settings fieldset[hidden], .settings .field[hidden] { display: none; }
+/* a category's own title: only among search results, where several are on screen */
+.cattitle { display: none; margin: 8px 0 -6px; font-size: 13px; font-weight: 700; color: var(--text); }
+body.searching .cattitle { display: block; }
 .settings fieldset { margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-width: 0; }
 .settings legend { float: left; width: 100%; padding: 12px 14px 10px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
 .field { clear: both; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 4px 16px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); }
@@ -24,7 +40,8 @@ legend + .field { border-top: 0; }
 .settings input:focus-visible, .settings textarea:focus-visible, .settings select:focus-visible, .settings .btn:focus-visible { outline: 2px solid var(--b); outline-offset: 2px; }
 .num { display: inline-flex; align-items: center; gap: 8px; }
 .unit { font: 12px var(--mono); color: var(--dim); min-width: 56px; }
-.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font: 12px var(--mono); color: var(--dim); }
+/* (.switch in base.css is the pill in the DJ page's header: its frame is undone here) */
+.settings .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font: 12px var(--mono); letter-spacing: 0; color: var(--dim); background: none; border: 0; border-radius: 0; padding: 0; }
 .switch input { width: 18px; height: 18px; accent-color: var(--ok); }
 .switch span { min-width: 24px; }
 .notice { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); line-height: 1.5; }
@@ -34,6 +51,14 @@ legend + .field { border-top: 0; }
 .actions .btn:disabled { opacity: 0.4; cursor: default; }
 .actions #save:not(:disabled) { background: var(--a); border-color: var(--a); color: #000; }
 .actions .result { font: 12px var(--mono); color: var(--dim); min-width: 200px; }
+@media (max-width: 820px) {
+  /* narrow: the categories become a row of tabs above the settings */
+  .settings main { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .setnav { position: static; }
+  .cats { flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; }
+  .catbtn { flex: none; white-space: nowrap; }
+  .catbtn[aria-current] { box-shadow: inset 0 -3px 0 var(--a); }
+}
 @media (max-width: 600px) {
   .field { grid-template-columns: minmax(0, 1fr); }
   .field .input { justify-self: start; justify-content: flex-start; }
