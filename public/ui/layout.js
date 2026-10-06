@@ -33,7 +33,6 @@ function applyLayout() {
 const SCALE = [[6, '+6'], [3, '+3'], [0, '0'], [-3, '-3'], [-6, '-6'], [-10, '-10'], [-20, '-20'], [-Infinity, '∞']];
 const marks = SCALE.map(([db, label]) => `<i${db === 0 ? ' class="zero"' : ''} style="bottom:${((volOfDb(db) / VOL_MAX) * 100).toFixed(2)}%">${label}</i>`).join('');
 for (const t of $$('.fadertrack')) t.insertAdjacentHTML('afterbegin', `<span class="fscale" aria-hidden="true">${marks}</span>`);
-$('#masterVol').insertAdjacentHTML('afterend', `<b class="hscale" aria-hidden="true">${marks.replaceAll('bottom:', 'left:')}</b>`);
 $('.mastermeters .mm')?.insertAdjacentHTML('afterend', `<div class="mscale" aria-hidden="true"><span>${marks}</span><small>dB</small></div>`);
 
 onUi(applyLayout);

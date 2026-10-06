@@ -5,7 +5,7 @@ import { jumpTo } from './deck.js';
 import { wireJog } from './canvas.js';
 import { addFeed } from './booth.js';
 import { mixerEls } from './layout.js';
-import { VOL_MAX, MASTER_UNITY, masterOfFader } from '../engine.js';
+import { VOL_MAX, MASTER_UNITY, masterOfFader, faderOfMaster } from '../engine.js';
 
 // ------------------------------------------------------------------ knobs
 // A knob is drawn like a pot on a mixer: a groove around it that fills with the deck colour from the centre position to
@@ -84,6 +84,9 @@ export function wireControls() {
   }
   $('#xfader').oninput = (e) => mixer.xfader.set(Number(e.target.value));
   $('#xfader').ondblclick = () => mixer.xfader.set(0.5); // the centre: both sides at full
+  // the master level: a knob in the stacked layout, the slider in the classic one. Both are the same fader travel
+  // (0 dB at 1, +6 dB at VOL_MAX), so the knob's arc starts at the 0 dB mark.
+  makeKnob($('#masterKnob'), { min: 0, max: VOL_MAX, center: 1, get: () => +faderOfMaster(mixer.master.value()).toFixed(3), set: (v) => mixer.master.set(masterOfFader(v)) });
   $('#masterVol').max = VOL_MAX;
   $('#masterVol').oninput = (e) => mixer.master.set(masterOfFader(Number(e.target.value)));
   $('#masterVol').ondblclick = () => mixer.master.set(MASTER_UNITY); // back to 0 dB

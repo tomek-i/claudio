@@ -112,6 +112,12 @@
     <div class="master">
       <div class="sname">MASTER</div>
       <label class="mastervol"><span>MASTER</span><input type="range" id="masterVol" min="0" max="1.54" step="0.01" value="1" title="Master volume: 0 on the scale is the normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></label>
+      <!-- the master level as a knob (stacked layout; the classic layout keeps the slider above, in the header) -->
+      <div class="mlevel">
+        <div class="k" id="masterKnob" data-label="LEVEL" title="Master level: 0 dB is the normal level; past it is extra level, up to +6 dB · drag up or down · double-click = 0 dB"></div>
+        <i class="inf">−∞</i><i class="zero">0dB</i><i class="max">+6dB</i>
+      </div>
+      <span class="clip" id="masterClip" title="Lights when the master output reaches full scale">CLIP</span>
       <div class="mastermeters" title="Master level, after the limiter">
         <div class="mm"><canvas class="meter" data-side="L" width="8" height="120"></canvas><small>L</small></div>
         <div class="mm"><canvas class="meter" data-side="R" width="8" height="120"></canvas><small>R</small></div>

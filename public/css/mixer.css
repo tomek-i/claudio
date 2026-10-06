@@ -62,19 +62,20 @@ body[data-layout="stacked"] .fxrow { display: grid; grid-template: "name sel sel
 body[data-layout="stacked"] .fxname { grid-area: name; font: 600 11px var(--mono); color: var(--c); }
 body[data-layout="stacked"] .fxrow .fxsel { grid-area: sel; width: 100%; min-width: 0; }
 body[data-layout="stacked"] .master { grid-area: master; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
-body[data-layout="stacked"] .master .mastervol { flex-direction: column; align-items: stretch; gap: 2px; font-size: 9px; }
-body[data-layout="stacked"] .master .mastervol span { display: none; }
-body[data-layout="stacked"] .master .mastervol::before { content: 'VOL'; }
+/* the master level is a knob here (the slider is the classic layout's, in the header): LEVEL with -inf, 0 dB and +6 dB
+   marked round it where the knob points at them, and a CLIP light under it */
+body[data-layout="stacked"] .master .mastervol { display: none; }
+.mlevel { position: relative; align-self: center; width: 84px; padding-top: 10px; display: flex; justify-content: center; --c: var(--text); }
+.mlevel .k svg { width: 56px; height: 56px; }
+.mlevel > i { position: absolute; transform: translate(-50%, -50%); font: 7px/1 var(--mono); font-style: normal; color: var(--dim); white-space: nowrap; }
+.mlevel > i.inf { left: 14px; top: 64px; }
+.mlevel > i.zero { left: 70px; top: 9px; color: var(--text); font-weight: 600; }
+.mlevel > i.max { left: 71px; top: 64px; }
+.clip { align-self: center; padding: 2px 7px; border: 1px solid #3a1217; border-radius: 3px; background: #1a0b0d; font: 600 8px/1 var(--mono); letter-spacing: 0.12em; color: #6a2a31; }
+.clip.on { background: #ff4d5e; border-color: #ff4d5e; color: #1a0508; box-shadow: 0 0 8px #ff4d5e; }
 .mastermeters { flex: 1 1 60px; display: flex; justify-content: center; gap: 6px; min-height: 60px; }
 .mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 9px var(--mono); color: var(--dim); }
 .mm .meter { flex: 1 1 0; height: 0; min-height: 0; }
-/* and under the master fader, which lies on its side: the marks run left to right over the travel of the cap's centre */
-.hscale { display: none; position: relative; height: 12px; margin-inline: 6px; font: 400 7px/1 var(--mono); color: var(--dim); letter-spacing: 0; }
-body[data-layout="stacked"] .master .hscale { display: block; }
-.hscale i { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; font-style: normal; }
-.hscale i::before { content: ''; width: 1px; height: 3px; background: currentColor; opacity: 0.7; }
-.hscale i.zero { color: var(--text); font-weight: 600; }
-.hscale i.zero::before { width: 2px; opacity: 1; }
 /* the same scale between the two master meters; its hidden-height footer matches the L / R letters under them */
 .mscale { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 20px; font: 7px/1 var(--mono); color: var(--dim); }
 .mscale span { flex: 1 1 0; position: relative; }

@@ -38,6 +38,7 @@ let lastLive = null, lastSlow = 0;
 // a slider follows the engine except while the pointer holds it (not merely while it has focus: a double-click
 // reset, a `dj` command or an automation moves a slider that was just used)
 const held = (el) => el.matches(':active');
+let clipUntil = 0; // the master CLIP light is on until then
 function frame() {
   if (!mixer) return;
   const now = performance.now();
@@ -105,7 +106,14 @@ function frame() {
   }
   const xf = $('#xfader'); if (!held(xf)) xf.value = mixer.xfader.value();
   const mv = $('#masterVol'); if (!held(mv)) mv.value = faderOfMaster(mixer.master.value());
-  if (document.body.dataset.layout === 'stacked') for (const m of $$('.master .meter')) drawMeter(m, mixer.meters[m.dataset.side]);
+  if (document.body.dataset.layout === 'stacked') {
+    let peak = -Infinity;
+    for (const m of $$('.master .meter')) { drawMeter(m, mixer.meters[m.dataset.side]); peak = Math.max(peak, m.meter.lvl); }
+    $('#masterKnob').render?.();
+    // CLIP: the output reached full scale (within 0.3 dB of it); it stays lit for a second so a single peak is seen
+    const now = performance.now(); if (peak >= -0.3) clipUntil = now + 1000;
+    $('#masterClip').classList.toggle('on', now < clipUntil);
+  }
   const tr = mixer.transition;
   $('#transitionInfo').textContent = tr ? `⟶ ${tr.style.toUpperCase()} ${tr.from}→${tr.to} · ${Math.max(0, (tr.endAt - Date.now()) / 1000).toFixed(0)}s` : '';
   const nowMs = Date.now();
