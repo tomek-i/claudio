@@ -153,14 +153,16 @@ export function drawTurntable(canvas, d, color, hand) {
   g.shadowColor = 'transparent';
   g.fillStyle = '#101014'; g.beginPath(); g.arc(0, 0, 9 * k, 0, Math.PI * 2); g.fill();                     // pivot cap
   g.strokeStyle = '#8a8a96'; g.lineWidth = 1.5 * k; g.stroke();
-  // headshell: angled in a little, as on an S-shaped arm, with a finger lift and a stripe in the deck colour
-  g.translate(len - 12 * k, 0); g.rotate(0.38);
+  // headshell: it ends in a point, and the tip of that point is the stylus: the spot that reads the record, where a cue
+  // sticker passes under it. The finger lift is a short dark handle on the outer side, away from the tip.
   if (held || over) { g.shadowColor = color; g.shadowBlur = (held ? 14 : 8) * k; }
-  g.fillStyle = '#1b1b21'; g.beginPath(); g.roundRect(-6 * k, -8 * k, 30 * k, 16 * k, 3 * k); g.fill();
+  g.fillStyle = '#1b1b21';
+  g.beginPath(); g.moveTo(-30 * k + len, -8 * k); g.lineTo(-10 * k + len, -8 * k); g.lineTo(len, 0); g.lineTo(-10 * k + len, 8 * k); g.lineTo(-30 * k + len, 8 * k); g.closePath(); g.fill();
   g.shadowColor = 'transparent';
   g.strokeStyle = '#5c5c68'; g.lineWidth = 1; g.stroke();
-  g.fillStyle = t ? color : '#55546a'; g.fillRect(14 * k, -8 * k, 3 * k, 16 * k);
-  g.strokeStyle = '#c8c8d2'; g.lineWidth = 2 * k; g.lineCap = 'round'; g.beginPath(); g.moveTo(20 * k, -8 * k); g.lineTo(27 * k, -17 * k); g.stroke(); // finger lift
+  g.fillStyle = t ? color : '#55546a'; g.fillRect(len - 17 * k, -8 * k, 3 * k, 16 * k);
+  g.strokeStyle = '#3c3c46'; g.lineWidth = 4 * k; g.lineCap = 'round'; g.beginPath(); g.moveTo(len - 24 * k, -8 * k); g.lineTo(len - 24 * k, -15 * k); g.stroke(); // finger lift
+  g.fillStyle = '#ffffff'; g.shadowColor = '#ffffff'; g.shadowBlur = 5 * k; g.beginPath(); g.arc(len, 0, 2 * k, 0, Math.PI * 2); g.fill(); // the stylus
   g.restore();
   g.restore();
 }
