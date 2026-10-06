@@ -16,16 +16,16 @@ const fitted = [$('#scroll'), ...$$('.overview')];
 const canvasRO = new ResizeObserver((entries) => { for (const e of entries) fitCanvas(e.target); });
 for (const c of fitted) { fitCanvas(c); canvasRO.observe(c); }
 // a jog wheel is drawn square inside its box (object-fit: contain), so its backing store follows the shorter side
-function fitJog(c, scale = 1) {
-  const s = Math.floor(Math.min(c.clientWidth, c.clientHeight) * devicePixelRatio * scale);
+function fitJog(c) {
+  const s = Math.floor(Math.min(c.clientWidth, c.clientHeight) * devicePixelRatio);
   if (s && c.width !== s) c.width = c.height = s;
 }
 const jogs = $$('.jogwheel');
 // resized once the layout settles (dragging the divider changes the box every frame), not on every step
 let jogFit = 0;
-const jogRO = new ResizeObserver(() => { clearTimeout(jogFit); jogFit = setTimeout(() => jogs.forEach((c) => c.classList.contains('held') || fitJog(c)), 120); });
+const jogRO = new ResizeObserver(() => { clearTimeout(jogFit); jogFit = setTimeout(() => jogs.forEach(fitJog), 120); });
 for (const c of jogs) { fitJog(c); jogRO.observe(c); }
-window.addEventListener('resize', () => { fitted.forEach(fitCanvas); jogs.forEach((c) => c.classList.contains('held') || fitJog(c)); }); // browser zoom changes devicePixelRatio, not the CSS box
+window.addEventListener('resize', () => { fitted.forEach(fitCanvas); jogs.forEach(fitJog); }); // browser zoom changes devicePixelRatio, not the CSS box
 let fontsEpoch = 0; // cached layers with text are rebuilt once the web fonts arrive
 document.fonts?.addEventListener('loadingdone', () => fontsEpoch++);
 const peakMaxes = new WeakMap();
@@ -295,19 +295,9 @@ export function drawJog(canvas, d, color) {
 // drag the outer ring = nudge (pitch bend, settles back on release)
 export function wireJog(canvas, d) {
   let drag = null;
-  // the wheel is the square in the middle of the box; a drag keeps the centre it started with, so growing the
-  // wheel under the hand does not change the angle
+  // the wheel is the square in the middle of the box; a drag keeps the centre it started with
   const centre = () => { const r = canvas.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, half: Math.min(r.width, r.height) / 2 }; };
   const geo = (e, c = drag?.c || centre()) => ({ a: Math.atan2(e.clientY - c.y, e.clientX - c.x), rr: Math.hypot(e.clientX - c.x, e.clientY - c.y) / c.half });
-  const deckEl = canvas.closest('.deck'), GROW = 1.5;
-  const grow = (c) => {
-    if (!ui.jogGrowOnGrab || deckEl.classList.contains('jog-large')) return;
-    const half = c.half * GROW, shift = (at, size) => Math.max(half - at, 0) + Math.min(size - half - at, 0); // back inside the viewport
-    canvas.style.setProperty('--gx', `${shift(c.x, innerWidth)}px`); canvas.style.setProperty('--gy', `${shift(c.y, innerHeight)}px`);
-    canvas.classList.add('held');
-    fitJog(canvas, GROW);
-  };
-  const shrink = () => { if (canvas.classList.contains('held')) { canvas.classList.remove('held'); fitJog(canvas); } };
   canvas.addEventListener('pointerdown', (e) => {
     if (!d.buffer) return;
     const g = geo(e), mode = g.rr > 2 * plateR() ? 'nudge' : 'scratch';
@@ -315,7 +305,6 @@ export function wireJog(canvas, d) {
     if (mode === 'scratch' && !takeHold(d)) return;
     drag = { mode, a: g.a, t: performance.now(), bend: mode === 'nudge' ? bend(d) : null, c: centre() };
     canvas.setPointerCapture(e.pointerId);
-    grow(drag.c);
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!drag) return;
@@ -330,7 +319,6 @@ export function wireJog(canvas, d) {
     if (!drag) return;
     if (drag.mode === 'scratch') letGo(d); else drag.bend.end();
     drag = null;
-    shrink();
   };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
 }

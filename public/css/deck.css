@@ -18,9 +18,6 @@
 .deck > .jog { grid-column: 1; grid-row: 1 / span 4; width: var(--jog); height: var(--jog); align-self: center; position: relative; }
 .jog > .jogwheel { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; cursor: grab; touch-action: none; }
 .jog > .jogwheel:active { cursor: grabbing; }
-/* grow while held: an overlay around the wheel's own centre, nothing else on the deck moves (--gx / --gy keep it on screen) */
-.jog > .jogwheel { transition: transform 0.1s ease-out; }
-.jog > .jogwheel.held { transform: translate(var(--gx, 0px), var(--gy, 0px)) scale(1.5); z-index: 5; }
 /* the size toggle sits on the corner of the box, off the wheel */
 .jogsize { position: absolute; top: 0; right: 0; z-index: 3; width: 22px; height: 22px; padding: 0; border-radius: 6px; background: #0c0c11d0; border: 1px solid var(--line); color: var(--dim); font-size: 13px; line-height: 1; cursor: pointer; }
 .jogsize:hover { color: var(--text); border-color: var(--dim); }

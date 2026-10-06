@@ -7,7 +7,7 @@ sessionStorage.setItem('djClient', clientId);
 export let mixer = null;
 export let isEngine = false;
 export const tracks = new Map(); // id -> full track (with waveform)
-export const ui = { jogRing: 'large', deckLayout: 'stacked', jogLarge: [], jogGrowOnGrab: true, lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} }; // the ui.* settings, kept current by prefs.js
+export const ui = { jogRing: 'large', deckLayout: 'stacked', jogLarge: [], lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} }; // the ui.* settings, kept current by prefs.js
 // what the hand is doing on the waveforms, for the renderer: held = deck -> 'scratch' | 'seek' | 'nudge',
 // preview = deck -> the position a silent seek is showing, strip = the deck whose nudge strip is under the pointer
 export const wave = { held: new Map(), preview: new Map(), strip: null };

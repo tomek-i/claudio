@@ -36,7 +36,7 @@ test('coerce: types and ranges', () => {
   assert.deepEqual(coerce(field('ui.jogLarge'), ['b', 'A', 'B']), { value: ['A', 'B'] });
   assert.deepEqual(coerce(field('ui.jogLarge'), []), { value: [] });
   assert.match(coerce(field('ui.jogLarge'), ['E']).error, /list of decks/);
-  assert.match(coerce(field('ui.jogGrowOnGrab'), 'yes').error, /on or off/);
+  assert.match(coerce(field('ui.waveGuard'), 'yes').error, /on or off/);
   assert.deepEqual(coerce(field('ui.lowerCollapsed'), true), { value: true });
   assert.deepEqual(coerce(field('ui.waveGuard'), false), { value: false });
   assert.match(coerce(field('ui.waveInertia'), 1).error, /on or off/);
@@ -53,7 +53,7 @@ test('coerce: types and ranges', () => {
 });
 
 test('uiSettings: what the DJ page is sent, defaults included', () => {
-  const defaults = { deckLayout: 'stacked', jogRing: 'large', jogLarge: [], jogGrowOnGrab: true, lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
+  const defaults = { deckLayout: 'stacked', jogRing: 'large', jogLarge: [], lowerCollapsed: false, lowerHeight: 0, keysCollapsed: true, meterStyle: 'bar', hotcues: 'pad', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} };
   assert.deepEqual(uiSettings(base()), defaults);
   assert.deepEqual(uiSettings({ ...base(), ui: { jogRing: 'small', deckLayout: 'classic', jogLarge: ['B'], lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 } }),
     { ...defaults, deckLayout: 'classic', jogRing: 'small', jogLarge: ['B'], lowerCollapsed: true, lowerHeight: 260, waveZoom: 300, waveGuard: false, touchHoldMs: 500 });
