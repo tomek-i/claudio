@@ -1,8 +1,7 @@
 {
   "port": 4747,
   "libraryDirs": [
-    "./library",
-    "~/Music"
+    "./library"
   ],
   "downloadDir": "./library/downloads",
   "targetLoudnessDb": -10,

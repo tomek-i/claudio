@@ -115,7 +115,7 @@ ARM). Model weights download to `.dj/models/` on first run. Control: `config.jso
 throttles to one job.
 
 ## Configuration and data
-`config.json`: port, `libraryDirs` (default `./library` and `~/Music`), download folder, loudness target, stems, auto-DJ.
+`config.json`: port, `libraryDirs` (default `./library`; add more on the `/settings` page), download folder, loudness target, stems, auto-DJ.
 Edit it by hand or on the **settings page** at http://localhost:4747/settings, which also has the UI options (the deck layout:
 stacked like a CDJ or the classic side-by-side one, and the size of the jog wheel's outer ring) and marks the settings that need a restart. http://localhost:4747/health shows
 whether each part of the rig (engine, ffmpeg, yt-dlp, stems, disk) is working.

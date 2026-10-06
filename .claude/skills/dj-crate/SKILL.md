@@ -5,7 +5,7 @@ description: "Build and search the DJ Claude library: download tracks, albums or
 
 # The crate
 
-The crate is the music library. Every audio file in the library folders is scanned and analysed automatically. The folders are `library/` and `~/Music` by default, set by `libraryDirs` in `config.json`. Analysis covers BPM and beat grid, key as a Camelot code, loudness, energy from 1 to 10, intro, breakdowns, drops and outro. Downloads land in `library/downloads/` and are analysed as soon as they finish.
+The crate is the music library. Every audio file in the library folders is scanned and analysed automatically. The only folder is `library/` by default, set by `libraryDirs` in `config.json`. Analysis covers BPM and beat grid, key as a Camelot code, loudness, energy from 1 to 10, intro, breakdowns, drops and outro. Downloads land in `library/downloads/` and are analysed as soon as they finish.
 
 In this skill `dj` is short for `node dj.mjs`, run from the project root. `<id>` and `<trackId>` are a track's library id, shown by `dj library`.
 
@@ -61,7 +61,7 @@ If the analysed BPM is half or double the real tempo, or the key is wrong, use t
 
 - To add local files, copy them into `library/`, then run `node dj.mjs scan`.
 - Audio files can also be dropped onto the page or picked with its FILES button. They are copied into the `uploads` folder of the first library folder and analysed.
-- To use other folders, edit `libraryDirs` in `config.json` and restart the server.
+- To use other folders, add them under "Music folders" on the `/settings` page (or edit `libraryDirs` in `config.json`) and restart the server.
 - Changed files are re-analysed automatically. To force a full redo, run `node dj.mjs scan --force`.
 
 ## Deeper analysis
