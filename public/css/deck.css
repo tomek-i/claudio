@@ -148,7 +148,7 @@ body[data-layout="stacked"] .deck:not(.compact) .jumps { grid-row: 5; grid-colum
 body[data-layout="stacked"] .deck:not(.compact) > .jog { grid-column: 2; grid-row: 6 / 10; width: auto; height: auto; min-width: 170px; min-height: 170px; align-self: stretch; }
 /* large: the wheel claims its height instead of waiting for leftovers (the lower row gives way): as much as the
    page can give without scrolling, up to twice the normal size */
-body[data-layout="stacked"] .deck.jog-large:not(.compact) > .jog { min-height: clamp(170px, 100vh - 850px, 340px); }
+body[data-layout="stacked"] .deck.jog-large:not(.compact) > .jog { min-height: clamp(170px, 100vh - 1000px, 340px); }
 body[data-layout="stacked"] .deck:not(.compact) .slip { grid-column: 1; grid-row: 6; }
 body[data-layout="stacked"] .deck:not(.compact) .cue { grid-column: 1; grid-row: 9; }
 body[data-layout="stacked"] .deck:not(.compact) .play { grid-column: 1; grid-row: 10; min-width: 0; }

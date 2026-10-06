@@ -7,7 +7,7 @@ import { hint, onBindings } from './bindings.js';
 // ui.lowerCollapsed and ui.lowerHeight (0 = automatic) hold the saved state. The bar above the row is the divider:
 // drag it to resize, double-click for the automatic height, and collapsed it carries the summary (track count,
 // downloads, the latest booth line). `peek` shows the row without saving that, for when it opens by itself.
-const MIN = 140, SNAP = 60, STEP = 24;
+const MIN = 300, SNAP = 60, STEP = 24; // MIN is the row's automatic minimum in crate.css: the page scrolls before the crate gets shorter
 const bar = $('#lowerBar'), row = $('#lower'), toggle = $('#lowerToggle');
 const maxHeight = () => Math.round(innerHeight * 0.6);
 const narrow = () => matchMedia('(max-width: 1100px)').matches; // the page scrolls there: nothing to resize against
@@ -23,11 +23,6 @@ function applyLower() {
   document.body.classList.toggle('lower-sized', sized);
   row.style.flex = sized ? `0 0 ${Math.max(MIN, Math.min(maxHeight(), height))}px` : '';
   row.style.minHeight = sized ? '0' : '';
-  if (sized) {
-    // taller than the page can give without scrolling (the rig has a minimum height): hand the overflow back
-    const over = document.body.scrollHeight - document.body.clientHeight;
-    if (over > 0) row.style.flex = `0 0 ${Math.max(MIN, row.offsetHeight - over)}px`;
-  }
   toggle.setAttribute('aria-expanded', String(!collapsed));
   toggle.textContent = collapsed ? '▴' : '▾';
   const k = hint('lower.toggle');
@@ -51,15 +46,15 @@ $('#lbCrate').onclick = $('#lbFeed').onclick = () => toggleLower(false);
 // ---- the divider
 let drag = null;
 bar.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('button') || narrow()) return;
-  drag = { y: e.clientY, moved: false };
+  if (e.target.closest('button') || narrow() || document.body.classList.contains('lower-max')) return;
+  drag = { y: e.clientY, h: row.offsetHeight, moved: false }; // from where the row is now: the page may be scrolled
   bar.setPointerCapture(e.pointerId);
 });
 bar.addEventListener('pointermove', (e) => {
   if (!drag) return;
   if (!drag.moved && Math.abs(e.clientY - drag.y) < 4) return;
   drag.moved = true;
-  const h = innerHeight - e.clientY - bar.offsetHeight / 2; // the row is the last thing on the page
+  const h = drag.h + drag.y - e.clientY;
   preview = h < MIN - SNAP ? { collapsed: true, height: ui.lowerHeight } : { collapsed: false, height: Math.max(MIN, Math.min(maxHeight(), Math.round(h))) };
   applyLower();
 });
@@ -71,13 +66,13 @@ const drop = () => {
   saveUi(p.collapsed ? { lowerCollapsed: true } : { lowerCollapsed: false, lowerHeight: Math.min(p.height, row.offsetHeight) });
 };
 bar.addEventListener('pointerup', drop); bar.addEventListener('pointercancel', drop);
-bar.addEventListener('dblclick', (e) => { if (!e.target.closest('button')) { peek = false; last = false; saveUi({ lowerCollapsed: false, lowerHeight: 0 }); } });
+bar.addEventListener('dblclick', (e) => { if (!e.target.closest('button') && !document.body.classList.contains('lower-max')) { peek = false; last = false; saveUi({ lowerCollapsed: false, lowerHeight: 0 }); } });
 bar.addEventListener('keydown', (e) => {
   if (e.target !== bar) return;
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLower(); return; }
   if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
   e.preventDefault();
-  if (narrow()) return;
+  if (narrow() || document.body.classList.contains('lower-max')) return;
   if (document.body.classList.contains('lower-collapsed')) { if (e.key === 'ArrowUp') toggleLower(false); return; }
   const h = row.offsetHeight + (e.key === 'ArrowUp' ? STEP : -STEP);
   if (h < MIN) toggleLower(true); else saveUi({ lowerHeight: Math.min(maxHeight(), h) });
