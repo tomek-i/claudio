@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Library, AUDIO_EXT, trackId } from './lib/library.mjs';
 import { Downloader } from './lib/downloader.mjs';
 import { StemQueue, STEMS } from './lib/stems.mjs';
+import { VisualsHub, lanAddress } from './lib/visuals.mjs';
 import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
@@ -164,6 +165,12 @@ function startStarter() {
   });
 }
 
+// the /visuals page: frames (and, for those who ask, audio) from the engine tab out to viewers; the engine only
+// measures while someone watches and only encodes while someone listens
+const visuals = new VisualsHub({ library, audio: config.visuals?.audio !== false, onAudience: (a) => broadcast('visuals', a) });
+// other devices need this machine's address on the network, not localhost
+const visualsUrl = () => `http://${lanAddress() || 'localhost'}:${PORT}/visuals`;
+
 function applyLiveSettings() {
   Object.assign(stemCfg, config.stems || {});
   stems.enabled = stemCfg.enabled !== false;
@@ -172,6 +179,7 @@ function applyLiveSettings() {
   stems.minFreeGB = stemCfg.minFreeGB;
   stems.setDevice(stemCfg.device);
   stems.pump();
+  visuals.setAudio(config.visuals?.audio !== false);
   library.targetLoudnessDb = config.targetLoudnessDb;
   if (sequencer && config.autoDJ) {
     sequencer.auto.enabled = config.autoDJ.enabled !== false;
@@ -535,7 +543,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/events') {
       const id = q.client || `c${Date.now()}`;
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
-      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, recording: !!session, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
+      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, recording: !!session, visuals: { viewers: visuals.viewers.size, listeners: visuals.listeners.size }, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
       clients.set(id, res);
       const ka = setInterval(() => res.write(': ka\n\n'), 15000);
       req.on('close', () => {
@@ -552,7 +560,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/state' && req.method === 'POST') {
       const b = await readBody(req);
-      if (b.client === engineId) { engineState = b.state; engineStateAt = Date.now(); trackHistory(b.state); }
+      if (b.client === engineId) { engineState = b.state; engineStateAt = Date.now(); trackHistory(b.state); if (visuals.viewers.size) visuals.setState(liveState()); }
       return send(res, 200, { ok: true });
     }
     if (p === '/api/ack' && req.method === 'POST') {
@@ -561,6 +569,41 @@ const server = http.createServer(async (req, res) => {
       pendingCmds.get(b.id)?.(b); pendingCmds.delete(b.id);
       return send(res, 200, { ok: true });
     }
+
+    // --- visuals: viewers read one event stream (hello, frames, scene, mode); only the engine tab posts frames
+    if (p === '/api/visuals/events') {
+      const id = `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
+      visuals.setState(liveState());
+      visuals.attach(id, res);
+      const ka = setInterval(() => res.write(': ka\n\n'), 15000);
+      req.on('close', () => { clearInterval(ka); visuals.detach(id); });
+      return;
+    }
+    if (p === '/api/visuals/frames' && req.method === 'POST') {
+      const b = await readBody(req);
+      return send(res, 200, { ok: b.client === engineId, frames: b.client === engineId ? visuals.push(b.frames) : 0 });
+    }
+    if (p === '/api/visuals/mode' && req.method === 'POST') {
+      const r = visuals.setMode((await readBody(req)).mode);
+      if (r.ok) addLog('action', `Visuals: ${r.mode}${r.viewers ? '' : ' (no page is open)'}`);
+      return send(res, r.ok ? 200 : 400, r);
+    }
+    // audio, for viewers who turn it on: one long WebM response each (answered once there is a place to start it);
+    // the engine tab posts the encoded chunks in order
+    if (p === '/api/visuals/audio' && req.method === 'POST') {
+      if (q.client !== engineId) { req.resume(); return send(res, 200, { ok: false }); }
+      const chunks = []; for await (const c of req) chunks.push(c);
+      return send(res, 200, { ok: visuals.pushAudio({ stream: q.stream, t0: q.t0 }, Buffer.concat(chunks)) });
+    }
+    if (p === '/api/visuals/audio') {
+      const id = `l${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      if (!visuals.listen(id, res)) return send(res, 403, { ok: false, error: 'audio is switched off (the visuals.audio setting)' });
+      req.on('close', () => visuals.unlisten(id));
+      return;
+    }
+    if (p === '/api/visuals') return send(res, 200, { ...visuals.status(), url: visualsUrl() });
+    if (p === '/visuals') return serveFile(req, res, path.join(ROOT, 'public', 'visuals.html'));
 
     // --- control (CLI / Claude)
     if (p === '/api/state') return send(res, 200, liveState());
@@ -753,7 +796,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, buildHealth({
         port: PORT, uptimeSec: process.uptime(), engine: liveState().engine, library: library.status(),
         dirs: library.dirs.map((dir) => ({ dir, exists: fs.existsSync(dir) })),
-        ffmpeg, ffprobe, ytdlp: fs.existsSync(downloader.localBin) ? downloader.localBin : ytdlpOnPath, jobs: downloader.list(), stems: st, freeGB: st.freeGB, minFreeGB: stemCfg.minFreeGB,
+        ffmpeg, ffprobe, ytdlp: fs.existsSync(downloader.localBin) ? downloader.localBin : ytdlpOnPath, jobs: downloader.list(), stems: st, freeGB: st.freeGB, minFreeGB: stemCfg.minFreeGB, visuals: visuals.status(),
       }));
     }
     if (p === '/health') return serveFile(req, res, path.join(ROOT, 'public', 'health.html'));
@@ -830,7 +873,7 @@ server.listen(PORT, () => {
   const s = library.scan();
   // the banner's equaliser follows the live deck: how far into its current beat it is (0..1), or null when nothing plays
   const beat = () => { const st = liveState(), d = st.decks?.[st.live]; return d?.playing && d.bpm && d.firstBeat != null ? ((((d.position - d.firstBeat) / (60 / d.bpm)) % 1) + 1) % 1 : null; };
-  banner({ url: `http://localhost:${PORT}`, dirs: library.dirs, tracks: s.total, queued: s.queued, live: config.banner?.loop === false ? null : beat });
+  banner({ url: `http://localhost:${PORT}`, visuals: visualsUrl(), dirs: library.dirs, tracks: s.total, queued: s.queued, live: config.banner?.loop === false ? null : beat });
   addLog('system', `Server started. ${s.total} tracks in library, ${s.queued} to analyse.`);
   if (stemCfg.auto !== false) {
     if (!stems.available) addLog('system', '⚠ Stem separation unavailable: no .venv python with demucs (see README)');

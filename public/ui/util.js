@@ -3,10 +3,14 @@
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 export const mmss = (s) => (s == null || isNaN(s) ? '0:00' : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`);
-export const camelotColor = (c) => {
+// the colour of a Camelot key as [hue 0..360, saturation %, lightness %]; null for no key. The /visuals page takes its hue from this too.
+export const camelotHsl = (c) => {
   const m = /^(\d+)([AB])$/.exec(c || '');
-  if (!m) return '#666';
-  return `hsl(${((Number(m[1]) - 1) * 30 + 90) % 360} ${m[2] === 'B' ? 75 : 65}% ${m[2] === 'B' ? 68 : 58}%)`;
+  return m ? [((Number(m[1]) - 1) * 30 + 90) % 360, m[2] === 'B' ? 75 : 65, m[2] === 'B' ? 68 : 58] : null;
+};
+export const camelotColor = (c) => {
+  const x = camelotHsl(c);
+  return x ? `hsl(${x[0]} ${x[1]}% ${x[2]}%)` : '#666';
 };
 export const compatible = (a, b) => {
   const x = /^(\d+)([AB])$/.exec(a || ''), y = /^(\d+)([AB])$/.exec(b || '');

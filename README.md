@@ -82,6 +82,28 @@ choreography per beat; `dj plan add` schedules any command for a future bar, mix
 The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.
 
+## Visuals for a second screen
+`http://<this machine>:4747/visuals` is a full-screen visualiser that reacts to the live set: for a projector behind
+the decks, a second monitor, or someone's phone. The server prints the address with this machine's network address
+when it starts, and `dj visuals` shows it again. The page only watches; it has no deck controls.
+
+- **Modes**: spectrum tunnel, particle field, reactive terrain, kaleidoscope. **Auto** (the default) moves between
+  them on musical boundaries (a new track, a breakdown, the start of a phrase) with a crossfade several bars long.
+  Pick one on the page (move the pointer for the overlay, or keys `1`-`4`, `A` for auto), by address
+  (`/visuals?mode=tunnel`), or from the booth for every open page: `dj visuals <mode|auto>`.
+- **Colour follows the track**: the hue is the key's colour as on the deck's key chip, the accent is the deck colour,
+  and both move from one track to the next as the mix does. Energy and structure set how intense it is.
+- **Sound, if wanted**: the page is silent until a viewer turns the sound on (the Sound button, `S`, or
+  `/visuals?audio=1` and one click). The viewer then hears the set a second or two behind the decks, and the picture
+  is locked to what that viewer hears. With the sound off the picture runs as close to live as it can, for a screen
+  in the room; `/visuals?offset=<ms>` or the `←` `→` keys shift it for a slow projector. The `visuals.audio` setting
+  switches the sound off for everyone.
+- **Needs WebGPU** (a current Chrome or Edge). It is drawn with three.js, vendored in `public/vendor/three/`; there is
+  no WebGL fallback, and a browser without WebGPU gets a message saying so.
+
+The engine tab measures the sound and encodes audio only while someone is watching or listening. `/health` shows both
+streams.
+
 ## Making a video of a set
 ```bash
 node produce/record-browser.mjs                 # before the set: records the DJ table page (Playwright), becomes the sound system

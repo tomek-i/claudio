@@ -1,0 +1,30 @@
+/* The /visuals page: a full-screen canvas and a small overlay that hides when the pointer rests. */
+html, body.visuals { margin: 0; height: 100%; background: #000; color: #e9e6df; overflow: hidden; font: 14px/1.4 system-ui, "Segoe UI", sans-serif; }
+#stage, #stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+body.visuals.resting { cursor: none; }
+
+#notice { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; padding: 24px; }
+#notice[hidden] { display: none; }
+#notice h1 { font-size: 20px; letter-spacing: 0.12em; margin: 0 0 12px; color: #ff7a45; }
+#notice p { max-width: 520px; margin: 0; font-size: 16px; color: #cfcbc2; }
+
+#overlay { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 12px 14px; border-radius: 12px;
+  background: rgba(12, 12, 14, 0.78); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px);
+  display: grid; gap: 8px; justify-items: center; max-width: calc(100vw - 32px); transition: opacity 0.4s; }
+#overlay.hide { opacity: 0; pointer-events: none; }
+#overlay .modes { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#overlay button { font: inherit; color: #e9e6df; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+#overlay button:hover { background: rgba(255, 255, 255, 0.14); }
+#overlay button:focus-visible { outline: 2px solid #36d6e7; outline-offset: 2px; }
+#overlay button[aria-pressed="true"] { background: #ff7a45; border-color: #ff7a45; color: #111; }
+#overlay button.showing:not([aria-pressed="true"]) { border-color: #36d6e7; }
+#overlay .sound { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; font-size: 13px; color: #cfcbc2; }
+#overlay .sound[hidden], #overlay .sound [hidden] { display: none; }
+#overlay .sound label { display: inline-flex; gap: 6px; align-items: center; }
+#overlay .sound input[type=range] { width: 110px; accent-color: #ff7a45; }
+#soundAsk { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); font: inherit; font-size: 18px; padding: 14px 22px; border-radius: 12px; cursor: pointer;
+  color: #111; background: #ff7a45; border: 0; }
+#soundAsk[hidden] { display: none; }
+#soundAsk:focus-visible { outline: 2px solid #36d6e7; outline-offset: 3px; }
+#overlay .line { display: flex; gap: 14px; font-size: 13px; color: #cfcbc2; }
+#overlay .keys { font-size: 12px; color: #a8a49b; }

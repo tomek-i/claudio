@@ -258,6 +258,7 @@ SET       plan add '<json>'|show|clear   queue add <id…>|show|clear   autodj o
 TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status]   vocals <id>
           hotcue <deck> [set <n> [bar:N]] | <n>     savedloop <deck> [set <name> <beats>] | <name>
 KEYS      keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (see cli-ext/keys.mjs)
+VISUALS   visuals [<mode>|auto]   the /visuals page for a second screen: who is watching, or change the mode on every open page
 PAGE      crate hide|show|toggle   hide or show the bottom panel (library, sampler, booth) on every open page (e.g. before recording)
 ENGINE    keylock, key, stem, xfassign, sample(r), deckfx, scratch: see  dj help-engine
 GLOBAL    --why "reason"   shows your reasoning in the booth feed      --json   raw output`);
