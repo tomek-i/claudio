@@ -1,0 +1,83 @@
+// The desktop app's start-up, with the real Electron: the start-up window first, then the server, the checks and the
+// audio engine, then the DJ page in its place; and the start-up window saying so when the server cannot start.
+// The app runs on a scratch project folder (DJ_ROOT: its own config, port and generated library) and a scratch
+// Electron profile, so it never meets the rig on this machine. Skipped when Electron is not installed (it is the
+// desktop app's own dependency: `pnpm install`). Ports 4859-4860. desktop-driver.mjs is the part inside Electron.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { REAL, scratch, sleep } from './server-harness.mjs';
+
+let electron = null;
+try { electron = createRequire(path.join(REAL, 'apps', 'desktop', 'package.json'))('electron'); } catch { /* not installed, or its binary is not downloaded */ }
+// DESKTOP_TEST_REQUIRED (the CI job that exists to run this): a missing Electron is a failure there, not a skip
+if (!electron && process.env.DESKTOP_TEST_REQUIRED) throw new Error('Electron is not installed, and DESKTOP_TEST_REQUIRED is set');
+const skip = !electron && 'Electron is not installed (pnpm install)';
+
+// one run of the app, to its end: the driver's events in order, the exit code, and what the app printed
+function run(sc, env = {}) {
+  return new Promise((resolve) => {
+    // a Linux CI machine has no user namespace sandbox to give
+    const args = [...(process.platform === 'linux' && process.env.CI ? ['--no-sandbox'] : []), path.join(REAL, 'test', 'desktop-driver.mjs'), path.join(REAL, 'apps', 'desktop', 'main.mjs')];
+    const child = spawn(electron, args, {
+      cwd: sc.dir, windowsHide: false,
+      env: { ...process.env, DJ_ROOT: sc.dir, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1', DJ_BANNER_LOOP: '0', DRIVE_USERDATA: path.join(sc.dir, 'electron-profile'), ...env },
+    });
+    let out = '';
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (out += d));
+    child.on('close', (code) => resolve({ code, out, events: out.split(/\r?\n/).filter((l) => l.startsWith('@@')).map((l) => JSON.parse(l.slice(2))) }));
+  });
+}
+const up = async (sc) => { try { return (await fetch(sc.base + '/api/state', { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; } };
+const stopped = async (sc) => { for (let i = 0; i < 50; i++) { if (!(await up(sc))) return true; await sleep(100); } return false; };
+
+test('start-up: the start-up window first, then the DJ page with a live engine; the server stops with the app', { skip, timeout: 90000 }, async () => {
+  const sc = scratch('desktop', { port: 4859 });
+  const r = await run(sc);
+  const ev = r.events, at = (f) => ev.findIndex(f);
+  assert.equal(r.code, 0, r.out);
+
+  // the start-up window is on screen before the DJ page exists, and goes when that is shown
+  const splashShown = at((e) => e.ev === 'win' && e.kind === 'splash' && e.visible);
+  const mainFirst = at((e) => e.ev === 'win' && e.kind === 'main');
+  const mainShown = at((e) => e.ev === 'win' && e.kind === 'main' && e.visible);
+  assert.ok(splashShown >= 0 && mainFirst > splashShown, r.out);
+  assert.equal(ev[mainFirst].visible, false, 'the DJ page loads hidden behind the start-up window');
+  assert.ok(mainShown > mainFirst, r.out);
+  assert.ok(at((e) => e.ev === 'gone' && e.kind === 'splash') > mainFirst, r.out);
+
+  // the steps it listed ended well: the server, the library, the two tools. (The engine's line turns to ok as the
+  // window closes, too briefly to be read from here: the engine itself is checked below.)
+  const steps = ev.filter((e) => e.ev === 'splash').at(-1).steps;
+  for (const id of ['server', 'library', 'ffmpeg', 'ffprobe']) assert.equal(steps[id], 'ok', `${id}: ${JSON.stringify(steps)}`);
+  assert.ok(steps.engine, JSON.stringify(steps));
+  assert.equal(ev.filter((e) => e.ev === 'splash').at(-1).failed, false);
+
+  // the DJ page is the sound system by the time it is shown
+  const state = ev.find((e) => e.ev === 'state');
+  assert.equal(state.engine?.connected, true, JSON.stringify(state));
+  assert.equal(state.engine?.started, true, JSON.stringify(state));
+  // (a Linux CI screen has no window manager to maximise anything)
+  if (process.platform !== 'linux') assert.equal(ev[mainShown].maximized, true, 'the first start is maximised');
+
+  assert.ok(await stopped(sc), 'the server the app started stops with it');
+});
+
+test('start-up: a port that something else holds is reported in the start-up window, and the app exits with 1', { skip, timeout: 90000 }, async () => {
+  const sc = scratch('desktop-taken', { port: 4860 });
+  const other = http.createServer((req, res) => { res.statusCode = 404; res.end(); });
+  await new Promise((r) => other.listen(sc.port, r));
+  try {
+    const r = await run(sc);
+    const last = r.events.filter((e) => e.ev === 'splash').at(-1);
+    assert.equal(last?.steps.server, 'fail', r.out);
+    assert.equal(last.failed, true);
+    assert.ok(!r.events.some((e) => e.kind === 'main'), 'no DJ page is opened');
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /the server did not start on port 4860/);
+  } finally { other.closeAllConnections?.(); other.close(); }
+});
