@@ -1,0 +1,4 @@
+# Browser mode needs no install. Only the desktop app has dependencies (Electron), as its own package.
+# Electron fetches its own binary the first time it is run (about 370 MB).
+packages:
+  - apps/desktop

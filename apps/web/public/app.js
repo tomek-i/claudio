@@ -134,3 +134,7 @@ function frame() {
 
 loadLibrary();
 refreshHistory();
+
+// the desktop app (apps/desktop) loads the page with ?desktop: it may start sound without a click, so the engine
+// starts by itself
+if (new URLSearchParams(location.search).has('desktop')) $('#startBtn').click();

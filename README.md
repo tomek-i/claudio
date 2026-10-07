@@ -39,6 +39,20 @@ The page can be played by hand too: drag a track from the crate onto a deck (or 
 one to import and load them), drag the big waveform to scratch, hold Alt to move the playhead silently, and use the
 mouse wheel on it to zoom. A playing deck is locked against waveform drags unless you hold Shift or open the lock.
 
+### As a desktop app
+The same server and the same page in a window of their own, instead of a browser tab:
+```bash
+pnpm install     # once: Electron, for the desktop app only (it fetches its own binary, about 370 MB, on first run)
+pnpm desktop
+```
+- **No Start engine click**: the app may play sound without one, so the window is the sound system as soon as it opens.
+- **No stale engine**: the window is not slowed down when it is hidden or minimised, as a background browser tab is.
+- **One thing to launch**: the server starts with the app and stops with it. If a server is already running
+  (`node dj.mjs start`), the app uses that one and leaves it running when it quits.
+
+Claude Code and `node dj.mjs …` work the same in both modes: they talk to the server. Browser mode needs no install;
+only `apps/desktop/` has dependencies.
+
 ## How it works
 | Piece | What it does |
 |---|---|
