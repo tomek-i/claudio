@@ -247,6 +247,9 @@
     <p class="hint">Then in Claude Code, try <code>/dj-set</code> or just ask: “play me a 30 minute hardstyle set”.</p>
   </div>
 </div>
+<!-- the desktop app (?desktop) may play sound without a click, so the dialog is never shown there: the engine starts
+     by itself (app.js). It still appears if that fails, or when another window takes the engine over. -->
+<script>if (new URLSearchParams(location.search).has('desktop')) document.getElementById('startOverlay').classList.add('hide');</script>
 
 <div class="overlay hide" id="shortcuts" role="dialog" aria-label="Keyboard shortcuts">
   <div class="card shortcuts">

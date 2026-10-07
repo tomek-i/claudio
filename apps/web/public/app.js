@@ -22,6 +22,7 @@ $('#startBtn').onclick = async () => {
     else await mixer.ctx.resume();
   } catch (err) {
     $('#overlayMsg').textContent = `Audio engine failed to start: ${err.message}`;
+    $('#startOverlay').classList.remove('hide'); // the desktop app hides the dialog from the start: show it for the error
     setMixer(null);
     return;
   }
