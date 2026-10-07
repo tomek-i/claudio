@@ -12,7 +12,7 @@ import os from 'node:os';
 import { spawn, execFile, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { TRACKS, fixtureDir } from './fixtures.mjs';
-import { trackId } from '../lib/library.mjs';
+import { trackId } from '../apps/server/lib/library.mjs';
 
 export const REAL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRATCH_BASE = process.env.DJ_SCRATCH || path.join(os.tmpdir(), 'dj-claude-srvtest');
@@ -21,8 +21,9 @@ export function scratch(name, { port, config = {}, mutateLibrary } = {}) {
   const dir = path.join(SCRATCH_BASE, name);
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, '.dj'), { recursive: true });
-  for (const f of ['server.mjs', 'dj.mjs', 'package.json']) fs.copyFileSync(path.join(REAL, f), path.join(dir, f));
-  for (const d of ['lib', 'cli-ext']) fs.cpSync(path.join(REAL, d), path.join(dir, d), { recursive: true });
+  // the same layout as the project, without the page (the server tests never load it)
+  for (const f of ['dj.mjs', 'package.json']) fs.copyFileSync(path.join(REAL, f), path.join(dir, f));
+  for (const d of ['apps/server', 'apps/cli']) fs.cpSync(path.join(REAL, d), path.join(dir, d), { recursive: true });
   const real = JSON.parse(fs.readFileSync(path.join(REAL, 'config.json'), 'utf8'));
   const cfg = {
     ...real, port,
@@ -53,7 +54,7 @@ export function scratch(name, { port, config = {}, mutateLibrary } = {}) {
 export async function startServer(sc) {
   const logFile = path.join(sc.dir, '.dj', 'server.log');
   const fd = fs.openSync(logFile, 'a');
-  const child = spawn(process.execPath, [path.join(sc.dir, 'server.mjs')], { cwd: sc.dir, env: { ...process.env, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1' }, stdio: ['ignore', fd, fd], windowsHide: true });
+  const child = spawn(process.execPath, [path.join(sc.dir, 'apps', 'server', 'server.mjs')], { cwd: sc.dir, env: { ...process.env, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1' }, stdio: ['ignore', fd, fd], windowsHide: true });
   for (let i = 0; i < 80; i++) {
     await sleep(150);
     try { await fetch(sc.base + '/api/state'); return { child, stop: () => { try { child.kill(); } catch { /* gone */ } } }; } catch { /* starting */ }

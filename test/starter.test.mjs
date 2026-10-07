@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { downloadStarter, starterTracks } from '../lib/starter.mjs';
+import { downloadStarter, starterTracks } from '../apps/server/lib/starter.mjs';
 
 const body = (s) => Buffer.from(s);
 const track = (name, data) => ({ file: `${name}.mp3`, source: `http://page/${name}`, url: `http://files/${name}`, bytes: data.length, sha256: crypto.createHash('sha256').update(data).digest('hex') });

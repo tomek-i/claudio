@@ -1,7 +1,7 @@
 // Settings schema: values are validated against the schema, applied all-or-nothing, and unknown config keys survive.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FIELDS, describe, coerce, applyPatch, uiSettings } from '../lib/settings.mjs';
+import { FIELDS, describe, coerce, applyPatch, uiSettings } from '../apps/server/lib/settings.mjs';
 
 const field = (key) => FIELDS.find((f) => f.key === key);
 const base = () => ({ port: 4747, libraryDirs: ['./library'], stems: { enabled: true, threads: 2, model: 'htdemucs' }, custom: { keep: 'me' } });
@@ -85,7 +85,7 @@ test('applyPatch: one bad value rejects the whole patch; unknown keys are refuse
 });
 
 test('keys section: unknown actions, bad keys and duplicates are refused; only overrides are stored', async () => {
-  const { ACTIONS, effective, validateBindings, bindingOf, parseBinding } = await import('../lib/keymap.mjs');
+  const { ACTIONS, effective, validateBindings, bindingOf, parseBinding } = await import('../apps/server/lib/keymap.mjs');
   const keys = field('keys.bindings');
   assert.deepEqual(coerce(keys, {}), { value: {} });
   // a default written out is not an override; a changed key and an unbound action are
@@ -121,11 +121,11 @@ test('keys section: unknown actions, bad keys and duplicates are refused; only o
   assert.deepEqual(cfg.keys.bindings, { 'loop.half': 'key:Comma' }, 'a refused set changes nothing');
 });
 
-// ---------------------------------------------------------------- where things are (lib/paths.mjs)
+// ---------------------------------------------------------------- where things are (apps/server/lib/paths.mjs)
 import fsP from 'node:fs';
 import osP from 'node:os';
 import pathP from 'node:path';
-import { findRoot, ROOT, LIB_DIR, PUBLIC_DIR, SERVER_FILE, CLI_FILE, CLI_EXT_DIR, CONFIG_FILE, DJ_DIR } from '../lib/paths.mjs';
+import { findRoot, ROOT, LIB_DIR, PUBLIC_DIR, SERVER_FILE, CLI_FILE, CLI_EXT_DIR, CONFIG_FILE, DJ_DIR } from '../apps/server/lib/paths.mjs';
 
 test('paths: the project root is the first folder upwards with a config.json, or DJ_ROOT; the code is found from the code', () => {
   const tmp = fsP.mkdtempSync(pathP.join(osP.tmpdir(), 'djpaths-'));

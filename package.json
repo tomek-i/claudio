@@ -29,7 +29,7 @@
     "dj": "./dj.mjs"
   },
   "scripts": {
-    "start": "node server.mjs",
+    "start": "node apps/server/server.mjs",
     "test": "node --test test/*.test.mjs test/server-*.mjs",
     "scan": "node dj.mjs scan",
     "setup": "node dj.mjs doctor --fix",

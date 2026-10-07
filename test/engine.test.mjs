@@ -1,9 +1,9 @@
-// Integration tests: public/engine.js driven through a Web Audio mock whose worklet nodes run the real DeckVoice.
+// Integration tests: apps/web/public/engine.js driven through a Web Audio mock whose worklet nodes run the real DeckVoice.
 // Run: node --test test/engine.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SR, render, flush, wav, server, ctxLog, MockParam } from './webaudio-mock.mjs';
-const { Mixer, Ctl, STEMS } = await import('../public/engine.js');
+const { Mixer, Ctl, STEMS } = await import('../apps/web/public/engine.js');
 
 const BPM = 128, BEAT = 60 / BPM;
 function addTrack(id, { seconds = 60, bpm = BPM, stems = false, camelot = '8A', freq = 220 } = {}) {

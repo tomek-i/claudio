@@ -9,8 +9,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ANALYSIS_VERSION, STRUCT_VERSION } from '../lib/analyze.mjs';
-import { Library } from '../lib/library.mjs';
+import { ANALYSIS_VERSION, STRUCT_VERSION } from '../apps/server/lib/analyze.mjs';
+import { Library } from '../apps/server/lib/library.mjs';
 
 const FIXTURE_VERSION = 1, SR = 22050;
 

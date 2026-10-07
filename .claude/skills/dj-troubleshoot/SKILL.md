@@ -36,7 +36,7 @@ To recover the engine:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| "Audio engine not connected" or "Engine state is stale" | The browser tab was closed, or Chrome throttled a hidden, silent tab. | Follow the recovery steps above. Afterwards keep the tab in its own window with audio playing. For recordings use `produce/record-browser.mjs`, because its Chromium does not throttle. |
+| "Audio engine not connected" or "Engine state is stale" | The browser tab was closed, or Chrome throttled a hidden, silent tab. | Follow the recovery steps above. Afterwards keep the tab in its own window with audio playing. For recordings use `tools/produce/record-browser.mjs`, because its Chromium does not throttle. |
 | Loads time out, or the engine goes stale during a set | Chrome throttled the hidden tab (see the row above). | Reload the tab, click "Start engine", then load the tracks again. |
 | The Playwright window closed | That window was the engine, so the engine is gone. | Follow the recovery steps above in a normal browser. |
 | Two tabs both show "Start engine" and take the sound from each other | Only one tab is the sound system at a time. | Close the extra tab, or click "Start engine" in the tab where you want the audio. |
@@ -65,7 +65,7 @@ Keep at least 15 GB free and switch off automatic stem separation before a long 
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `dj get` fails with "confirm you're not a bot" | YouTube wants a login. | Export your YouTube cookies in Netscape format to `.dj/youtube-cookies.txt`. `dj get` and `produce/get-sample.mjs` use that file when it exists. Keep the file private. |
+| `dj get` fails with "confirm you're not a bot" | YouTube wants a login. | Export your YouTube cookies in Netscape format to `.dj/youtube-cookies.txt`. `dj get` and `tools/produce/get-sample.mjs` use that file when it exists. Keep the file private. |
 | `n challenge solving failed` | yt-dlp needs a JavaScript runtime. | `dj get` already passes `--js-runtimes node`, so make sure `node` is on PATH. Then update yt-dlp: delete the copy in `bin/` and run `node dj.mjs doctor --fix`, which installs yt-dlp only when it is missing. |
 | A short clip reports "analysis failed" | The clip is too short for BPM analysis. | Keep short samples out of `library/`. The dj-video skill explains where they go in "Samples for the sampler". |
 

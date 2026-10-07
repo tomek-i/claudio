@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { analyzeFile, refineTrack, applyGridEdit } from '../lib/analyze.mjs';
-import { labelSections } from '../lib/sections.mjs';
-import { timeOfBeat, beatOfTime, shiftCamelot, deckEffectiveCamelot } from '../lib/music.mjs';
+import { analyzeFile, refineTrack, applyGridEdit } from '../apps/server/lib/analyze.mjs';
+import { labelSections } from '../apps/server/lib/sections.mjs';
+import { timeOfBeat, beatOfTime, shiftCamelot, deckEffectiveCamelot } from '../apps/server/lib/music.mjs';
 
 const SR = 22050;
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'djgrid-'));

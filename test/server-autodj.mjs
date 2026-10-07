@@ -57,8 +57,8 @@ test('a pending planned mix keeps the auto-DJ out; key clash → filter; big tem
   const clash = sc.lib.tracks.find((t) => Math.abs(t.bpm - 150) < 3 && t.id !== A.id && !['6A', '5A', '7A', '6B', '4A', '8A', '5B', '7B'].includes(t.camelot));
   const far = sc.lib.tracks.find((t) => t.bpm < 125 && t.bpm > 90);
   assert.ok(clash && far);
-  const { Sequencer } = await import('../lib/sequencer.mjs');
-  const { Library } = await import('../lib/library.mjs');
+  const { Sequencer } = await import('../apps/server/lib/sequencer.mjs');
+  const { Library } = await import('../apps/server/lib/library.mjs');
   const lib = new Library({ dirs: [], cacheFile: sc.dir + '/.dj/library.json' });
   const seq = new Sequencer({ library: lib, liveState: () => ({}), history: [], addLog() {}, sessionLog() {}, config: {} });
   const s = { decks: { A: { ...A, trackId: A.id, playing: true, rate: 1, effectiveCamelot: A.camelot }, B: { keylock: true } } };

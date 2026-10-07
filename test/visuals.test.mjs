@@ -2,8 +2,8 @@
 // builds the scene and fans both out.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SpectrumTap, BANDS } from '../public/worklets/visuals-tap.js';
-import { VisualsHub, MODES, cleanFrame, buildScene, lanAddress } from '../lib/visuals.mjs';
+import { SpectrumTap, BANDS } from '../apps/web/public/worklets/visuals-tap.js';
+import { VisualsHub, MODES, cleanFrame, buildScene, lanAddress } from '../apps/server/lib/visuals.mjs';
 
 const SR = 48000;
 function measure(fn, seconds = 0.2) {
@@ -193,7 +193,7 @@ test('lanAddress: a real adapter on a home range before virtual ones; none when 
 
 // ---------------------------------------------------------------- the page's feed (no browser: a stand-in event source)
 globalThis.EventSource = class { addEventListener() {} };
-const { Feed, blendHsl, sectionAt, hslToRgb } = await import('../public/ui/visuals/feed.js');
+const { Feed, blendHsl, sectionAt, hslToRgb } = await import('../apps/web/public/ui/visuals/feed.js');
 const near = (a, b, eps = 0.02) => a.every((x, i) => Math.abs(x - b[i]) <= eps);
 
 test('feed colours: two decks blend along the colour wheel, not through grey; opposite hues go to the louder', () => {
@@ -247,7 +247,7 @@ test('feed: reads between two frames, runs the beat on past the newest one, and 
 });
 
 // ---------------------------------------------------------------- lining the sound up with the frames
-const { Sync } = await import('../public/ui/visuals/audio.js');
+const { Sync } = await import('../apps/web/public/ui/visuals/audio.js');
 
 test('sync: finds how far the guessed time is from the truth, follows it as it drifts, and ignores silence', () => {
   // the "music": a loudness curve with a beat and a slower swell; frames carry it on the engine clock
@@ -302,7 +302,7 @@ test('feed: when frames start arriving later than they first did (a hidden engin
 });
 
 // ---------------------------------------------------------------- the morph's quality tiers
-const { pickTier, lowerTier, TIERS, tierBytes } = await import('../public/ui/visuals/morph.js');
+const { pickTier, lowerTier, TIERS, tierBytes } = await import('../apps/web/public/ui/visuals/morph.js');
 
 test('morph tiers: chosen from the adapter, never one whose buffers do not fit, the address can force one', () => {
   const big = { maxStorageBufferBindingSize: 2 ** 31, maxBufferSize: 2 ** 31 };
@@ -325,7 +325,7 @@ test('morph tiers: chosen from the adapter, never one whose buffers do not fit, 
 });
 
 // ---------------------------------------------------------------- low-latency audio: signalling and the session description
-const { musicSdp, opusParams } = await import('../public/ui/visuals/sdp.js');
+const { musicSdp, opusParams } = await import('../apps/web/public/ui/visuals/sdp.js');
 
 test('musicSdp: the Opus line asks for stereo, the bitrate and no DTX, keeping what was there; other codecs are left alone', () => {
   const sdp = ['v=0', 'm=audio 9 UDP/TLS/RTP/SAVPF 111 63 9', 'a=rtpmap:111 opus/48000/2', 'a=rtcp-fb:111 transport-cc', 'a=fmtp:111 minptime=10;useinbandfec=1', 'a=rtpmap:63 red/48000/2', 'a=fmtp:63 111/111', 'a=rtpmap:9 G722/8000', ''].join('\r\n');

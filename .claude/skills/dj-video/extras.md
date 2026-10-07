@@ -15,13 +15,13 @@ bin/yt-dlp.exe -f "bv*[height<=480]+ba/b[height<=480]" --merge-output-format mp4
 Then cut the track with the footage. `<design.mjs>` is the design module and `<N>` is the track number:
 
 ```bash
-node produce/cut-track.mjs <design.mjs> <N> --footage
+node tools/produce/cut-track.mjs <design.mjs> <N> --footage
 ```
 
 Use this command instead when you already have a `meta.json` and the audio, and want to run the cutter directly:
 
 ```bash
-node produce/video-cuts.mjs <meta.json> <audio> <out.mp4> --bg <viz.mp4> --screen <capture.webm> --screen-offset <sec>
+node tools/produce/video-cuts.mjs <meta.json> <audio> <out.mp4> --bg <viz.mp4> --screen <capture.webm> --screen-offset <sec>
 ```
 
 - A line whose clip has no footage keeps the visualiser.
@@ -32,7 +32,7 @@ node produce/video-cuts.mjs <meta.json> <audio> <out.mp4> --bg <viz.mp4> --scree
 Use this command for thumbnails and posts. `<trackA>` to `<trackD>` are library ids or search text; the first two are required.
 
 ```bash
-node produce/snap-deck.mjs <trackA> <trackB> [trackC] [trackD] --scale 2
+node tools/produce/snap-deck.mjs <trackA> <trackB> [trackC] [trackD] --scale 2
 ```
 
 - It plays a 1-minute demo and saves 3840×2160 PNGs in `.dj/produce/out/shots`.
@@ -50,11 +50,11 @@ node dj.mjs find "<sound> sound effect"
 Then download it. `<name>` is a kebab-case name for the sample, and the command saves `.dj/produce/samples/<name>.mp3` and prints its non-silent segments:
 
 ```bash
-node produce/get-sample.mjs <url> <name>
+node tools/produce/get-sample.mjs <url> <name>
 ```
 
 Use this command to measure the segments again with a different silence threshold:
 
 ```bash
-node produce/measure-sample.mjs .dj/produce/samples/<name>.mp3 --thresh -45
+node tools/produce/measure-sample.mjs .dj/produce/samples/<name>.mp3 --thresh -45
 ```

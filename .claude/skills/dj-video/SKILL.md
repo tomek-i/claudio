@@ -28,7 +28,7 @@ For a video without DJ-table footage, skip steps 1, 2 and 6.
 
 1. Start the page recorder before you load any deck. It runs until you stop it, so run it in the background.
    ```bash
-   node produce/record-browser.mjs
+   node tools/produce/record-browser.mjs
    ```
 2. Wait for the engine in the recorder window. That window takes over as the sound system. Run `node dj.mjs status` until it shows the engine connected.
 3. Start the audio recording at the start of the set.
@@ -42,7 +42,7 @@ For a video without DJ-table footage, skip steps 1, 2 and 6.
    ```
 6. Stop the page recorder. This finalises the .webm.
    ```bash
-   node produce/record-browser.mjs --stop
+   node tools/produce/record-browser.mjs --stop
    ```
 7. Export the set audio.
    ```bash
@@ -50,12 +50,12 @@ For a video without DJ-table footage, skip steps 1, 2 and 6.
    ```
 8. Render the video.
    ```bash
-   node produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
+   node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
    ```
 
 ## Record the DJ table
 
-The footage is optional. `node produce/record-browser.mjs` opens its own maximised Chromium, clicks "Start engine" and records the page.
+The footage is optional. `node tools/produce/record-browser.mjs` opens its own maximised Chromium, clicks "Start engine" and records the page.
 
 - Start it before you load any deck. The recorder window takes over as the sound system, and the decks in the old tab are dropped.
 - `dj status` must show the engine connected afterwards.
@@ -79,7 +79,7 @@ Render after the set, one render at a time. A render during a live set starves t
 Use this command for a set with DJ-table footage:
 
 ```bash
-node produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
+node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
 ```
 
 - `--title "Credit - Song"` sets the opening card. The part before ` - ` is the small credit, and the rest is the big title. The text is drawn with ffmpeg drawtext, and `%`, `:` and `,` are escaped for you. Without `--title`, the audio file name is the title.
@@ -99,7 +99,7 @@ Read "Speakers on screen" in `extras.md` in this folder before making a dj-voice
 
 ## Screenshots of the deck
 
-Read "Screenshots of the deck" in `extras.md` in this folder before taking screenshots of the DJ page with `produce/snap-deck.mjs`.
+Read "Screenshots of the deck" in `extras.md` in this folder before taking screenshots of the DJ page with `tools/produce/snap-deck.mjs`.
 
 ## Samples for the sampler
 

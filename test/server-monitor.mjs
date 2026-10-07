@@ -105,10 +105,10 @@ test('transition critique → booth log, memory; dj rate + memory + suggest use 
   assert.match(m.out, /👍1/);
   await eng.set('B', { playing: false, trackId: null, loaded: false });
   // U has been on air, so suggest excludes it now; check the scorer the server passes to suggest
-  const { Memory } = await import('../lib/memory.mjs');
+  const { Memory } = await import('../apps/server/lib/memory.mjs');
   const adj = new Memory(path.join(sc.dir, '.dj', 'memory.json')).adjust(T, U);
   assert.ok(adj.delta < 0 && adj.reasons.some((x) => /rated good/.test(x)), JSON.stringify(adj));
-  const { Library } = await import('../lib/library.mjs');
+  const { Library } = await import('../apps/server/lib/library.mjs');
   const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, '.dj', 'library.json') });
   const u = lib.suggest({ from: T.id, limit: 50, memory: new Memory(path.join(sc.dir, '.dj', 'memory.json')) }).find((x) => x.id === U.id);
   assert.ok(u.reasons.some((x) => /memory: this pair rated good/.test(x)), u.reasons.join('; '));

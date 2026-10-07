@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJ Claude · Visuals</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23111'/><circle cx='16' cy='16' r='9' fill='none' stroke='%23ff7a45' stroke-width='2'/><circle cx='16' cy='16' r='2.5' fill='%2336d6e7'/></svg>">
+<link rel="stylesheet" href="css/visuals.css">
+<!-- three.js is vendored (apps/web/public/vendor/three/README.md): the page works offline and there is no build step -->
+<script type="importmap">
+{ "imports": { "three/webgpu": "./vendor/three/three.webgpu.min.js", "three/tsl": "./vendor/three/three.tsl.min.js" } }
+</script>
+</head>
+<body class="visuals">
+<div id="stage"></div>
+<div id="notice" hidden><h1>DJ·CLAUDE visuals</h1><p id="noticeText"></p></div>
+<button type="button" id="soundAsk" hidden>Turn the sound on</button>
+<div id="overlay" class="hide">
+  <div class="modes" id="modes" role="group" aria-label="Visual mode"></div>
+  <div class="sound" id="sound" hidden>
+    <button type="button" id="soundBtn" aria-pressed="false">Sound off</button>
+    <span id="soundCtl" hidden><button type="button" id="muteBtn" aria-pressed="false">Mute</button>
+      <label>Volume <input type="range" id="volume" min="0" max="1" step="0.01" value="1"></label></span>
+    <span id="soundState"></span>
+  </div>
+  <div class="line"><span id="status">connecting…</span><span id="quality"></span><span id="nudge"></span></div>
+  <div class="keys">1–4 mode · A auto · S sound · M mute · ← → shift the picture · F full screen</div>
+</div>
+<script type="module" src="ui/visuals.js"></script>
+</body>
+</html>

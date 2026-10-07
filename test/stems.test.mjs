@@ -1,12 +1,12 @@
 // Parallel stem separation: N concurrent jobs at full speed; while music plays, 1 job × 2 threads
 // (running jobs finish, nothing is killed); full speed again after the quiet period.
-// Uses a fake separator (a node script standing in for .venv python + lib/separate.py).
+// Uses a fake separator (a node script standing in for .venv python + apps/server/lib/separate.py).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { StemQueue } from '../lib/stems.mjs';
+import { StemQueue } from '../apps/server/lib/stems.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -60,7 +60,7 @@ let p = 0; const iv = setInterval(() => { p += 0.25; console.log('PROGRESS ' + p
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-// A fake separator that reports a device the way lib/separate.py does: argv[6] is the device setting ('auto' | 'cpu'),
+// A fake separator that reports a device the way apps/server/lib/separate.py does: argv[6] is the device setting ('auto' | 'cpu'),
 // FAKE_GPU the device 'auto' finds, and a track named in FAKE_FAIL has its GPU run fail and is redone on the CPU.
 function fakeRig({ gpu, fail = '', concurrency = 3 }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'djstems-'));

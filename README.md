@@ -42,19 +42,19 @@ mouse wheel on it to zoom. A playing deck is locked against waveform drags unles
 ## How it works
 | Piece | What it does |
 |---|---|
-| `server.mjs` | Holds the library and analysis cache, relays commands to the browser engine, long-polls (`dj wait`), booth log, crowd inbox, recorder, auto-DJ. |
-| `dj.mjs` + `cli-ext/` | The CLI Claude drives: `node dj.mjs help` and `node dj.mjs help-engine`. |
-| `public/engine.js`, `public/worklets/` | Web Audio engine: four decks (A/B + C/D), 3-band kill EQ, filter, beat-synced echo, loops, key lock + key shift (WSOLA), per-stem playback, deck FX, 8-pad sampler, scratching, sample-accurate transitions. |
-| `public/app.js`, `public/ui/`, `public/css/` | The DJ-table UI and the booth feed: plain ES modules and per-component stylesheets, no build step. |
-| `lib/analyze.mjs` | BPM and beat grid, downbeat, key (Camelot), loudness, energy 1–10, intro/breakdowns/drops/outro, section labels, auto hot cues. |
-| `lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |
-| `lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
-| `lib/sequencer.mjs`, `lib/monitor.mjs`, `lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
-| `lib/settings.mjs`, `lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
-| `lib/starter.mjs`, `starter/` | The Creative Commons starter crate behind `dj starter` and the **Download demo tracks** button. |
-| `lib/banner.mjs` | The server's startup banner: one of fifteen animations at random, then an equaliser that follows the live deck's beat. |
-| `lib/stems.mjs` + `lib/separate.py` | Optional stem separation (demucs) so vocals/drums/bass can be muted or swapped live. |
-| `produce/` | Production toolchain: Playwright page recording, set/album video rendering, caption indexing for speech clips, voice-reel builder, live design runner, per-track cutting, speaker footage cut-ins (`video-cuts.mjs`), deck screenshots (`snap-deck.mjs`). |
+| `apps/server/server.mjs` | Holds the library and analysis cache, relays commands to the browser engine, long-polls (`dj wait`), booth log, crowd inbox, recorder, auto-DJ. |
+| `dj.mjs` + `apps/cli/cli-ext/` | The CLI Claude drives: `node dj.mjs help` and `node dj.mjs help-engine`. |
+| `apps/web/public/engine.js`, `apps/web/public/worklets/` | Web Audio engine: four decks (A/B + C/D), 3-band kill EQ, filter, beat-synced echo, loops, key lock + key shift (WSOLA), per-stem playback, deck FX, 8-pad sampler, scratching, sample-accurate transitions. |
+| `apps/web/public/app.js`, `apps/web/public/ui/`, `apps/web/public/css/` | The DJ-table UI and the booth feed: plain ES modules and per-component stylesheets, no build step. |
+| `apps/server/lib/analyze.mjs` | BPM and beat grid, downbeat, key (Camelot), loudness, energy 1–10, intro/breakdowns/drops/outro, section labels, auto hot cues. |
+| `apps/server/lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |
+| `apps/server/lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
+| `apps/server/lib/sequencer.mjs`, `apps/server/lib/monitor.mjs`, `apps/server/lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
+| `apps/server/lib/settings.mjs`, `apps/server/lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
+| `apps/server/lib/starter.mjs`, `starter/` | The Creative Commons starter crate behind `dj starter` and the **Download demo tracks** button. |
+| `apps/server/lib/banner.mjs` | The server's startup banner: one of fifteen animations at random, then an equaliser that follows the live deck's beat. |
+| `apps/server/lib/stems.mjs` + `apps/server/lib/separate.py` | Optional stem separation (demucs) so vocals/drums/bass can be muted or swapped live. |
+| `tools/produce/` | Production toolchain: Playwright page recording, set/album video rendering, caption indexing for speech clips, voice-reel builder, live design runner, per-track cutting, speaker footage cut-ins (`video-cuts.mjs`), deck screenshots (`snap-deck.mjs`). |
 
 ### Skills (`.claude/skills/`)
 These are what make Claude a DJ rather than a chatbot with a CLI. Claude Code loads them automatically in this folder.
@@ -108,7 +108,7 @@ when it starts, and `dj visuals` shows it again. The page only watches; it has n
 - **Quality**: the morphing modes draw 250 thousand, 1 million or 4 million points (low, medium, high). The page
   picks a tier for the graphics card when it starts and steps down one if it cannot hold the frame rate;
   `/visuals?quality=low|medium|high` fixes it.
-- **Needs WebGPU** (a current Chrome or Edge). It is drawn with three.js, vendored in `public/vendor/three/`; there is
+- **Needs WebGPU** (a current Chrome or Edge). It is drawn with three.js, vendored in `apps/web/public/vendor/three/`; there is
   no WebGL fallback, and a browser without WebGPU gets a message saying so.
 
 The engine tab measures the sound and encodes audio only while someone is watching or listening. `/health` shows both
@@ -116,21 +116,21 @@ streams.
 
 ## Making a video of a set
 ```bash
-node produce/record-browser.mjs                 # before the set: records the DJ table page (Playwright), becomes the sound system
+node tools/produce/record-browser.mjs                 # before the set: records the DJ table page (Playwright), becomes the sound system
 node dj.mjs record start --no-screen --no-mic   # … play the set …
 node dj.mjs record stop && node dj.mjs export   # → .dj/exports/<session>.mp3 + tracklist
-node produce/record-browser.mjs --stop
-node produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
+node tools/produce/record-browser.mjs --stop
+node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
 ```
 You get a 720p mp4 and a 480p copy: reactive visualiser, title card, the DJ table as footage, one colour tint per track.
 Details and options in `.claude/skills/dj-video/SKILL.md`.
 
 ## Speech clips as the vocals, and albums
 An hour-long album can be made this way: talk clips indexed from their captions
-(`produce/index-captions.mjs`), a title hook per track cut word-accurately, verses that literally match the song's
-words, one subagent planning each song, a voice reel built with `produce/build-reel.mjs`, the whole thing played as one
-live take by `produce/run-design.mjs` and cut into tracks with `produce/cut-track.mjs`. The `dj-voice` and `dj-album`
-skills walk through it; `produce/songs/README.md` is the song-plan schema.
+(`tools/produce/index-captions.mjs`), a title hook per track cut word-accurately, verses that literally match the song's
+words, one subagent planning each song, a voice reel built with `tools/produce/build-reel.mjs`, the whole thing played as one
+live take by `tools/produce/run-design.mjs` and cut into tracks with `tools/produce/cut-track.mjs`. The `dj-voice` and `dj-album`
+skills walk through it; `tools/produce/songs/README.md` is the song-plan schema.
 
 ## Stems (vocals / drums / bass / other)
 Optional, project-local. Every track can be split into `.dj/stems/<trackId>/{vocals,drums,bass,other}.wav`
@@ -155,7 +155,7 @@ memory, say) is redone on the CPU. `dj stems status` and the health page show wh
 the settings page (`stems.device`) keeps it off the GPU. On the CPU, separation throttles to one job while music
 plays; a GPU takes one track at a time regardless.
 
-`lib/separate.py` decodes with ffmpeg and writes WAVs itself, so it also works where torchaudio has no wheel (Windows on
+`apps/server/lib/separate.py` decodes with ffmpeg and writes WAVs itself, so it also works where torchaudio has no wheel (Windows on
 ARM). Model weights download to `.dj/models/` on first run. Control: `config.json → stems` (`enabled`, `auto`,
 `device`, `concurrency`, `threads`), `dj stems <id|all>`, `dj stems status`, `dj vocals <id>`.
 
@@ -178,7 +178,7 @@ Everything the rig generates lives in `.dj/` (git-ignored): `library.json` analy
 `grid-edits.json`, `server.log`. Music lives in `library/` (git-ignored).
 
 YouTube sometimes asks for a login. Export your cookies to `.dj/youtube-cookies.txt` (Netscape format) and both
-`dj get` and `produce/get-sample.mjs` will use them. Never commit that file.
+`dj get` and `tools/produce/get-sample.mjs` will use them. Never commit that file.
 
 ## Tests
 ```bash
@@ -187,13 +187,13 @@ node --test test/*.test.mjs test/server-*.mjs
 Server tests run scratch copies on ports 4851–4858 with a fake engine and a generated library (synthetic tracks run
 through the real analyser), so they need no music on the machine and never touch `.dj/`.
 
-Benchmarks compare the working tree with the git ref in `bench/baseline.json` (`BENCH_BASE=<ref>` overrides it) and check
+Benchmarks compare the working tree with the git ref in `tools/bench/baseline.json` (`BENCH_BASE=<ref>` overrides it) and check
 that the output is byte-identical:
 ```bash
-node bench/analyze.bench.mjs     # also: deck-voice, zoom, library
+node tools/bench/analyze.bench.mjs     # also: deck-voice, zoom, library
 ```
 
 ## Notes
 - Built for personal use with music you have the rights to play. Downloads are your responsibility.
 - Windows is the primary platform (PowerShell/Git Bash); the engine and server are plain Node + browser and run elsewhere, but
-  paths such as fonts in `produce/viz.mjs` default to Windows and may need `VIZ_FONT_BOLD`.
+  paths such as fonts in `tools/produce/viz.mjs` default to Windows and may need `VIZ_FONT_BOLD`.

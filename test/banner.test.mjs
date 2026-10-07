@@ -2,7 +2,7 @@
 // output that is not a terminal stays plain text.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ANIMATIONS, frame, logoRows, banner } from '../lib/banner.mjs';
+import { ANIMATIONS, frame, logoRows, banner } from '../apps/server/lib/banner.mjs';
 
 const strip = (s) => s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
 const info = { url: 'http://localhost:4747', dirs: ['/music', '/more'], tracks: 12, queued: 0 };

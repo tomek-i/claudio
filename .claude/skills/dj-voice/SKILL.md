@@ -19,7 +19,7 @@ During the run the beds play live with their own vocals muted and the reel plays
 - **Bed**: the instrumental track under the speech. Beds play on decks A and B in turn.
 - **Reel**: one WAV file holding every line of a design. It is a normal library track.
 - **Window**: the part of the reel that plays over one bed.
-- **Runner**: `produce/run-design.mjs`, the script that plays a design on the decks.
+- **Runner**: `tools/produce/run-design.mjs`, the script that plays a design on the decks.
 - **Anchor bar**: the bar of the bed where a window begins. The reel builder measures the position of every line from this bar, and the runner seeks the reel to the window's offset on this bar.
 - **Design**: a `.mjs` file that lists the beds and the lines. `<design.mjs>` is its path and `<name>` is its file name without `.mjs`.
 
@@ -30,8 +30,8 @@ During the run the beds play live with their own vocals muted and the reel plays
 node dj.mjs get "<youtube url>"                       # audio into the crate; the file name keeps the [videoId]
 bin/yt-dlp.exe --write-auto-sub --sub-lang en --skip-download -o ".dj/voice/captions/sub-%(id)s" "<youtube url>"
 node dj.mjs stems <clipId>                            # vocal stem = the speech without the clip's background music
-node produce/index-captions.mjs                        # writes .dj/voice/sentences.json (with kind and speaker) and words.json
-node produce/analyze-speech.mjs                        # optional: pitch class, contour and strongest-consonant offset per line
+node tools/produce/index-captions.mjs                        # writes .dj/voice/sentences.json (with kind and speaker) and words.json
+node tools/produce/analyze-speech.mjs                        # optional: pitch class, contour and strongest-consonant offset per line
 ```
 - Separate the stems of every clip, even though it takes time. The reel builder cuts each line from the vocal stem when one exists.
 - The speaker name comes from "| Name |" in the clip's title. If the title has none, set it in `.dj/voice/clips.json` as `{ "<videoId>": { "speaker": "Name" } }`.
@@ -39,8 +39,8 @@ node produce/analyze-speech.mjs                        # optional: pitch class, 
 
 ## Find material
 ```bash
-node produce/find-line.mjs "<word>|<word>" --dur 0.6-3 --speaker <name>     # sentences; prints: dur kind speaker clipId from | text
-node produce/index-captions.mjs --find <words>                              # exact phrase occurrences with word timing
+node tools/produce/find-line.mjs "<word>|<word>" --dur 0.6-3 --speaker <name>     # sentences; prints: dur kind speaker clipId from | text
+node tools/produce/index-captions.mjs --find <words>                              # exact phrase occurrences with word timing
 ```
 A good line meets all of these:
 - It lasts 0.6 to 3 s.
@@ -51,7 +51,7 @@ A good line meets all of these:
 Use one speaker per 8-bar phrase. A **hook** is a short phrase everyone can repeat. A **stab** is a single word used for rolls.
 
 ## Write the design
-A design module exports `SECTIONS` and `WINDOWS`. `SECTIONS` lists the beds in playing order. `WINDOWS` lists what the reel plays over each bed. For an album, write song plans and let `produce/album-design.mjs` generate both exports (see the dj-album skill). For a one-off, write the module by hand. `<bedId>` is the library id of a bed.
+A design module exports `SECTIONS` and `WINDOWS`. `SECTIONS` lists the beds in playing order. `WINDOWS` lists what the reel plays over each bed. For an album, write song plans and let `tools/produce/album-design.mjs` generate both exports (see the dj-album skill). For a one-off, write the module by hand. `<bedId>` is the library id of a bed.
 
 ```js
 export const SECTIONS = [{ name: 'intro', id: '<bedId>', bpm: 125, key: 0, fromBar: 17, bars: 64,
@@ -73,19 +73,19 @@ Read `design.md` in this folder before writing or editing a design file. It defi
 
 ## Build the reel and play it
 ```bash
-node produce/build-reel.mjs <design.mjs>        # writes library/voice-reels/Voice Reel - <name>.wav and .dj/voices/<name>-reel.json
+node tools/produce/build-reel.mjs <design.mjs>        # writes library/voice-reels/Voice Reel - <name>.wav and .dj/voices/<name>-reel.json
 node dj.mjs scan                                 # the reel becomes a track (artist "Voice Reel")
-node produce/run-design.mjs --design <design.mjs> --dry    # cues the beds and the reel, checks everything resolves
-node produce/run-design.mjs --design <design.mjs>          # records, plays every section with hand-offs, exports at the end
+node tools/produce/run-design.mjs --design <design.mjs> --dry    # cues the beds and the reel, checks everything resolves
+node tools/produce/run-design.mjs --design <design.mjs>          # records, plays every section with hand-offs, exports at the end
 ```
 - `.dj/voice/` holds the speech index. `.dj/voices/` holds each reel's metadata.
 - The build prints a ⚠ line for each line that starts before the anchor bar or overlaps the previous line. Change the design until it prints none.
 - Run the commands in the order shown. The runner stops with an error if the reel has not been scanned.
-- If you want DJ-table footage, start `produce/record-browser.mjs` before the runner (see "Record the DJ table" in the dj-video skill). The runner reads its timing.
+- If you want DJ-table footage, start `tools/produce/record-browser.mjs` before the runner (see "Record the DJ table" in the dj-video skill). The runner reads its timing.
 - During a live run, check `.dj/produce/out/run-design.log` and `dj status`, and never go more than 60 s without checking for new user text. The live-set rules in CLAUDE.md apply.
 
 ## Volume and feel
 - Every line in the reel is levelled to the same speech loudness.
-- The bed ducks to 0.8 under each line. This value is fixed in `produce/run-design.mjs`.
-- If the voice is too quiet, raise `TARGET_DB` in `produce/build-reel.mjs` (−18 dB) and rebuild the reel. Do not use the deck fader.
+- The bed ducks to 0.8 under each line. This value is fixed in `tools/produce/run-design.mjs`.
+- If the voice is too quiet, raise `TARGET_DB` in `tools/produce/build-reel.mjs` (−18 dB) and rebuild the reel. Do not use the deck fader.
 - A line cut from a vocal stem sounds dry and clear. A line cut from the raw clip carries the clip's background music.

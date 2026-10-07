@@ -1,7 +1,7 @@
 // DSP unit tests for the deck player worklet core. Run: node --test test/dsp.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DeckVoice, PlayheadModel, parseWav, wrapLoop, shiftCamelot, zoomFromInt16, CrusherCore } from '../public/worklets/deck-player.js';
+import { DeckVoice, PlayheadModel, parseWav, wrapLoop, shiftCamelot, zoomFromInt16, CrusherCore } from '../apps/web/public/worklets/deck-player.js';
 
 const SR = 48000;
 
@@ -335,7 +335,7 @@ test('process() does not allocate in steady state (sampling heap profiler)', asy
 });
 
 test('sampler one-shots: finite, non-silent, normalised, click-free edges, sensible pitch', async () => {
-  const { synth, PAD_KINDS } = await import('../public/samples.js');
+  const { synth, PAD_KINDS } = await import('../apps/web/public/samples.js');
   for (const kind of PAD_KINDS) {
     const o = synth(kind, SR);
     assert.ok(o.L.length > SR * 0.3 && o.L.length === o.R.length, `${kind} length`);

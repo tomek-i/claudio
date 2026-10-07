@@ -1,9 +1,9 @@
-// Minimal Web Audio mock for Node integration tests of public/engine.js.
+// Minimal Web Audio mock for Node integration tests of apps/web/public/engine.js.
 // - AudioParam keeps an automation timeline and throws like the spec does for overlapping curves.
 // - AudioWorkletNode('deck-player') runs the REAL DeckVoice; messages go through structuredClone (with transfer),
 //   so anything that isn't cloneable fails exactly as it would in the browser.
 // - render(seconds) advances the audio clock in 128-frame quanta.
-import { DeckVoice, STEMS } from '../public/worklets/deck-player.js';
+import { DeckVoice, STEMS } from '../apps/web/public/worklets/deck-player.js';
 
 export const SR = 48000;
 const clock = { frame: 0 };

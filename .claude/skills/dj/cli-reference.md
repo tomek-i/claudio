@@ -48,7 +48,7 @@ TRACK   sections <id>                      labelled structure with bar numbers
         vocals <id>                        where the vocals are, in bars and times
         hotcue <deck> [list] | set <1-8> [bar:N|sec] [--label x] [--exact] | <1-8> | clear <n> | reset <n>
         savedloop <deck> [list] | set <name> [beats] [--at bar:N|sec] | <name> | delete <name>
-KEYS    keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (flags in cli-ext/keys.mjs)
+KEYS    keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (flags in apps/cli/cli-ext/keys.mjs)
 PAGE    crate hide|show|toggle             hide or show the bottom panel (library, sampler, booth) on every open page, for example before recording
 ENGINE  keylock <deck> [on|off|toggle]     key lock: tempo changes keep the key (on by default)
         key <deck> <-6..+6|reset>          shift the key in semitones, independent of tempo

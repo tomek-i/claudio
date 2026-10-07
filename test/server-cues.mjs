@@ -116,7 +116,7 @@ test('grid correction via the server: shift/nudge/bpm persist and re-derive stru
 });
 
 test('key-aware suggest recommends a key shift; mashup mode pairs vocals over beds', async () => {
-  const { Library } = await import('../lib/library.mjs');
+  const { Library } = await import('../apps/server/lib/library.mjs');
   const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, '.dj', 'library.json') });
   // 8A at 140 BPM played at 150: +1.19 st → +1 st → 3A: clash with 8A; a −1 st key shift fixes it
   const k = lib.keyPlan('8A', { bpm: 140, camelot: '8A' }, 150, false);

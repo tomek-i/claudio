@@ -2,7 +2,7 @@
 // 'off' for things switched off on purpose.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHealth, toolVersion } from '../lib/health.mjs';
+import { buildHealth, toolVersion } from '../apps/server/lib/health.mjs';
 
 const healthy = () => ({
   port: 4747, uptimeSec: 125, engine: { connected: true, started: true, stale: false },
