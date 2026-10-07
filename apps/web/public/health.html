@@ -16,7 +16,7 @@
   <div class="status" id="overall"><span class="led"></span><span class="txt">checking…</span></div>
   <span class="spacer"></span>
   <a class="btn sm" href="/settings">Settings</a>
-  <a class="btn sm" href="/">Back to the decks</a>
+  <a class="btn sm" href="/" data-back>Back to the decks</a>
 </header>
 <main>
   <h2>System health <small id="checkedAt"></small></h2>
@@ -25,6 +25,7 @@
   <p class="hint">Red: a required system is down and the decks cannot play. Amber: an optional system has a fault; everything else works.</p>
   <p class="hint">Checked once when this page opens; nothing runs in the background. The same data as JSON: <a href="/api/health"><code>/api/health</code></a></p>
 </main>
+<script type="module" src="ui/back.js"></script>
 <script type="module">
 import { $, esc } from './ui/util.js';
 
