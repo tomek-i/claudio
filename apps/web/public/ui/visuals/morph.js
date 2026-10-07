@@ -107,6 +107,13 @@ export class Morph {
 
   dispose() {
     this.material.dispose(); this.blend.dispose?.();
-    for (const b of [...this.slots.flatMap((s) => [s.pos, s.col, s.s1, s.s2]), this.drawn.pos, this.drawn.col]) b.dispose?.();
+    // Disposing a storage node does not free its GPU buffer, and these are the big ones (640 MB in all at the high
+    // tier), so the renderer is asked to drop each buffer outright. Without this a step down a tier keeps the old
+    // tier's memory until the page is reloaded.
+    for (const b of [...this.slots.flatMap((s) => [s.pos, s.col, s.s1, s.s2]), this.drawn.pos, this.drawn.col]) {
+      b.dispose?.();
+      const r = this.renderer;
+      try { if (r._attributes?.delete) r._attributes.delete(b.value); else r.backend.destroyAttribute?.(b.value); } catch { /* the device may be gone */ }
+    }
   }
 }
