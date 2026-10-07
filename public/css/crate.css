@@ -27,10 +27,10 @@ body.lower-collapsed .lb-feed, body:not(.booth-pinned):not([data-dock="booth"]) 
 .lb-feed.unread::before { content: '●'; color: var(--warn); margin-right: 6px; }
 body.lower-collapsed .lower { display: none; }
 body.lower-collapsed .lb-sizes { display: none; }
-/* maximised (ui/maximize.js): a slim strip of the decks, the bar, and the panel cover the page until the button is
-   clicked again */
+/* maximised (ui/maximize.js): a slim strip of the decks, the bar, and the panel cover the page below the header until
+   the button is clicked again. The header stays, since its layout buttons are the way back; --top-h is its height. */
 .deckstrip { display: none; }
-body.lower-max .deckstrip { position: fixed; inset: 0 0 auto 0; z-index: 8; height: 46px; display: flex; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+body.lower-max .deckstrip { position: fixed; inset: var(--top-h, 0px) 0 auto 0; z-index: 8; height: 46px; display: flex; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
 .ds { position: relative; flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: var(--panel); font-family: var(--mono); font-size: 12px; --c: var(--a); }
 .ds[hidden] { display: none; }
 .ds[data-deck="B"] { --c: var(--b); } .ds[data-deck="C"] { --c: var(--cc); } .ds[data-deck="D"] { --c: var(--dc); }
@@ -42,8 +42,8 @@ body.lower-max .deckstrip { position: fixed; inset: 0 0 auto 0; z-index: 8; heig
 .ds.playing .ds-play { background: var(--c); border-color: var(--c); color: #000; }
 .ds-bar { position: absolute; inset: auto 0 0 0; height: 3px; background: #ffffff0d; }
 .ds-bar b { display: block; height: 100%; width: 0; background: var(--c); }
-body.lower-max .lowerbar { position: fixed; inset: 46px 0 auto 0; z-index: 8; cursor: default; }
-body.lower-max .lower { position: fixed; inset: 81px 0 0 0; z-index: 8; overflow: auto; }
+body.lower-max .lowerbar { position: fixed; inset: calc(var(--top-h, 0px) + 46px) 0 auto 0; z-index: 8; cursor: default; }
+body.lower-max .lower { position: fixed; inset: calc(var(--top-h, 0px) + 81px) 0 0 0; z-index: 8; overflow: auto; }
 body.lower-max :is(.lb-toggle, .lb-sizes) { display: none; }
 body.lower-max .lb-grip { background: none; }
 /* the freed height (row hidden, or set shorter by hand) goes to the rig */

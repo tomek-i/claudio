@@ -4,11 +4,14 @@ import { onUi, saveUi } from './prefs.js';
 import { toggleLower } from './lower.js';
 
 // ------------------------------------------------------------------ the bottom panel maximised, and the layout presets
-// Maximised, the panel (whichever tab is open) covers the page under a slim strip of the decks, until its button is
-// clicked again or Esc is pressed. Maximising a hidden panel shows it for that long.
+// Maximised, the panel (whichever tab is open) covers the page below the header, under a slim strip of the decks,
+// until its button is clicked again, Esc is pressed or another layout is picked in the header. Maximising a hidden panel shows it for that long.
 // The header's layout buttons set everything at once (ui.layoutPreset): Mix = decks with the library, Browse = the
 // library maximised, Perform = decks with the sampler. They only drive what is already there.
 const btn = $('#lowerMax');
+// the header stays on screen above a maximised panel (its layout buttons are the way back); the styles need its height
+const top = $('header.top');
+new ResizeObserver(() => document.body.style.setProperty('--top-h', `${top.offsetHeight}px`)).observe(top);
 let on = false, rehide = false; // rehide: the panel was hidden when it was maximised
 
 export function setMax(want) {
