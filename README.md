@@ -45,6 +45,8 @@ The same server and the same page in a window of their own, instead of a browser
 pnpm install     # once: Electron, for the desktop app only (it fetches its own binary, about 370 MB, on first run)
 pnpm desktop
 ```
+- **A start-up window**: it opens at once and lists each step as it happens (the server, the health checks, the
+  audio engine), then gives way to the DJ page when the engine is live. If the server cannot start, it says why.
 - **No Start engine click**: the app may play sound without one, so the window is the sound system as soon as it opens.
 - **No stale engine**: the window is not slowed down when it is hidden or minimised, as a background browser tab is.
 - **One thing to launch**: the server starts with the app and stops with it. If a server is already running
