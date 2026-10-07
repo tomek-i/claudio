@@ -2,6 +2,7 @@
 // it reads the server's visuals stream (ui/visuals/feed.js) and draws it with WebGPU (ui/visuals/stage.js).
 //   /visuals?mode=auto|<name>   which mode to show (auto, the default, moves between them by itself)
 //   /visuals?offset=<ms>        shift the picture against the sound, for a slow projector (also the ← → keys)
+//   /visuals?quality=low|medium|high   how many elements the morphing modes draw (chosen for the GPU otherwise)
 //   /visuals?audio=1            ask for the set's sound as well (one click starts it; the page is silent otherwise)
 // With the sound on, the picture is locked to what this viewer hears; with it off it runs as close to live as it can.
 // `dj visuals <mode|auto>` from the booth changes every open page.
@@ -90,6 +91,8 @@ async function boot() {
   const canvas = document.createElement('canvas');
   $('#stage').replaceChildren(canvas);
   const s = new Stage(canvas, MODES, {
+    quality: params.get('quality'),
+    onTier: () => drawOverlay(),
     onLost: (why) => {
       console.warn('GPU device lost:', why);
       if (stage === s) { stage = null; s.dispose(); setTimeout(boot, 500); }
@@ -148,6 +151,7 @@ function drawOverlay() {
   $('#muteBtn').setAttribute('aria-pressed', String(listener.muted));
   $('#soundState').textContent = !on ? '' : listener.state === 'playing' ? (heard != null && newest ? `${Math.max(0, newest.t - heard).toFixed(1)} s behind the decks, ${listener.locked ? 'picture in step' : 'lining the picture up…'}` : 'playing')
     : listener.state === 'connecting' ? 'connecting…' : 'sound dropped, joining again… (picture runs live)';
+  $('#quality').textContent = stage?.tier ? `quality ${stage.tier}` : '';
   $('#nudge').textContent = feed.offsetMs ? `picture ${feed.offsetMs > 0 ? '+' : ''}${feed.offsetMs} ms` : '';
 }
 setInterval(drawOverlay, 1000);

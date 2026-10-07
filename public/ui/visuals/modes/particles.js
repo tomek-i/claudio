@@ -1,24 +1,28 @@
 // Particle field: a cloud of particles simulated on the GPU. A compute pass moves every particle each frame: they
 // drift on a slow flow field, are held on shells around the centre that breathe with the bass, and are thrown
 // outwards by each kick. Every particle listens to one band of the spectrum, which lights it up.
-const COUNT = 200000, BANDS = 16;
+// It shapes the shared elements (../morph.js), so it morphs into and out of the other modes that do. The simulation
+// keeps its positions and velocities in the slot's two state buffers and writes the result as the elements' targets.
+const BANDS = 16;
 
 export default {
   name: 'particles',
   label: 'Particle field',
-  create({ THREE, tsl, renderer, u }) {
-    const { Fn, float, int, vec3, uniform, instancedArray, instanceIndex, hash, sin, cos, sqrt, pow, length, mix, uv, smoothstep, varying } = tsl;
-
-    const pos = instancedArray(COUNT, 'vec3'), vel = instancedArray(COUNT, 'vec3');
+  morph({ THREE, tsl, renderer, u }, slot) {
+    const { Fn, float, int, vec3, vec4, uniform, instanceIndex, hash, sin, cos, sqrt, pow, length, mix } = tsl;
+    const N = slot.count, pos = slot.s1, vel = slot.s2;
     const dt = uniform(0.016);
+
     const init = Fn(() => {
-      const a = hash(instanceIndex).mul(Math.PI * 2), z = hash(instanceIndex.add(COUNT)).mul(2).sub(1), r = pow(hash(instanceIndex.add(COUNT * 2)), 1 / 3).mul(4);
+      const a = hash(instanceIndex).mul(Math.PI * 2), z = hash(instanceIndex.add(N)).mul(2).sub(1), r = pow(hash(instanceIndex.add(N * 2)), 1 / 3).mul(4);
       const xy = sqrt(float(1).sub(z.mul(z)));
-      pos.element(instanceIndex).assign(vec3(cos(a).mul(xy), sin(a).mul(xy), z).mul(r));
-      vel.element(instanceIndex).assign(vec3(0));
-    })().compute(COUNT);
+      pos.element(instanceIndex).assign(vec4(vec3(cos(a).mul(xy), sin(a).mul(xy), z).mul(r), 0));
+      vel.element(instanceIndex).assign(vec4(0));
+    })().compute(N);
+    renderer.compute(init);
+
     const step = Fn(() => {
-      const p = pos.element(instanceIndex), v = vel.element(instanceIndex);
+      const p = pos.element(instanceIndex).xyz.toVar(), v = vel.element(instanceIndex).xyz.toVar();
       const r = length(p).max(0.001), dir = p.div(r), h = hash(instanceIndex);
       const t = u.time.mul(0.3);
       const flow = vec3(sin(p.y.mul(0.9).add(t)), sin(p.z.mul(0.9).add(t.mul(1.3))), sin(p.x.mul(0.9).add(t.mul(0.7)))).mul(u.drive.mul(1.4).add(0.3));
@@ -28,37 +32,25 @@ export default {
       v.addAssign(push.mul(dt));
       v.mulAssign(float(1).sub(dt.mul(1.7)).max(0));
       p.addAssign(v.mul(dt));
-    })().compute(COUNT);
-    renderer.compute(init);
+      pos.element(instanceIndex).assign(vec4(p, 0));
+      vel.element(instanceIndex).assign(vec4(v, 0));
+      const band = u.bands.element(int(hash(instanceIndex.add(N * 3)).mul(BANDS - 0.01)));
+      const light = band.mul(band).mul(1.6).add(length(v).mul(0.12)).add(0.05).mul(u.energy.mul(0.8).add(0.6));
+      slot.pos.element(instanceIndex).assign(vec4(p, band.mul(0.05).add(0.022).mul(slot.scale.size)));
+      slot.col.element(instanceIndex).assign(vec4(mix(u.color, u.accent, hash(instanceIndex.add(N * 4)).mul(band).mul(1.4).min(1)).mul(light).mul(slot.scale.light), 1));
+    })().compute(N);
 
-    const band = u.bands.element(int(hash(instanceIndex.add(COUNT * 3)).mul(BANDS - 0.01)));
-    const speed = length(vel.toAttribute());
-    const light = band.mul(band).mul(1.6).add(speed.mul(0.12)).add(0.05).mul(u.energy.mul(0.8).add(0.6));
-    const material = new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
-    material.positionNode = pos.toAttribute();
-    material.scaleNode = band.mul(0.05).add(0.022);
-    material.colorNode = varying(mix(u.color, u.accent, hash(instanceIndex.add(COUNT * 4)).mul(band).mul(1.4).min(1)).mul(light));
-    material.opacityNode = smoothstep(0.5, 0.05, length(uv().sub(0.5)));
-
-    const cloud = new THREE.Sprite(material);
-    cloud.count = COUNT;
-    cloud.frustumCulled = false;
-    const scene = new THREE.Scene();
-    scene.add(cloud);
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    const view = { position: new THREE.Vector3(0, 0, 9), target: new THREE.Vector3(0, 0, 0), fov: 60 };
     let turn = 0;
-
     return {
-      scene, camera,
+      view,
       update(sig, d) {
         dt.value = Math.min(0.05, d);
         renderer.compute(step);
         turn += d * (0.08 + 0.12 * sig.drive);
-        camera.position.set(Math.sin(turn) * 9, Math.sin(turn * 0.37) * 2.5, Math.cos(turn) * 9);
-        camera.lookAt(0, 0, 0);
+        view.position.set(Math.sin(turn) * 9, Math.sin(turn * 0.37) * 2.5, Math.cos(turn) * 9);
       },
-      resize(w, h) { camera.aspect = w / h; camera.updateProjectionMatrix(); },
-      dispose() { material.dispose(); pos.dispose?.(); vel.dispose?.(); init.dispose?.(); step.dispose?.(); },
+      dispose() { init.dispose?.(); step.dispose?.(); },
     };
   },
 };

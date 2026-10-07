@@ -88,7 +88,9 @@ the decks, a second monitor, or someone's phone. The server prints the address w
 when it starts, and `dj visuals` shows it again. The page only watches; it has no deck controls.
 
 - **Modes**: spectrum tunnel, particle field, reactive terrain, kaleidoscope. **Auto** (the default) moves between
-  them on musical boundaries (a new track, a breakdown, the start of a phrase) with a crossfade several bars long.
+  them on musical boundaries (a new track, a breakdown, the start of a phrase), over several bars. Between the tunnel
+  and the particle field the change is a morph: the same points of light fly from one shape into the other. Every
+  other pair crossfades.
   Pick one on the page (move the pointer for the overlay, or keys `1`-`4`, `A` for auto), by address
   (`/visuals?mode=tunnel`), or from the booth for every open page: `dj visuals <mode|auto>`.
 - **Colour follows the track**: the hue is the key's colour as on the deck's key chip, the accent is the deck colour,
@@ -98,6 +100,9 @@ when it starts, and `dj visuals` shows it again. The page only watches; it has n
   is locked to what that viewer hears. With the sound off the picture runs as close to live as it can, for a screen
   in the room; `/visuals?offset=<ms>` or the `←` `→` keys shift it for a slow projector. The `visuals.audio` setting
   switches the sound off for everyone.
+- **Quality**: the morphing modes draw 250 thousand, 1 million or 4 million points (low, medium, high). The page
+  picks a tier for the graphics card when it starts and steps down one if it cannot hold the frame rate;
+  `/visuals?quality=low|medium|high` fixes it.
 - **Needs WebGPU** (a current Chrome or Edge). It is drawn with three.js, vendored in `public/vendor/three/`; there is
   no WebGL fallback, and a browser without WebGPU gets a message saying so.
 

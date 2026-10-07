@@ -300,3 +300,26 @@ test('feed: when frames start arriving later than they first did (a hidden engin
   const behind = (now + 5 - feed.lead) / 1000 - (t - 0.02);
   assert.ok(Math.abs(behind) < 0.05, `back to live: ${behind}`);
 });
+
+// ---------------------------------------------------------------- the morph's quality tiers
+const { pickTier, lowerTier, TIERS, tierBytes } = await import('../public/ui/visuals/morph.js');
+
+test('morph tiers: chosen from the adapter, never one whose buffers do not fit, the address can force one', () => {
+  const big = { maxStorageBufferBindingSize: 2 ** 31, maxBufferSize: 2 ** 31 };
+  assert.deepEqual(TIERS, { low: 250000, medium: 1000000, high: 4000000 });
+  assert.equal(pickTier({ info: { vendor: 'nvidia', architecture: 'turing' }, limits: big }), 'high');
+  assert.equal(pickTier({ info: { vendor: 'amd' }, limits: big }), 'high');
+  assert.equal(pickTier({ info: { vendor: 'apple' }, limits: big }), 'medium');
+  assert.equal(pickTier({ info: { vendor: 'intel', architecture: 'gen-12lp' }, limits: big }), 'low');
+  assert.equal(pickTier({ info: {}, limits: big }), 'low', 'unknown graphics start low');
+  // a buffer is 16 bytes an element: 4 M elements need 64 MB, 1 M need 16 MB
+  const mid = { maxStorageBufferBindingSize: 32 * 2 ** 20, maxBufferSize: 256 * 2 ** 20 };
+  assert.equal(pickTier({ info: { vendor: 'nvidia' }, limits: mid }), 'medium', 'high does not fit');
+  assert.equal(pickTier({ info: { vendor: 'nvidia' }, limits: mid, want: 'high' }), 'medium', 'not even when asked for');
+  assert.equal(pickTier({ info: { vendor: 'nvidia' }, limits: { maxStorageBufferBindingSize: 2 ** 31, maxBufferSize: 8 * 2 ** 20 } }), 'low', 'the smaller of the two limits counts');
+  assert.equal(pickTier({ info: {}, limits: { maxStorageBufferBindingSize: 1024 } }), null, 'nothing fits: no morphing modes');
+  for (const t of ['low', 'medium', 'high']) assert.equal(pickTier({ info: { vendor: 'intel' }, limits: big, want: t }), t, `?quality=${t}`);
+  assert.equal(pickTier({ info: { vendor: 'nvidia' }, limits: big, want: 'ultra' }), 'high', 'an unknown name is ignored');
+  assert.deepEqual(['high', 'medium', 'low'].map(lowerTier), ['medium', 'low', null], 'one step down at a time, and no lower than low');
+  assert.equal(tierBytes('high'), 640000000);
+});
