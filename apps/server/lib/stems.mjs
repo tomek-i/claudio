@@ -161,7 +161,8 @@ export class StemQueue {
     const was = this.mode();
     if (on) this.lastMusicAt = Date.now();
     const now = this.mode();
-    if (was !== now && !this.onGpu) { this.log(now === 'throttled' ? '🎚 Stem separation throttled while music plays (1 job, 2 threads)' : `🎚 Stem separation back to full speed (${this.concurrency} jobs × ${this.threads} threads)`); }
+    // only worth saying when there is something to separate: with every stem done the mode changes nothing
+    if (was !== now && !this.onGpu && (this.queue.length || this.jobs.size)) { this.log(now === 'throttled' ? '🎚 Stem separation throttled while music plays (1 job, 2 threads)' : `🎚 Stem separation back to full speed (${this.concurrency} jobs × ${this.threads} threads)`); }
     if (now === 'full') this.pump();
   }
   mode() { return this.lastMusicAt && Date.now() - this.lastMusicAt < this.quietSec * 1000 ? 'throttled' : 'full'; }

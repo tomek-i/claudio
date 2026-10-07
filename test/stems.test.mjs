@@ -136,3 +136,20 @@ test('stem queue on automatic with no GPU: the first job says so, then the CPU c
   assert.ok(['t0', 't1', 't2', 't3'].every((id) => q.isDone(id)));
   r.done();
 });
+
+test('stem queue: says it is throttled only when there is something to separate', async () => {
+  const r = fakeRig({ gpu: 'cpu' });
+  const { q } = r;
+  q.setDevice('cpu');
+  // every stem done, nothing queued: music starting is not news
+  q.setMusicPlaying(true);
+  assert.equal(q.status().mode, 'throttled', 'the mode still changes');
+  assert.ok(!r.logs.some((l) => /throttled/.test(l)), `logged: ${r.logs.join(' | ')}`);
+  // with work in hand it is said
+  q.lastMusicAt = 0;
+  for (const id of ['t0', 't1', 't2', 't3']) q.enqueue(id);
+  q.setMusicPlaying(true);
+  assert.equal(r.logs.filter((l) => /throttled while music plays/.test(l)).length, 1);
+  await r.drain();
+  r.done();
+});
