@@ -66,7 +66,12 @@ body[data-layout="stacked"] .fxslot .fxsel { width: 100%; min-width: 0; height: 
 body[data-layout="stacked"] .fxpair { display: flex; gap: 8px; }
 body[data-layout="stacked"] .fxpair .k svg { width: 28px; height: 28px; }
 body[data-layout="stacked"] .faderwrap { flex: 1 1 auto; height: auto; min-height: 110px; align-items: stretch; }
-body[data-layout="stacked"] .faderwrap .meter, body[data-layout="stacked"] input.fader { height: auto; }
+body[data-layout="stacked"] input.fader { height: auto; }
+/* The meter is taken out of the flow and sized from the strip. As a stretched item it would hold the strip open: a
+   canvas remembers the pixel height it was last drawn at, so after the decks had once been tall (the bottom panel
+   maximised) the mixer, and with it the whole deck row, stayed that tall. */
+body[data-layout="stacked"] .faderwrap { position: relative; padding-left: 18px; }
+body[data-layout="stacked"] .faderwrap .meter { position: absolute; left: 0; top: 8px; height: calc(100% - 16px); margin-block: 0; }
 body[data-layout="stacked"] .fadertrack { align-self: stretch; }
 /* the crossfader row: each deck's side switch (left, through, right) at its end */
 body[data-layout="stacked"] .xf { grid-column: 1 / -1; grid-row: 2; }
