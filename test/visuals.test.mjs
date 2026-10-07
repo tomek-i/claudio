@@ -170,7 +170,7 @@ test('audio: switched off, nothing is offered, accepted or passed on; a slow lis
   assert.equal(hub.listen('a', listener()), false);
   assert.equal(hub.pushAudio({ stream: 's', t0: 0 }, bytes(CLUSTER), 0), false);
   hub.setAudio(true);
-  assert.deepEqual(v.got.at(-1), { event: 'audio', data: { offered: true } });
+  assert.deepEqual(v.got.at(-1), { event: 'audio', data: { offered: true, lowLatency: false } });
   const a = listener(), slow = listener();
   hub.listen('a', a); hub.listen('slow', slow);
   hub.pushAudio({ stream: 's', t0: 0 }, bytes([1], CLUSTER, [2]), 0);
@@ -180,7 +180,7 @@ test('audio: switched off, nothing is offered, accepted or passed on; a slow lis
   assert.deepEqual([...a.all()].slice(-1), [3]);
   hub.setAudio(false);
   assert.equal(a.ended, true); assert.equal(hub.listeners.size, 0); assert.equal(hub.stream, null);
-  assert.deepEqual(v.got.at(-1), { event: 'audio', data: { offered: false } });
+  assert.deepEqual(v.got.at(-1), { event: 'audio', data: { offered: false, lowLatency: false } });
   assert.equal(hub.status().audio.offered, false);
 });
 
@@ -322,4 +322,77 @@ test('morph tiers: chosen from the adapter, never one whose buffers do not fit, 
   assert.equal(pickTier({ info: { vendor: 'nvidia' }, limits: big, want: 'ultra' }), 'high', 'an unknown name is ignored');
   assert.deepEqual(['high', 'medium', 'low'].map(lowerTier), ['medium', 'low', null], 'one step down at a time, and no lower than low');
   assert.equal(tierBytes('high'), 640000000);
+});
+
+// ---------------------------------------------------------------- low-latency audio: signalling and the session description
+const { musicSdp, opusParams } = await import('../public/ui/visuals/sdp.js');
+
+test('musicSdp: the Opus line asks for stereo, the bitrate and no DTX, keeping what was there; other codecs are left alone', () => {
+  const sdp = ['v=0', 'm=audio 9 UDP/TLS/RTP/SAVPF 111 63 9', 'a=rtpmap:111 opus/48000/2', 'a=rtcp-fb:111 transport-cc', 'a=fmtp:111 minptime=10;useinbandfec=1', 'a=rtpmap:63 red/48000/2', 'a=fmtp:63 111/111', 'a=rtpmap:9 G722/8000', ''].join('\r\n');
+  const out = musicSdp(sdp, 160);
+  assert.deepEqual(opusParams(out), { minptime: '10', useinbandfec: '1', stereo: '1', 'sprop-stereo': '1', maxaveragebitrate: '160000', usedtx: '0' });
+  assert.ok(out.includes('a=fmtp:63 111/111\r\n'), 'the other format lines are untouched');
+  assert.equal(out.split('\r\n').length, sdp.split('\r\n').length, 'no line added or lost');
+  // a line that already says otherwise is corrected, not duplicated
+  const again = musicSdp(out.replace('usedtx=0', 'usedtx=1').replace('stereo=1', 'stereo=0'), 192);
+  assert.equal(opusParams(again).usedtx, '0'); assert.equal(opusParams(again).stereo, '1'); assert.equal(opusParams(again).maxaveragebitrate, '192000');
+  assert.equal(again.match(/usedtx/g).length, 1);
+  // no format line yet: one is added after the codec
+  const bare = musicSdp('m=audio 9 RTP 96\r\na=rtpmap:96 opus/48000/2\r\na=mid:0\r\n', 128);
+  assert.equal(bare, 'm=audio 9 RTP 96\r\na=rtpmap:96 opus/48000/2\r\na=fmtp:96 stereo=1;sprop-stereo=1;maxaveragebitrate=128000;usedtx=0\r\na=mid:0\r\n');
+  assert.equal(musicSdp('m=audio 9 RTP 0\r\na=rtpmap:0 PCMU/8000\r\n'), 'm=audio 9 RTP 0\r\na=rtpmap:0 PCMU/8000\r\n', 'no Opus: unchanged');
+  assert.equal(opusParams('nothing'), null);
+});
+
+test('signalling: off by default; a place per viewer up to the cap; messages pass both ways; leaving frees the place', () => {
+  const toEngine = [], seen = [];
+  const hub = new VisualsHub({ library, maxListeners: 2, onSignal: (m) => toEngine.push(m), onAudience: (a) => seen.push(a.rtc) });
+  const v = [viewer(), viewer(), viewer()];
+  v.forEach((x, i) => hub.attach(`v${i}`, x));
+  assert.equal(v[0].got[0].data.lowLatency, false);
+  assert.deepEqual(hub.signalFromViewer('v0', { type: 'join' }), { ok: false, reason: 'off' });
+  assert.deepEqual(v[0].got.at(-1), { event: 'rtc', data: { type: 'refuse', reason: 'off' } });
+  assert.equal(toEngine.length, 0, 'the engine is not asked for anything while it is off');
+  hub.setRtc({ lowLatency: true, maxListeners: 2, audioBitrate: 192 });
+  assert.deepEqual(v[1].got.at(-1), { event: 'audio', data: { offered: true, lowLatency: true } });
+  assert.equal(hub.signalFromViewer('nobody', { type: 'join' }).ok, false);
+  assert.equal(hub.signalFromViewer('v0', { type: 'join' }).ok, true);
+  assert.deepEqual(toEngine.at(-1), { type: 'join', viewer: 'v0', bitrate: 192 });
+  assert.equal(hub.signalFromViewer('v1', { type: 'join' }).ok, true);
+  assert.deepEqual(hub.signalFromViewer('v2', { type: 'join' }), { ok: false, reason: 'full' }, 'the third is beyond the cap');
+  assert.deepEqual(v[2].got.at(-1).data, { type: 'refuse', reason: 'full' });
+  assert.equal(hub.signalFromViewer('v0', { type: 'join' }).ok, true, 'asking again does not take a second place');
+  assert.equal(hub.status().audio.rtcListeners, 2);
+  // engine -> viewer, viewer -> engine
+  assert.equal(hub.signalFromEngine({ viewer: 'v0', type: 'offer', sdp: 'OFFER' }).ok, true);
+  assert.deepEqual(v[0].got.at(-1), { event: 'rtc', data: { type: 'offer', sdp: 'OFFER' } });
+  assert.equal(hub.signalFromEngine({ viewer: 'v2', type: 'offer', sdp: 'X' }).ok, false, 'not to a viewer without a place');
+  assert.equal(hub.signalFromViewer('v0', { type: 'answer', sdp: 'ANSWER' }).ok, true);
+  assert.deepEqual(toEngine.at(-1), { type: 'answer', viewer: 'v0', sdp: 'ANSWER' });
+  assert.equal(hub.signalFromViewer('v0', { type: 'ice', candidate: { candidate: 'c', sdpMid: '0' } }).ok, true);
+  assert.deepEqual(toEngine.at(-1), { type: 'ice', viewer: 'v0', candidate: { candidate: 'c', sdpMid: '0' } });
+  hub.signalFromEngine({ viewer: 'v0', type: 'ice', candidate: { candidate: 'e' } });
+  assert.deepEqual(v[0].got.at(-1).data, { type: 'ice', candidate: { candidate: 'e' } });
+  assert.equal(hub.signalFromViewer('v2', { type: 'answer', sdp: 'X' }).ok, false);
+  assert.equal(hub.signalFromViewer('v0', { type: 'answer', sdp: 'x'.repeat(30000) }).ok, false, 'an oversized message is not passed on');
+  assert.equal(hub.signalFromViewer('v0', { type: 'pause', deck: 'A' }).ok, false, 'nothing but signalling');
+  // lowering the cap leaves those listening alone, and keeps new ones out
+  hub.setRtc({ lowLatency: true, maxListeners: 1 });
+  assert.equal(hub.rtc.size, 2);
+  // a viewer closing its page frees its place and the engine hangs up
+  hub.detach('v1');
+  assert.deepEqual(toEngine.at(-1), { type: 'leave', viewer: 'v1' });
+  assert.equal(hub.signalFromViewer('v2', { type: 'join' }).ok, false, 'one is listening and the cap is now one');
+  hub.signalFromViewer('v0', { type: 'leave' });
+  assert.deepEqual(toEngine.at(-1), { type: 'leave', viewer: 'v0' });
+  assert.equal(hub.signalFromViewer('v2', { type: 'join' }).ok, true);
+  // switching low latency off, or audio off, ends every direct connection
+  hub.setRtc({ lowLatency: false });
+  assert.deepEqual(v[2].got.slice(-2).map((g) => g.data), [{ type: 'bye' }, { offered: true, lowLatency: false }]);
+  assert.deepEqual(toEngine.at(-1), { type: 'leave', viewer: 'v2' });
+  assert.equal(hub.rtc.size, 0);
+  hub.setRtc({ lowLatency: true }); hub.signalFromViewer('v0', { type: 'join' });
+  hub.setAudio(false);
+  assert.equal(hub.rtc.size, 0); assert.deepEqual(hub.signalFromViewer('v0', { type: 'join' }), { ok: false, reason: 'off' });
+  assert.equal(seen.at(-1), 0);
 });

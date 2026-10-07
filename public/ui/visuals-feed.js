@@ -5,6 +5,7 @@
 // recorder in link.js, so neither can interrupt the other. It runs only while someone listens. The server says how
 // many are watching and listening in `hello` and in `visuals` events (wired in link.js).
 import { clientId, mixer, isEngine } from './state.js';
+import { musicSdp } from './visuals/sdp.js';
 
 let viewers = 0, listeners = 0, tap = null, starting = false, loaded = false;
 let queue = [], busy = false;
@@ -85,11 +86,61 @@ function stopCast() {
   try { mixer.out.disconnect(c.dest); } catch { /* already gone */ }
 }
 
+// ---- low-latency audio: the master output straight to a viewer over WebRTC, one connection per listener.
+// The server only carries the signalling (it also decides who gets a place: visuals.maxListeners). The sound comes
+// from the Web Audio graph, not a microphone, so there is no echo cancellation, noise suppression or gain control
+// to switch off, and none is added. No ICE servers: only addresses on this network are tried, and nothing outside
+// it is contacted. A viewer that cannot be reached this way uses the relay above.
+const peers = new Map(); // viewer id -> { pc }
+let rtcDest = null;
+const toViewer = (viewer, msg) => fetch('/api/visuals/rtc/engine', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ client: clientId, viewer, ...msg }) }).catch(() => {});
+function hangUp(viewer, tell = false) {
+  const p = peers.get(viewer);
+  if (!p) return;
+  peers.delete(viewer);
+  try { p.pc.close(); } catch { /* already closed */ }
+  if (tell) toViewer(viewer, { type: 'bye' });
+  if (!peers.size && rtcDest) { try { mixer.out.disconnect(rtcDest); } catch { /* already gone */ } rtcDest = null; }
+}
+async function call(viewer, kbps) {
+  hangUp(viewer);
+  if (!rtcDest) { rtcDest = mixer.ctx.createMediaStreamDestination(); mixer.out.connect(rtcDest); }
+  const pc = new RTCPeerConnection({ iceServers: [] });
+  peers.set(viewer, { pc, kbps });
+  pc.onicecandidate = (e) => { if (e.candidate) toViewer(viewer, { type: 'ice', candidate: e.candidate.toJSON() }); };
+  pc.onconnectionstatechange = () => { if (['failed', 'closed'].includes(pc.connectionState) && peers.get(viewer)?.pc === pc) hangUp(viewer, true); };
+  const sender = pc.addTrack(rtcDest.stream.getAudioTracks()[0], rtcDest.stream);
+  try {
+    const offer = await pc.createOffer();
+    offer.sdp = musicSdp(offer.sdp, kbps);
+    await pc.setLocalDescription(offer);
+    // the format line asks for the bitrate; the sender's own limit has to allow it too
+    const params = sender.getParameters();
+    if (params.encodings?.length) { params.encodings[0].maxBitrate = kbps * 1000; await sender.setParameters(params); }
+    toViewer(viewer, { type: 'offer', sdp: offer.sdp });
+  } catch (err) { console.warn('visuals: could not offer low-latency audio', err); hangUp(viewer, true); }
+}
+export async function visualsSignal(msg) {
+  if (!isEngine || !mixer?.out) return;
+  const p = peers.get(msg.viewer);
+  try {
+    if (msg.type === 'join') await call(msg.viewer, Number(msg.bitrate) || 160);
+    else if (msg.type === 'leave') hangUp(msg.viewer);
+    else if (msg.type === 'answer' && p) await p.pc.setRemoteDescription({ type: 'answer', sdp: msg.sdp });
+    else if (msg.type === 'ice' && p) await p.pc.addIceCandidate(msg.candidate);
+  } catch (err) { console.warn('visuals: low-latency signalling failed', err); hangUp(msg.viewer, true); }
+}
+
 function sync() {
   const engine = isEngine && !!mixer?.out;
   if (engine && viewers > 0) start(); else stop();
   if (engine && listeners > 0) startCast(); else stopCast();
+  if (!engine) for (const v of [...peers.keys()]) hangUp(v);
 }
 
-export function visualsAudience(a) { viewers = Number(a?.viewers) || 0; listeners = Number(a?.listeners) || 0; sync(); }
+export function visualsAudience(a) {
+  viewers = Number(a?.viewers) || 0; listeners = Number(a?.listeners) || 0;
+  if (!Number(a?.rtc)) for (const v of [...peers.keys()]) hangUp(v); // the server holds no low-latency listener: none is owed a connection
+  sync();
+}
 setInterval(sync, 1000); // this tab becoming, or ceasing to be, the engine

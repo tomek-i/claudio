@@ -100,6 +100,11 @@ when it starts, and `dj visuals` shows it again. The page only watches; it has n
   is locked to what that viewer hears. With the sound off the picture runs as close to live as it can, for a screen
   in the room; `/visuals?offset=<ms>` or the `←` `→` keys shift it for a slow projector. The `visuals.audio` setting
   switches the sound off for everyone.
+- **Low-latency sound** (the `visuals.lowLatency` setting, off by default for now): on the same network the sound
+  goes straight from the DJ page to the viewer over WebRTC, about a tenth of a second behind the decks instead of
+  a second or two. No audio passes through the server on that path and nothing outside the network is contacted.
+  It is tried first; a viewer it cannot reach within three seconds, or one beyond `visuals.maxListeners` (8), hears
+  the set through the server as before, and the overlay says which way the sound is coming.
 - **Quality**: the morphing modes draw 250 thousand, 1 million or 4 million points (low, medium, high). The page
   picks a tier for the graphics card when it starts and steps down one if it cannot hold the frame rate;
   `/visuals?quality=low|medium|high` fixes it.

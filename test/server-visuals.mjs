@@ -166,7 +166,7 @@ test('audio relay: the engine is told someone listens; a late joiner starts at t
   assert.ok(await waitUntil(() => late.bytes.length === 8));
   assert.deepEqual(late.bytes, [1, 2, 3, ...CLUSTER, 30], 'not the set from the beginning, and not the tail of a cluster');
   const health = (await api(sc.base, '/api/health')).checks.find((c) => c.id === 'visualsAudio');
-  assert.equal(health.status, 'ok'); assert.match(health.detail, /2 listeners · \d+ kbit\/s/);
+  assert.equal(health.status, 'ok'); assert.match(health.detail, /^0 low-latency · 2 relay · \d+ kbit\/s through the relay/);
   a.close(); late.close();
   assert.ok(await waitUntil(() => page.of('visuals').some((e) => e.listeners === 0)), 'and hears when the last one left');
 });
@@ -197,7 +197,7 @@ test('visuals.audio off: no audio is offered or sent, viewers are told, the pict
   await a.head;
   const saved = await api(sc.base, '/api/settings', { 'visuals.audio': false });
   assert.deepEqual(saved.changed, ['visuals.audio']); assert.deepEqual(saved.restart, [], 'applies without a restart');
-  assert.deepEqual(await waitUntil(() => v.of('audio')[0]), { offered: false });
+  assert.deepEqual(await waitUntil(() => v.of('audio')[0]), { offered: false, lowLatency: false });
   assert.ok(await waitUntil(() => a.done), 'the listener is disconnected');
   const refused = await fetch(sc.base + '/api/visuals/audio');
   assert.equal(refused.status, 403);
@@ -208,7 +208,7 @@ test('visuals.audio off: no audio is offered or sent, viewers are told, the pict
   const late = await stream('/api/visuals/events');
   assert.equal((await waitUntil(() => late.of('hello')[0])).audio, false);
   await api(sc.base, '/api/settings', { 'visuals.audio': true });
-  assert.deepEqual(await waitUntil(() => v.of('audio')[1]), { offered: true });
+  assert.deepEqual(await waitUntil(() => v.of('audio')[1]), { offered: true, lowLatency: false });
 });
 
 test('dj visuals: shows the address for other devices, and changes the mode on every open page', async () => {
@@ -224,4 +224,82 @@ test('dj visuals: shows the address for other devices, and changes the mode on e
   assert.notEqual(bad.code, 0); assert.match(bad.out, /unknown mode "disco"/);
   await cli(sc, ['visuals', 'auto']);
   assert.equal((await api(sc.base, '/api/visuals')).mode, 'auto');
+});
+
+// ---------------------------------------------------------------- low-latency audio: the signalling relay
+const signal = async (body) => (await post('/api/visuals/rtc', body)).json();
+const fromEngine = async (body) => (await post('/api/visuals/rtc/engine', body)).json();
+const audioCheck = async () => (await api(sc.base, '/api/health')).checks.find((c) => c.id === 'visualsAudio');
+
+test('low latency is off until the setting is on: no connection is offered and the engine is asked for nothing', async () => {
+  const page = await stream(`/api/events?client=${eng.client}-sig0`);
+  const v = await stream('/api/visuals/events');
+  const hello = await waitUntil(() => v.of('hello')[0]);
+  assert.equal(hello.lowLatency, false);
+  assert.deepEqual(await signal({ viewer: hello.id, type: 'join' }), { ok: false, reason: 'off' });
+  assert.deepEqual(await waitUntil(() => v.of('rtc')[0]), { type: 'refuse', reason: 'off' });
+  assert.equal(page.of('visualsRtc').length, 0);
+});
+
+test('signalling passes between the engine tab and each viewer; the cap sends the next listener to the relay; health counts both', async () => {
+  // the engine's own event stream is where its signalling arrives; nobody else's gets it
+  const engineEvents = await stream(`/api/events?client=${eng.client}`);
+  const other = await stream('/api/events?client=another-dj-page');
+  await api(sc.base, '/api/engine/claim', { client: eng.client });
+  const saved = await api(sc.base, '/api/settings', { 'visuals.lowLatency': true, 'visuals.maxListeners': 2, 'visuals.audioBitrate': 192 });
+  assert.deepEqual(saved.restart, [], 'all three apply live');
+  const v = [await stream('/api/visuals/events'), await stream('/api/visuals/events'), await stream('/api/visuals/events')];
+  const ids = [];
+  for (const x of v) { const h = await waitUntil(() => x.of('hello')[0]); assert.equal(h.lowLatency, true); ids.push(h.id); }
+  const toEngine = () => engineEvents.of('visualsRtc');
+
+  assert.deepEqual(await signal({ viewer: ids[0], type: 'join' }), { ok: true });
+  assert.deepEqual(await waitUntil(() => toEngine().find((m) => m.viewer === ids[0])), { type: 'join', viewer: ids[0], bitrate: 192 });
+  // offer and candidates one way, answer and candidates the other; nothing but text passes through the server
+  assert.deepEqual(await fromEngine({ client: eng.client, viewer: ids[0], type: 'offer', sdp: 'v=0 offer' }), { ok: true });
+  assert.deepEqual(await waitUntil(() => v[0].of('rtc')[0]), { type: 'offer', sdp: 'v=0 offer' });
+  await fromEngine({ client: eng.client, viewer: ids[0], type: 'ice', candidate: { candidate: 'candidate:1 1 udp 1 192.168.1.5 5000 typ host', sdpMid: '0' } });
+  assert.equal((await waitUntil(() => v[0].of('rtc')[1])).candidate.sdpMid, '0');
+  await signal({ viewer: ids[0], type: 'answer', sdp: 'v=0 answer' });
+  await signal({ viewer: ids[0], type: 'ice', candidate: { candidate: 'candidate:2', sdpMid: '0' } });
+  assert.ok(await waitUntil(() => toEngine().some((m) => m.type === 'answer' && m.sdp === 'v=0 answer' && m.viewer === ids[0])));
+  assert.ok(await waitUntil(() => toEngine().some((m) => m.type === 'ice' && m.candidate.candidate === 'candidate:2')));
+  assert.equal(other.of('visualsRtc').length, 0, 'only the engine tab hears signalling');
+  assert.equal(v[1].of('rtc').length, 0, 'and only the viewer it is for');
+  // an engine message from anyone but the engine tab goes nowhere
+  assert.deepEqual(await fromEngine({ client: 'someone-else', viewer: ids[0], type: 'offer', sdp: 'evil' }), { ok: false });
+  assert.ok(!v[0].of('rtc').some((m) => m.sdp === 'evil'));
+
+  // the cap is two: the third listener is refused a direct connection and uses the relay
+  assert.deepEqual(await signal({ viewer: ids[1], type: 'join' }), { ok: true });
+  assert.deepEqual(await signal({ viewer: ids[2], type: 'join' }), { ok: false, reason: 'full' });
+  assert.deepEqual(await waitUntil(() => v[2].of('rtc')[0]), { type: 'refuse', reason: 'full' });
+  const relay = listen();
+  await waitUntil(async () => (await api(sc.base, '/api/visuals')).audio.listeners === 1);
+  await postAudio(eng.client, 's9', 0, chunk([5], CLUSTER, [1]));
+  await relay.head;
+  const st = (await api(sc.base, '/api/visuals')).audio;
+  assert.equal(st.rtcListeners, 2); assert.equal(st.listeners, 1); assert.equal(st.maxListeners, 2); assert.equal(st.bitrate, 192);
+  const h = await audioCheck();
+  assert.equal(h.status, 'ok'); assert.match(h.detail, /^2 low-latency · 1 relay/);
+
+  // a viewer closing its page gives its place up, and the engine is told to hang up
+  v[1].close();
+  assert.ok(await waitUntil(() => toEngine().some((m) => m.type === 'leave' && m.viewer === ids[1])));
+  assert.deepEqual(await signal({ viewer: ids[2], type: 'join' }), { ok: true }, 'the place is free again');
+  // the engine hanging up frees the place too, and tells the viewer
+  await fromEngine({ client: eng.client, viewer: ids[2], type: 'bye' });
+  assert.deepEqual(await waitUntil(() => v[2].of('rtc').find((m) => m.type === 'bye')), { type: 'bye' });
+  assert.equal((await api(sc.base, '/api/visuals')).audio.rtcListeners, 1);
+
+  // low latency off: the remaining direct listener is sent to the relay, which is untouched; then audio off stops everything
+  await api(sc.base, '/api/settings', { 'visuals.lowLatency': false });
+  assert.deepEqual(await waitUntil(() => v[0].of('rtc').find((m) => m.type === 'bye')), { type: 'bye' });
+  assert.deepEqual(await waitUntil(() => v[0].of('audio').at(-1)), { offered: true, lowLatency: false });
+  assert.deepEqual(await signal({ viewer: ids[0], type: 'join' }), { ok: false, reason: 'off' });
+  assert.equal(relay.done, false, 'the relay listener was not disturbed');
+  await api(sc.base, '/api/settings', { 'visuals.lowLatency': true, 'visuals.audio': false });
+  assert.deepEqual(await signal({ viewer: ids[0], type: 'join' }), { ok: false, reason: 'off' }, 'visuals.audio off prevents any connection from being offered');
+  await api(sc.base, '/api/settings', { 'visuals.audio': true, 'visuals.lowLatency': false });
+  relay.close();
 });

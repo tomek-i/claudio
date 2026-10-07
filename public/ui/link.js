@@ -4,7 +4,7 @@ import { handlers } from './commands.js';
 import { loadLibrary, refreshHistory, renderJob, renderStarter } from './crate.js';
 import { addFeed } from './booth.js';
 import { receiveUi } from './prefs.js';
-import { visualsAudience } from './visuals-feed.js';
+import { visualsAudience, visualsSignal } from './visuals-feed.js';
 
 // ------------------------------------------------------------------ server link
 const es = new EventSource(`/api/events?client=${clientId}`);
@@ -31,6 +31,7 @@ es.addEventListener('job', (e) => renderJob(JSON.parse(e.data)));
 es.addEventListener('starter', (e) => renderStarter(JSON.parse(e.data)));
 es.addEventListener('ui', (e) => receiveUi(JSON.parse(e.data)));
 es.addEventListener('visuals', (e) => visualsAudience(JSON.parse(e.data)));
+es.addEventListener('visualsRtc', (e) => visualsSignal(JSON.parse(e.data)));
 // ---- the AUTO DJ switch in the header. The server says what it is (`hello`, then `autodj` whenever it changes, also
 // from `dj autodj on|off`); a click switches it now and saves it as the autoDJ.enabled setting.
 const autoBtn = $('#autoDjBtn');

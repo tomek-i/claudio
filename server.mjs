@@ -167,7 +167,12 @@ function startStarter() {
 
 // the /visuals page: frames (and, for those who ask, audio) from the engine tab out to viewers; the engine only
 // measures while someone watches and only encodes while someone listens
-const visuals = new VisualsHub({ library, audio: config.visuals?.audio !== false, onAudience: (a) => broadcast('visuals', a) });
+const visuals = new VisualsHub({
+  library, audio: config.visuals?.audio !== false,
+  lowLatency: config.visuals?.lowLatency === true, maxListeners: config.visuals?.maxListeners ?? 8, audioBitrate: config.visuals?.audioBitrate ?? 160,
+  onAudience: (a) => broadcast('visuals', a),
+  onSignal: (msg) => { if (engineId) broadcast('visualsRtc', msg, engineId); }, // low-latency signalling, to the engine tab only
+});
 // other devices need this machine's address on the network, not localhost
 const visualsUrl = () => `http://${lanAddress() || 'localhost'}:${PORT}/visuals`;
 
@@ -180,6 +185,7 @@ function applyLiveSettings() {
   stems.setDevice(stemCfg.device);
   stems.pump();
   visuals.setAudio(config.visuals?.audio !== false);
+  visuals.setRtc({ lowLatency: config.visuals?.lowLatency === true, maxListeners: config.visuals?.maxListeners ?? 8, audioBitrate: config.visuals?.audioBitrate ?? 160 });
   library.targetLoudnessDb = config.targetLoudnessDb;
   if (sequencer && config.autoDJ) {
     sequencer.auto.enabled = config.autoDJ.enabled !== false;
@@ -601,6 +607,15 @@ const server = http.createServer(async (req, res) => {
       if (!visuals.listen(id, res)) return send(res, 403, { ok: false, error: 'audio is switched off (the visuals.audio setting)' });
       req.on('close', () => visuals.unlisten(id));
       return;
+    }
+    // low-latency audio: only signalling passes here (offer, answer, ICE candidates); the sound goes tab to tab
+    if (p === '/api/visuals/rtc/engine' && req.method === 'POST') {
+      const b = await readBody(req);
+      return send(res, 200, b.client === engineId ? visuals.signalFromEngine(b) : { ok: false });
+    }
+    if (p === '/api/visuals/rtc' && req.method === 'POST') {
+      const b = await readBody(req);
+      return send(res, 200, visuals.signalFromViewer(String(b.viewer || ''), b));
     }
     if (p === '/api/visuals') return send(res, 200, { ...visuals.status(), url: visualsUrl() });
     if (p === '/visuals') return serveFile(req, res, path.join(ROOT, 'public', 'visuals.html'));

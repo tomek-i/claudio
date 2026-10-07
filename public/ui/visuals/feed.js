@@ -53,7 +53,7 @@ export function sectionAt(deck, pos) {
 }
 
 export class Feed {
-  constructor({ url = '/api/visuals/events', offsetMs = 0, onHello = () => {}, onMode = () => {}, onAudio = () => {}, onStatus = () => {} } = {}) {
+  constructor({ url = '/api/visuals/events', offsetMs = 0, onHello = () => {}, onMode = () => {}, onAudio = () => {}, onRtc = () => {}, onStatus = () => {} } = {}) {
     this.frames = [];           // recent frames, oldest first
     this.scene = { live: null, decks: {} };
     this.offsetMs = offsetMs;   // the viewer's own shift: positive draws later (a slow projector wants negative)
@@ -68,16 +68,17 @@ export class Feed {
       color: [...GREY], accent: [...GREY], live: null, trackId: null,
     };
     this.prevBass = 0;
-    this.onHello = onHello; this.onMode = onMode; this.onAudio = onAudio; this.onStatus = onStatus;
+    this.onHello = onHello; this.onMode = onMode; this.onAudio = onAudio; this.onRtc = onRtc; this.onStatus = onStatus;
     this.connect(url);
   }
 
   connect(url) {
     const es = this.es = new EventSource(url);
-    es.addEventListener('hello', (e) => { const h = JSON.parse(e.data); this.connected = true; this.scene = h.scene; this.frames = []; this.lead = null; this.window = []; this.onHello(h); this.onStatus(); });
+    es.addEventListener('hello', (e) => { const h = JSON.parse(e.data); this.connected = true; this.id = h.id; this.scene = h.scene; this.frames = []; this.lead = null; this.window = []; this.onHello(h); this.onStatus(); });
     es.addEventListener('scene', (e) => { this.scene = JSON.parse(e.data); });
     es.addEventListener('mode', (e) => this.onMode(JSON.parse(e.data).mode));
-    es.addEventListener('audio', (e) => this.onAudio(JSON.parse(e.data).offered));
+    es.addEventListener('audio', (e) => this.onAudio(JSON.parse(e.data)));
+    es.addEventListener('rtc', (e) => this.onRtc(JSON.parse(e.data))); // low-latency signalling from the engine tab
     es.addEventListener('frames', (e) => this.take(JSON.parse(e.data), performance.now()));
     es.onerror = () => { this.connected = false; this.onStatus(); }; // the browser reconnects by itself
   }
@@ -105,6 +106,9 @@ export class Feed {
     if (this.frames.length > 900) this.frames.splice(0, this.frames.length - 900); // about 19 s: a listener is a few seconds behind, and compares the seconds before that
     this.lastArrival = now;
   }
+
+  // the engine audio time it is now, as far as the arriving frames tell
+  liveTime(now) { return this.lead == null ? null : (now - this.lead) / 1000; }
 
   // the engine audio time that should be on screen now
   drawTime(now) {

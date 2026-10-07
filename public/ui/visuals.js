@@ -27,19 +27,24 @@ function notice(text) { $('#noticeText').textContent = text; $('#notice').hidden
 
 const feed = new Feed({
   offsetMs: Number(params.get('offset')) || 0,
-  onHello: (h) => { if (!params.get('mode')) wanted = h.mode; offered(h.audio); },
-  onAudio: (on) => offered(on),
+  onHello: (h) => { if (!params.get('mode')) wanted = h.mode; offered(h.audio, h.lowLatency); },
+  onAudio: (a) => offered(a.offered, a.lowLatency),
+  onRtc: (msg) => listener.onSignal(msg),
   onMode: (m) => { if (known(m)) { wanted = m; drawOverlay(); } },
   onStatus: () => drawOverlay(),
 });
 
 // ---------------------------------------------------------------- sound (optional; the picture follows it while it plays)
-const listener = new Listener({ levelAt: (t) => feed.levelAt(t), onState: () => drawOverlay() });
+const listener = new Listener({
+  levelAt: (t) => feed.levelAt(t), liveTime: (now) => feed.liveTime(now), onState: () => drawOverlay(),
+  signal: (msg) => fetch('/api/visuals/rtc', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ viewer: feed.id, ...msg }) }).catch(() => {}),
+});
 feed.clock = () => listener.time();
 let audioOffered = false;
-function offered(on) {
+function offered(on, lowLatency) {
   audioOffered = !!on && Listener.supported();
   if (!audioOffered) listener.stop();
+  else listener.setLowLatency(lowLatency);
   $('#soundAsk').hidden = !(audioOffered && params.get('audio') === '1' && listener.state === 'off');
   drawOverlay();
 }
@@ -149,7 +154,9 @@ function drawOverlay() {
   $('#soundBtn').textContent = on ? 'Sound on' : 'Sound off'; $('#soundBtn').setAttribute('aria-pressed', String(on));
   $('#soundCtl').hidden = !on;
   $('#muteBtn').setAttribute('aria-pressed', String(listener.muted));
-  $('#soundState').textContent = !on ? '' : listener.state === 'playing' ? (heard != null && newest ? `${Math.max(0, newest.t - heard).toFixed(1)} s behind the decks, ${listener.locked ? 'picture in step' : 'lining the picture up…'}` : 'playing')
+  // which way the sound is coming, and how far behind the decks it is
+  const path = listener.path === 'direct' ? 'low latency' : 'through the server', lag = heard != null && newest ? Math.max(0, newest.t - heard) : null;
+  $('#soundState').textContent = !on ? '' : listener.state === 'playing' ? `${path}${lag != null ? ` · ${lag < 1 ? `${Math.round(lag * 1000)} ms` : `${lag.toFixed(1)} s`} behind the decks, ${listener.locked ? 'picture in step' : 'lining the picture up…'}` : ''}`
     : listener.state === 'connecting' ? 'connecting…' : 'sound dropped, joining again… (picture runs live)';
   $('#quality').textContent = stage?.tier ? `quality ${stage.tier}` : '';
   $('#nudge').textContent = feed.offsetMs ? `picture ${feed.offsetMs > 0 ? '+' : ''}${feed.offsetMs} ms` : '';
