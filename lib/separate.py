@@ -47,10 +47,6 @@ def pick_device(want):
     return "cpu"
 
 
-def is_oom(e):
-    return isinstance(e, getattr(torch.cuda, "OutOfMemoryError", ())) or "out of memory" in str(e).lower()
-
-
 def free_gpu(model):
     model.to("cpu")
     gc.collect()
@@ -111,33 +107,24 @@ def main():
 
     # the mix stays in main memory: apply_model moves one segment at a time to the device and
     # collects the result back on the CPU, so a long track does not have to fit on the GPU
-    def run(dev, segment=None):
+    def run(dev):
         last[0] = 0.0
-        extra = {} if segment is None else {"segment": segment}
         with torch.no_grad():
             out = apply_model(model, mix[None], device=dev, shifts=1, split=True, overlap=0.25, progress=False,
-                              callback=cb, **extra)[0]
+                              callback=cb)[0]
         return out.cpu()
 
+    # A GPU run that fails (out of memory, an operation the device lacks) is done again on the CPU. Shorter
+    # segments are not tried first: htdemucs pads every segment back to its full length, so they save no memory
+    # (measured on an RTX 2080 Ti: a peak of 549 MiB at 7.8 s segments, 551 MiB at 3.9 s).
     try:
         sources = run(device)
     except Exception as e:  # noqa: BLE001
         if device == "cpu":
             raise
         free_gpu(model)
-        sources = None
-        if is_oom(e):
-            # tight on memory: shorter segments before giving up on the GPU
-            seg = min(float(m.segment) for m in getattr(model, "models", [model])) / 2
-            say("DEVICE %s out of GPU memory, trying again with %.1f s segments" % (device, seg))
-            try:
-                sources = run(device, seg)
-            except Exception as e2:  # noqa: BLE001
-                e = e2
-                free_gpu(model)
-        if sources is None:
-            say("DEVICE cpu the GPU run failed (%s), separating on the CPU instead" % brief(e))
-            sources = run("cpu")
+        say("DEVICE cpu the GPU run failed (%s), separating on the CPU instead" % brief(e))
+        sources = run("cpu")
     sources = sources * std + mean
     for name, src_t in zip(model.sources, sources):
         write_wav(os.path.join(out_dir, name + ".wav"), src_t.numpy())
