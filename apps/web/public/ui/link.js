@@ -133,19 +133,21 @@ setInterval(() => {
 // Clicking it opens /health. The checks are asked for when the engine state changes, when the tab is looked at
 // again and once a minute while it is visible.
 const HEALTH_MS = 60000;
-let status = { cls: '', txt: 'engine offline' }, issues = [];
+let status = { cls: '', txt: 'engine offline' }, issues = [], unknown = false; // unknown: the health checks could not be fetched
 function drawStatus() {
   const el = $('#engineStatus');
   el.className = `status ${status.cls}${issues.some((c) => c.status === 'fail') ? ' bad' : issues.length ? ' limited' : ''}`;
   $('.txt', el).textContent = `${status.txt}${issues.length ? ` · ${issues.length} issue${issues.length === 1 ? '' : 's'}` : ''}`;
-  el.title = issues.length ? `${issues.map((c) => `${c.name}: ${c.detail}`).join('\n')}\nClick for the health page` : 'All systems ok · click for the health page';
+  el.title = issues.length ? `${issues.map((c) => `${c.name}: ${c.detail}`).join('\n')}\nClick for the health page`
+    : unknown ? 'The server did not answer, so the state of the rig is not known · click for the health page' : 'All systems ok · click for the health page';
 }
 export async function refreshHealth() {
   try {
     const h = await (await fetch('/api/health')).json();
     // the engine check is this tab's own state, which the text already says
     issues = h.checks.filter((c) => ['fail', 'warn'].includes(c.status) && c.id !== 'engine');
-  } catch { issues = []; /* server unreachable: setStatus says so */ }
+    unknown = false;
+  } catch { issues = []; unknown = true; /* server unreachable: setStatus says so, and the tooltip must not say all is well */ }
   drawStatus();
 }
 export function setStatus(cls, txt) {

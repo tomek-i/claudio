@@ -168,25 +168,25 @@ export function renderKeys() {
     <div class="kgroups">
       <div class="kg"><h4>SOURCE <span class="kchop" title="the pad the keyboard plays, and what is on it">pad ${KB.pad} · ${p?.buffer ? esc(p.name) : 'empty'}</span></h4>
         <div class="krow">
-          <label>grab <select id="kbBeats">${opt([0.5, 1, 2, 4], KB.grabBeats, (v) => `${v} beat${v === 1 ? '' : 's'}`)}</select></label>
-          <label>of <select id="kbStem">${opt(['vocals', 'mix', 'drums', 'bass', 'other'], KB.grabStem)}</select></label>
+          <label title="How much to grab: the length of the chop, in beats">grab <select id="kbBeats">${opt([0.5, 1, 2, 4], KB.grabBeats, (v) => `${v} beat${v === 1 ? '' : 's'}`)}</select></label>
+          <label title="What to grab: one stem of the track, or the full mix">of <select id="kbStem">${opt(['vocals', 'mix', 'drums', 'bass', 'other'], KB.grabStem)}</select></label>
           ${['A', 'B', 'C', 'D'].map((d) => `<button class="btn sm kgrab" data-deck="${d}" title="grab from deck ${d} at its playhead, into pad ${KB.pad}">↓ ${d}</button>`).join('')}
         </div></div>
       <div class="kg"><h4>PLAY <span class="khud" id="kbHud">—</span></h4>
         <div class="krow">
-          <label>quant <select id="kbQuant">${opt(['off', '16', 'beat'], KB.quant, (v) => (v === '16' ? '1/16' : v))}</select></label>
+          <label title="Quantise: a note starts at once (off), on the next 1/16 or on the next beat of the live deck">quant <select id="kbQuant">${opt(['off', '16', 'beat'], KB.quant, (v) => (v === '16' ? '1/16' : v))}</select></label>
           <button class="btn sm ${KB.hold ? 'on' : ''}" id="kbHold" title="hold: the chop stops when you release the key">HOLD</button>
           <button class="btn sm ${KB.scale === 'on' ? 'on' : ''}" id="kbScale" title="scale lock: notes snap to the live track's key (needs the chop's root, detected on grab)">SCALE</button>
           <span class="koct" title="${esc([hint('chop.octave.down'), hint('chop.octave.up')].filter(Boolean).join(' / '))}">oct ${KB.octave >= 0 ? '+' : ''}${KB.octave}</span>
-          <label>vol <input type="range" id="kbGain" min="0" max="1.5" step="0.01" value="${KB.gain}"></label>
+          <label title="Volume of the chop, up to 150%">vol <input type="range" id="kbGain" min="0" max="1.5" step="0.01" value="${KB.gain}"></label>
         </div></div>
       <div class="kg"><h4>LOOP <span class="kevents">${L.events.length ? `${L.events.length} notes` : ''}</span></h4>
         <div class="krow">
-          <label><select id="kbBars">${opt([1, 2, 4, 8], L.bars, (v) => `${v} bar${v === 1 ? '' : 's'}`)}</select></label>
-          <button class="btn sm ${L.rec ? 'rec' : ''}" id="kbRec">● REC</button>
-          <button class="btn sm ${L.on && !L.rec ? 'on' : ''}" id="kbPlay">▶ LOOP</button>
-          <button class="btn sm" id="kbStop">■</button>
-          <button class="btn sm" id="kbClear">CLR</button>
+          <label title="Length of the recorded loop"><select id="kbBars">${opt([1, 2, 4, 8], L.bars, (v) => `${v} bar${v === 1 ? '' : 's'}`)}</select></label>
+          <button class="btn sm ${L.rec ? 'rec' : ''}" id="kbRec" title="Record: the notes you play are added to the loop, from the live deck's next bar · click again = stop recording, the loop plays on">● REC</button>
+          <button class="btn sm ${L.on && !L.rec ? 'on' : ''}" id="kbPlay" title="Play the recorded loop, from the live deck's next bar">▶ LOOP</button>
+          <button class="btn sm" id="kbStop" title="Stop the loop · its notes are kept">■</button>
+          <button class="btn sm" id="kbClear" title="Stop the loop and delete its notes">CLR</button>
         </div></div>
     </div>
     <div class="piano">${[...Array(18).keys()].map((s) => {

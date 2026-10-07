@@ -83,10 +83,12 @@ export function renderLibrary(force) {
   $('#lib tbody').innerHTML = rows.map((t) => {
     const f = fits(t);
     const cls = [ref && t.id !== ref.id && f.key && f.bpm ? 'match' : ref && (f.key || f.bpm) ? 'near' : '', historyIds.has(t.id) ? 'played' : '', loaded.includes(t.id) ? 'loaded' : ''].join(' ');
-    return `<tr class="${cls}" data-id="${t.id}" draggable="true">
-      <td class="fit"></td>
+    // the dot in the first column: how well the track fits the live deck
+    const fit = cls.includes('match') ? 'Fits the live deck: key and tempo both match' : cls.includes('near') ? 'Close to the live deck: its key or its tempo matches' : '';
+    return `<tr class="${cls}" data-id="${t.id}" draggable="true" title="Drag onto a deck to load it · touch: hold, then drag">
+      <td class="fit"${fit ? ` title="${fit}"` : ''}></td>
       <td class="load">${DECKS.map((n) => `<button class="ld ${n.toLowerCase()}" data-deck="${n}" title="Load on deck ${n}">${n}</button>`).join('')}</td>
-      <td class="name">${esc(t.title)} <small>${esc(t.artist || '')}</small>${t.stems ? ' <span class="stemtag" title="stems available">STEMS</span>' : ''}</td>
+      <td class="name">${esc(t.title)} <small>${esc(t.artist || '')}</small>${t.stems ? ' <span class="stemtag" title="Stems available: vocals, drums, bass and the rest can be faded separately">STEMS</span>' : ''}</td>
       <td>${t.bpm.toFixed(1)}</td>
       <td><span class="keychip" style="background:${camelotColor(t.camelot)}">${t.camelot}</span></td>
       <td><span class="ebar"><i style="width:${t.energy * 10}%"></i></span> ${t.energy}</td>

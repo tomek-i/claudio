@@ -26,13 +26,13 @@
   <div class="spacer"></div>
   <div class="presets" id="presets" role="group" aria-label="Page layout" title="Set the whole page layout in one click"><button data-preset="mix" title="Decks with the library under them">Mix</button><button data-preset="browse" title="The library full size, with a slim strip of the decks on top">Browse</button><button data-preset="perform" title="Decks with the sampler and chop keyboard under them">Perform</button></div>
   <div class="spacer"></div>
-  <button class="toplink" id="keysBtn" title="Keyboard shortcuts" aria-haspopup="dialog">⌨ Keys</button>
+  <button class="toplink" id="keysBtn" title="The keyboard shortcuts, as they are bound now" aria-haspopup="dialog">⌨ Keys</button>
   <a class="toplink" href="/visuals" target="_blank" rel="noopener" title="A full-screen visualiser of the set, for a second screen or a projector. Opens in a new tab; other devices use this machine's address (dj visuals shows it).">Visuals</a>
-  <a class="toplink" href="/settings" target="_blank" rel="noopener">Settings</a>
+  <a class="toplink" href="/settings" target="_blank" rel="noopener" title="All the settings of the rig, and the key bindings. Opens in a new tab, so the music keeps playing">Settings</a>
 </header>
 
 <section class="scope">
-  <canvas id="scroll" height="150"></canvas>
+  <canvas id="scroll" height="150" title="Drag a lane = scratch · alt+drag = move the playhead silently · ctrl+drag, or drag the strip on its bottom edge = nudge the tempo · double-click = hot cue on the nearest beat · wheel or pinch = zoom" aria-label="Waveforms of the decks"></canvas>
   <div class="scope-tools">
     <button id="waveZoomReset" title="Back to the default zoom" hidden>1:1</button>
     <button id="waveGuard" aria-pressed="true">🔒</button>
@@ -52,26 +52,26 @@
       <div class="bpmbox"><span class="bpm">—</span><span class="pitch">0.0%</span></div>
     </div>
     <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip bar" title="Bar, and the beat within it"><span class="barn">bar —</span><i class="beats"><b></b><b></b><b></b><b></b></i></span><span class="chip phrase" title="Where the track is in its 8-bar phrase"><span>phrase</span><i><b></b></i></span><span class="chip mixout"></span></div>
-    <canvas class="overview" height="64"></canvas>
+    <canvas class="overview" height="64" title="Track overview: click = jump there · drag = scrub silently (a playing deck needs Shift while the lock is on)" aria-label="Track overview"></canvas>
     <div class="transport">
-      <button class="btn cue">CUE</button>
-      <button class="btn play">▶</button>
-      <button class="btn sync">SYNC</button>
-      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
-      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
+      <button class="btn cue" title="Cue: while playing, stop and go back to the cue point · while stopped, set the cue point here">CUE</button>
+      <button class="btn play" title="Play / pause">▶</button>
+      <button class="btn sync" title="Sync: match the tempo to the other playing deck, and line the beats and bars up if this deck is playing · one shot, it does not stay locked">SYNC</button>
+      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4" title="Loop 4 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">4</button><button data-loop="8" title="Loop 8 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">8</button><button data-loop="16" title="Loop 16 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">16</button><button data-loop="32" title="Loop 32 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
+      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown" title="Jump to the next breakdown, landing on the bar">break</button><button data-jump="drop" title="Jump to the next drop, landing on the bar">drop</button><button data-jump="outro" title="Jump to the outro, landing on the bar">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
       <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span></label>
     </div>
     <div class="hotcues" title="Hot cues: click = jump on the beat · shift+click = set here"></div>
     <div class="deckx">
       <button class="btn sm keylock on" title="Key lock: tempo changes keep the key (WSOLA time-stretch)">KEYLOCK</button>
-      <span class="keyshift" title="Key shift in semitones (double-click to reset)"><button class="ks" data-d="-1">&minus;</button><span class="ksv">0</span><button class="ks" data-d="1">+</button><small>KEY</small></span>
+      <span class="keyshift" title="Key shift in semitones"><button class="ks" data-d="-1" title="Key down a semitone">&minus;</button><span class="ksv" title="Key shift in semitones · double-click = 0">0</span><button class="ks" data-d="1" title="Key up a semitone">+</button><small>KEY</small></span>
       <button class="btn sm slip on" title="Slip: after a scratch the track carries on where it would have been">SLIP</button>
-      <select class="xfa" title="Crossfader assign"><option value="left">XF L</option><option value="thru">THRU</option><option value="right">XF R</option></select>
+      <select class="xfa" title="Which side of the crossfader this deck is on · THRU = not on the crossfader"><option value="left">XF L</option><option value="thru">THRU</option><option value="right">XF R</option></select>
       <div class="stems off" title="Stem faders (enabled when the track has separated stems)">
-        <label>VOC<input type="range" data-stem="vocals" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>DRM<input type="range" data-stem="drums" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>BAS<input type="range" data-stem="bass" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>OTH<input type="range" data-stem="other" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>VOC<input type="range" title="Vocals level (needs separated stems)" data-stem="vocals" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>DRM<input type="range" title="Drums level (needs separated stems)" data-stem="drums" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>BAS<input type="range" title="Bass level (needs separated stems)" data-stem="bass" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>OTH<input type="range" title="Level of everything else: the track without vocals, drums and bass (needs separated stems)" data-stem="other" min="0" max="1" step="0.01" value="1" disabled></label>
       </div>
     </div>
   </section>
@@ -82,23 +82,23 @@
     <div class="strips">
       <div class="strip" data-deck="A">
         <div class="sname">A</div>
-        <div class="k trim" data-ctl="trim" data-label="TRIM" title="Trim: gain before the EQ, ±12 dB on top of the track's analysed level (double-click = 0 dB)"></div>
-        <div class="k" data-ctl="high" data-label="HI"></div>
-        <div class="k" data-ctl="mid" data-label="MID"></div>
-        <div class="k" data-ctl="low" data-label="LOW"></div>
-        <div class="k" data-ctl="filter" data-label="FILTER"></div>
-        <div class="fxslot"><select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO"></div><div class="k" data-ctl="fx" data-label="FX"></div></div></div>
-        <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
+        <div class="k trim" data-ctl="trim" data-label="TRIM" title="Trim: gain before the EQ, ±12 dB on top of the track's analysed level · drag up or down · double-click = 0 dB"></div>
+        <div class="k" data-ctl="high" data-label="HI" title="High EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="mid" data-label="MID" title="Mid EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="low" data-label="LOW" title="Low EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="filter" data-label="FILTER" title="Filter: left of centre = low-pass, right = high-pass, centre = off · drag up or down · double-click = off"></div>
+        <div class="fxslot"><select class="fxsel" title="Deck FX: the effect on this deck, timed to the beat · the FX knob sets how much"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO" title="Echo send: how much of this deck goes into the echo · drag up or down · double-click = off"></div><div class="k" data-ctl="fx" data-label="FX" title="Amount of the deck FX picked above · drag up or down · double-click = off"></div></div></div>
+        <div class="faderwrap"><canvas class="meter" width="10" height="120" title="Deck level as it reaches the master: after the fader and the crossfader" aria-label="Deck level"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
       </div>
       <div class="strip" data-deck="B">
         <div class="sname">B</div>
-        <div class="k trim" data-ctl="trim" data-label="TRIM" title="Trim: gain before the EQ, ±12 dB on top of the track's analysed level (double-click = 0 dB)"></div>
-        <div class="k" data-ctl="high" data-label="HI"></div>
-        <div class="k" data-ctl="mid" data-label="MID"></div>
-        <div class="k" data-ctl="low" data-label="LOW"></div>
-        <div class="k" data-ctl="filter" data-label="FILTER"></div>
-        <div class="fxslot"><select class="fxsel" title="Deck FX (beat-synced)"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO"></div><div class="k" data-ctl="fx" data-label="FX"></div></div></div>
-        <div class="faderwrap"><canvas class="meter" width="10" height="120"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
+        <div class="k trim" data-ctl="trim" data-label="TRIM" title="Trim: gain before the EQ, ±12 dB on top of the track's analysed level · drag up or down · double-click = 0 dB"></div>
+        <div class="k" data-ctl="high" data-label="HI" title="High EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="mid" data-label="MID" title="Mid EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="low" data-label="LOW" title="Low EQ: down to a full cut, up to +6 dB · drag up or down · double-click = flat"></div>
+        <div class="k" data-ctl="filter" data-label="FILTER" title="Filter: left of centre = low-pass, right = high-pass, centre = off · drag up or down · double-click = off"></div>
+        <div class="fxslot"><select class="fxsel" title="Deck FX: the effect on this deck, timed to the beat · the FX knob sets how much"><option value="none">FX off</option><option value="reverb">reverb</option><option value="flanger">flanger</option><option value="phaser">phaser</option><option value="gate">gate</option><option value="crush">crush</option></select><div class="fxpair"><div class="k" data-ctl="echo" data-label="ECHO" title="Echo send: how much of this deck goes into the echo · drag up or down · double-click = off"></div><div class="k" data-ctl="fx" data-label="FX" title="Amount of the deck FX picked above · drag up or down · double-click = off"></div></div></div>
+        <div class="faderwrap"><canvas class="meter" width="10" height="120" title="Deck level as it reaches the master: after the fader and the crossfader" aria-label="Deck level"></canvas><span class="fadertrack"><input type="range" class="fader" min="0" max="1.54" step="0.01" value="1" title="Channel fader: 0 on the scale is the track at its normal level; above it is extra level, up to +6 dB · double-click = 0 dB"></span></div>
       </div>
     </div>
     <div class="master">
@@ -111,11 +111,11 @@
       </div>
       <span class="clip" id="masterClip" title="Lights when the master output reaches full scale">CLIP</span>
       <div class="mastermeters" title="Master level, after the limiter">
-        <div class="mm"><canvas class="meter" data-side="L" width="8" height="120"></canvas><small>L</small></div>
-        <div class="mm"><canvas class="meter" data-side="R" width="8" height="120"></canvas><small>R</small></div>
+        <div class="mm"><canvas class="meter" data-side="L" width="8" height="120" title="Master level, left channel, after the limiter" aria-label="Master level, left"></canvas><small>L</small></div>
+        <div class="mm"><canvas class="meter" data-side="R" width="8" height="120" title="Master level, right channel, after the limiter" aria-label="Master level, right"></canvas><small>R</small></div>
       </div>
     </div>
-    <div class="xf"><span class="xfsw" data-deck="A" role="group" aria-label="Crossfader side for deck A" title="Which side of the crossfader deck A is on · T = through: not on the crossfader"><button data-side="left">L</button><button data-side="thru">T</button><button data-side="right">R</button></span><span>A·C</span><span class="xftrack"><input type="range" id="xfader" min="0" max="1" step="0.005" value="0" title="Crossfader: each side stays at full level until the fader passes the centre line · double-click = centre"></span><span>B·D</span><span class="xfsw" data-deck="B" role="group" aria-label="Crossfader side for deck B" title="Which side of the crossfader deck B is on · T = through: not on the crossfader"><button data-side="left">L</button><button data-side="thru">T</button><button data-side="right">R</button></span></div>
+    <div class="xf"><span class="xfsw" data-deck="A" role="group" aria-label="Crossfader side for deck A" title="Which side of the crossfader deck A is on · T = through: not on the crossfader"><button data-side="left" title="On the left of the crossfader">L</button><button data-side="thru" title="Through: not on the crossfader, always heard">T</button><button data-side="right" title="On the right of the crossfader">R</button></span><span>A·C</span><span class="xftrack"><input type="range" id="xfader" min="0" max="1" step="0.005" value="0" title="Crossfader: each side stays at full level until the fader passes the centre line · double-click = centre"></span><span>B·D</span><span class="xfsw" data-deck="B" role="group" aria-label="Crossfader side for deck B" title="Which side of the crossfader deck B is on · T = through: not on the crossfader"><button data-side="left" title="On the left of the crossfader">L</button><button data-side="thru" title="Through: not on the crossfader, always heard">T</button><button data-side="right" title="On the right of the crossfader">R</button></span></div>
   </section>
 
   <section class="deck" data-deck="B">
@@ -130,26 +130,26 @@
       <div class="bpmbox"><span class="bpm">—</span><span class="pitch">0.0%</span></div>
     </div>
     <div class="chips"><span class="chip key">—</span><span class="chip energy">E —</span><span class="chip bar" title="Bar, and the beat within it"><span class="barn">bar —</span><i class="beats"><b></b><b></b><b></b><b></b></i></span><span class="chip phrase" title="Where the track is in its 8-bar phrase"><span>phrase</span><i><b></b></i></span><span class="chip mixout"></span></div>
-    <canvas class="overview" height="64"></canvas>
+    <canvas class="overview" height="64" title="Track overview: click = jump there · drag = scrub silently (a playing deck needs Shift while the lock is on)" aria-label="Track overview"></canvas>
     <div class="transport">
-      <button class="btn cue">CUE</button>
-      <button class="btn play">▶</button>
-      <button class="btn sync">SYNC</button>
-      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4">4</button><button data-loop="8">8</button><button data-loop="16">16</button><button data-loop="32">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
-      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown">break</button><button data-jump="drop">drop</button><button data-jump="outro">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
+      <button class="btn cue" title="Cue: while playing, stop and go back to the cue point · while stopped, set the cue point here">CUE</button>
+      <button class="btn play" title="Play / pause">▶</button>
+      <button class="btn sync" title="Sync: match the tempo to the other playing deck, and line the beats and bars up if this deck is playing · one shot, it does not stay locked">SYNC</button>
+      <div class="loops" title="Loop, in beats: click = loop this block (snapped) · hold = momentary · shift+click = from the next bar"><button class="lin" title="Loop in: mark the start of a loop on the nearest beat">IN</button><button class="lout" title="Loop out: close the loop on the nearest beat and start looping">OUT</button><button class="lscale" data-scale="0.5" title="Halve the loop · shift+click = move the loop back by its own length · with no loop: a shorter next loop">½</button><button data-loop="4" title="Loop 4 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">4</button><button data-loop="8" title="Loop 8 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">8</button><button data-loop="16" title="Loop 16 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">16</button><button data-loop="32" title="Loop 32 beats: click = loop this block (snapped) · click again = off · hold = momentary · shift+click = from the next bar">32</button><button class="lscale" data-scale="2" title="Double the loop · shift+click = move the loop forward by its own length · with no loop: a longer next loop">×2</button><button class="lsize" title="Loop on / off · shows the length when it is not one of the four">LOOP</button></div>
+      <div class="jumps" title="Jump to the next section, landing on the bar"><button data-jump="breakdown" title="Jump to the next breakdown, landing on the bar">break</button><button data-jump="drop" title="Jump to the next drop, landing on the bar">drop</button><button data-jump="outro" title="Jump to the outro, landing on the bar">outro</button><button class="bj" data-beats="-16" title="Jump back 16 beats">◀ 16</button><button class="bj" data-beats="-4" title="Jump back 4 beats">◀ 4</button><button class="bj" data-beats="4" title="Jump forward 4 beats">4 ▶</button><button class="bj" data-beats="16" title="Jump forward 16 beats">16 ▶</button></div>
       <label class="tempo"><span class="tlabel">TEMPO</span><span class="ratetrack"><span class="rscale" aria-hidden="true"><i>−</i><i class="zero">0</i><i>+</i></span><input type="range" class="rate" min="0.9" max="1.1" step="0.0005" value="1" title="Tempo, ±10% · double-click = 0%"></span></label>
     </div>
     <div class="hotcues" title="Hot cues: click = jump on the beat · shift+click = set here"></div>
     <div class="deckx">
       <button class="btn sm keylock on" title="Key lock: tempo changes keep the key (WSOLA time-stretch)">KEYLOCK</button>
-      <span class="keyshift" title="Key shift in semitones (double-click to reset)"><button class="ks" data-d="-1">&minus;</button><span class="ksv">0</span><button class="ks" data-d="1">+</button><small>KEY</small></span>
+      <span class="keyshift" title="Key shift in semitones"><button class="ks" data-d="-1" title="Key down a semitone">&minus;</button><span class="ksv" title="Key shift in semitones · double-click = 0">0</span><button class="ks" data-d="1" title="Key up a semitone">+</button><small>KEY</small></span>
       <button class="btn sm slip on" title="Slip: after a scratch the track carries on where it would have been">SLIP</button>
-      <select class="xfa" title="Crossfader assign"><option value="left">XF L</option><option value="thru">THRU</option><option value="right">XF R</option></select>
+      <select class="xfa" title="Which side of the crossfader this deck is on · THRU = not on the crossfader"><option value="left">XF L</option><option value="thru">THRU</option><option value="right">XF R</option></select>
       <div class="stems off" title="Stem faders (enabled when the track has separated stems)">
-        <label>VOC<input type="range" data-stem="vocals" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>DRM<input type="range" data-stem="drums" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>BAS<input type="range" data-stem="bass" min="0" max="1" step="0.01" value="1" disabled></label>
-        <label>OTH<input type="range" data-stem="other" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>VOC<input type="range" title="Vocals level (needs separated stems)" data-stem="vocals" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>DRM<input type="range" title="Drums level (needs separated stems)" data-stem="drums" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>BAS<input type="range" title="Bass level (needs separated stems)" data-stem="bass" min="0" max="1" step="0.01" value="1" disabled></label>
+        <label>OTH<input type="range" title="Level of everything else: the track without vocals, drums and bass (needs separated stems)" data-stem="other" min="0" max="1" step="0.01" value="1" disabled></label>
       </div>
     </div>
   </section>
@@ -160,14 +160,14 @@
 <!-- the bottom panel: one bar of tabs, and under it the open tab (the booth can stay pinned beside it). ui/lower.js -->
 <div class="lowerbar" id="lowerBar" aria-label="Bottom panel" title="Drag to resize the bottom panel · double-click = automatic height">
   <div class="tabs" role="tablist" aria-label="Bottom panel">
-    <button class="tab" role="tab" data-tab="library">Library <span id="lbCount"></span></button>
+    <button class="tab" role="tab" data-tab="library" title="The library and the queue">Library <span id="lbCount"></span></button>
     <button class="tab" role="tab" data-tab="sampler">Sampler &amp; keys</button>
-    <button class="tab" role="tab" data-tab="booth" id="boothTab">Booth</button>
+    <button class="tab" role="tab" data-tab="booth" id="boothTab" title="The booth: Claude's decisions, live, and requests to Claude">Booth</button>
   </div>
   <span class="lb-jobs" id="lbJobs"></span>
   <button class="lb-feed" id="lbFeed" title="Show the booth"></button>
   <span class="lb-grip"></span>
-  <span class="lb-sizes" role="group" aria-label="Panel height"><button data-h="300" title="Small">S</button><button data-h="440" title="Medium">M</button><button data-h="620" title="Large">L</button></span>
+  <span class="lb-sizes" role="group" aria-label="Panel height"><button data-h="300" title="Small bottom panel">S</button><button data-h="440" title="Medium bottom panel">M</button><button data-h="620" title="Large bottom panel">L</button></span>
   <button class="lb-max" id="lowerMax" aria-pressed="false" title="Maximise the bottom panel">⤢</button>
   <button class="lb-toggle" id="lowerToggle" aria-expanded="true" aria-controls="lower" title="Hide the bottom panel">▾</button>
 </div>
@@ -175,34 +175,34 @@
   <section class="crate">
    <div class="crate-main">
     <div class="crate-head">
-      <input id="search" placeholder="Search artist, title, 6A, 128…" autocomplete="off">
+      <input id="search" placeholder="Search artist, title, 6A, 128…" autocomplete="off" title="Search by artist, title, key (6A), BPM or genre · every word has to match">
       <div class="filters" id="libFilters" role="group" aria-label="Filters">
         <button data-f="bpm" aria-pressed="false" title="Only tracks within 6% of the live deck's tempo (double and half time count)">BPM ±6%</button>
         <button data-f="key" aria-pressed="false" title="Only tracks in a key that mixes with the live deck">Key match</button>
         <button data-f="energy" aria-pressed="false" title="Energy: click to step through any, low (1–4), mid (5–7), high (8–10)">Energy</button>
         <button data-f="fresh" aria-pressed="false" title="Hide tracks already played in this set">Unplayed</button>
       </div>
-      <label class="sortby">Sort <select id="libSort"><option value="added">newest</option><option value="title">title</option><option value="bpm">BPM</option><option value="key">key</option><option value="energy">energy</option></select></label>
+      <label class="sortby">Sort <select id="libSort" title="Sort the library · a column header does the same, and a second click on it reverses the order"><option value="added">newest</option><option value="title">title</option><option value="bpm">BPM</option><option value="key">key</option><option value="energy">energy</option></select></label>
       <span class="count" id="libCount"></span>
-      <button class="btn sm" id="addBtn" aria-expanded="false" aria-controls="grabRow" title="Fetch a track from YouTube or SoundCloud, or import files">+ Add music</button>
+      <button class="btn sm" id="addBtn" aria-expanded="false" aria-controls="grabRow" title="Show or hide the row for adding music: fetch a track from YouTube or SoundCloud, or import files">+ Add music</button>
     </div>
     <div class="grab" id="grabRow" hidden>
-      <input id="grabInput" placeholder="Paste a YouTube / SoundCloud URL, or type “artist - title” to fetch it" autocomplete="off">
-      <label class="pl"><input type="checkbox" id="grabPlaylist"> playlist</label>
-      <button class="btn" id="grabBtn">GET</button>
+      <input id="grabInput" placeholder="Paste a YouTube / SoundCloud URL, or type “artist - title” to fetch it" autocomplete="off" title="A YouTube or SoundCloud URL, or “artist - title” to search for it · Enter = get it">
+      <label class="pl" title="Fetch the whole playlist behind the URL (up to 25 tracks), not only the one track"><input type="checkbox" id="grabPlaylist"> playlist</label>
+      <button class="btn" id="grabBtn" title="Download it into the library and analyse it">GET</button>
       <button class="btn" id="filesBtn" title="Import audio files from this device into the library">FILES</button>
       <input type="file" id="filesInput" accept="audio/*" multiple hidden>
     </div>
     <div id="jobs"></div>
     <div class="tablewrap">
       <table id="lib">
-        <thead><tr><th></th><th>Load</th><th data-sort="title">Track</th><th data-sort="bpm">BPM</th><th data-sort="key">Key</th><th data-sort="energy">Energy</th><th>Len</th><th></th></tr></thead>
+        <thead><tr><th title="A dot marks a track that fits the live deck">&nbsp;</th><th>Load</th><th data-sort="title" title="Sort by title · click again = reverse">Track</th><th data-sort="bpm" title="Sort by BPM · click again = reverse">BPM</th><th data-sort="key" title="Sort by key · click again = reverse">Key</th><th data-sort="energy" title="Sort by energy · click again = reverse">Energy</th><th>Len</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="empty" id="libEmpty">
         Your crate is empty. Use “Add music” above, drop audio into <code>library/</code>, or ask Claude: <em>“grab some 2008 hardstyle classics”</em>.
         <div class="starter">
-          <button class="btn" id="starterBtn">Download demo tracks</button>
+          <button class="btn" id="starterBtn" title="Download the Creative Commons starter crate into the library">Download demo tracks</button>
           <small id="starterMsg">Free to use: Creative Commons tracks across hip-hop, house, techno and drum &amp; bass.</small>
         </div>
       </div>
@@ -220,7 +220,7 @@
   </section>
 
   <aside class="booth">
-    <h2 title="The booth: Claude's decisions, live">Booth <div class="feedfilters" id="feedFilters" role="group" aria-label="Show in the log"><button data-show="main" title="Everything except the raw commands">Main</button><button data-show="claude" title="What Claude says, and requests to Claude">Claude</button><button data-show="action" title="The raw commands sent to the decks">Actions</button><button data-show="system">System</button><button data-show="all">All</button></div><button class="pin" id="boothPin" aria-pressed="true" title="Keep the booth beside the open tab">pin</button></h2>
+    <h2 title="The booth: Claude's decisions, live">Booth <div class="feedfilters" id="feedFilters" role="group" aria-label="Show in the log"><button data-show="main" title="Everything except the raw commands">Main</button><button data-show="claude" title="What Claude says, and requests to Claude">Claude</button><button data-show="action" title="The raw commands sent to the decks">Actions</button><button data-show="system" title="Only the rig's own lines: warnings and status">System</button><button data-show="all" title="Every line, the raw commands included">All</button></div><button class="pin" id="boothPin" aria-pressed="true" title="Keep the booth beside the open tab">pin</button></h2>
     <!-- what is playing and what comes next, pinned above the log (ui/booth.js) -->
     <div class="nownext" id="nowNext">
       <div class="nn"><b>NOW</b><span id="nnNow">—</span></div>
@@ -231,9 +231,9 @@
     </div>
     <div id="feed" data-show="main"></div>
     <form id="ask">
-      <input id="askInput" placeholder="Request a track or a vibe for Claude…" autocomplete="off">
-      <button class="btn">SEND</button>
-      <label class="tts" title="Let Claude talk on the mic"><input type="checkbox" id="ttsToggle" checked> mic</label>
+      <input id="askInput" placeholder="Request a track or a vibe for Claude…" autocomplete="off" title="A request for Claude: a track, a vibe, a change of plan · Enter = send">
+      <button class="btn" title="Send the request to Claude">SEND</button>
+      <label class="tts" title="Let Claude talk on the mic · the music dips while it speaks"><input type="checkbox" id="ttsToggle" checked> mic</label>
     </form>
   </aside>
 </section>
@@ -243,7 +243,7 @@
     <div class="bigdisc"></div>
     <h1>DJ Claude</h1>
     <p id="overlayMsg">Browsers need one click before they can play sound.<br>This tab becomes the sound system Claude plays through.</p>
-    <button class="btn big" id="startBtn">Start engine</button>
+    <button class="btn big" id="startBtn" title="Start the audio engine: this tab becomes the sound system">Start engine</button>
     <p class="hint">Then in Claude Code, try <code>/dj-set</code> or just ask: “play me a 30 minute hardstyle set”.</p>
   </div>
 </div>
@@ -255,8 +255,8 @@
   <div class="card shortcuts">
     <h2>Keyboard shortcuts</h2>
     <div id="shortcutList"></div>
-    <p class="hint">Keys are physical positions, shown as this keyboard labels them. <a href="/settings#keys" target="_blank" rel="noopener">Change them in Settings</a>.</p>
-    <button class="btn" id="shortcutsClose">Close</button>
+    <p class="hint">Keys are physical positions, shown as this keyboard labels them. <a href="/settings#keys" target="_blank" rel="noopener" title="Open the key bindings in Settings, in a new tab">Change them in Settings</a>.</p>
+    <button class="btn" id="shortcutsClose" title="Close the shortcut list (Esc)">Close</button>
   </div>
 </div>
 
