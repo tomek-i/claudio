@@ -207,6 +207,13 @@ that the output is byte-identical:
 node tools/bench/analyze.bench.mjs     # also: deck-voice, zoom, library
 ```
 
+## Releases
+Versions and the changelog come from the commit messages ([Conventional Commits](https://www.conventionalcommits.org):
+`feat(visuals): …`, `fix(ui): …`). On every push to `main`, [release-please](https://github.com/googleapis/release-please)
+keeps a release pull request up to date with the next version and `CHANGELOG.md`; merging it tags the version and
+publishes the GitHub release. A `feat` raises the minor version, a `fix` the patch version. Setup:
+`.github/workflows/release-please.yml` and `release-please-config.json`.
+
 ## Notes
 - Built for personal use with music you have the rights to play. Downloads are your responsibility.
 - Windows is the primary platform (PowerShell/Git Bash); the engine and server are plain Node + browser and run elsewhere, but
