@@ -107,6 +107,7 @@ const stems = new StemQueue({
   concurrency: stemCfg.concurrency,
   model: stemCfg.model,
   minFreeGB: stemCfg.minFreeGB,
+  device: stemCfg.device,
   enabled: stemCfg.enabled !== false,
   log: (t) => addLog('system', t),
   onEvent: (ev) => broadcast('stems', ev),
@@ -169,6 +170,7 @@ function applyLiveSettings() {
   stems.threads = stemCfg.threads;
   stems.concurrency = Math.max(1, Number(stemCfg.concurrency) || 1);
   stems.minFreeGB = stemCfg.minFreeGB;
+  stems.setDevice(stemCfg.device);
   stems.pump();
   library.targetLoudnessDb = config.targetLoudnessDb;
   if (sequencer && config.autoDJ) {

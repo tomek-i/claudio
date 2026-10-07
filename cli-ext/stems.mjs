@@ -8,9 +8,10 @@ export default ({ api, flags, rest, fail, out, fmtTrack, mmss, JSON_OUT }) => ({
       const s = await api('/api/stems');
       if (JSON_OUT) return out(s);
       if (!s.available) console.log('⚠ separator unavailable (no .venv python / demucs)');
-      console.log(`Stems: ${s.done}/${s.total} tracks done  (${s.model}, ${s.threads} threads${s.enabled ? '' : ', DISABLED'})  free disk ${s.freeGB ?? '?'} GB`);
-      if (s.mode) console.log(`  mode ${s.mode === 'throttled' ? 'THROTTLED (music playing: 1 job × 2 threads)' : 'full speed'}  — up to ${s.maxJobs} job(s) × ${s.jobThreads} threads now (config: ${s.concurrency} × ${s.threads})`);
-      for (const j of s.jobs || []) console.log(`  ▶ separating ${j.id} ${j.title}  ${Math.round(j.progress * 100)}%  (${mmss(j.elapsedSec)} elapsed${j.threads ? ', ' + j.threads + ' threads' : ''})`);
+      console.log(`Stems: ${s.done}/${s.total} tracks done  (${s.model}, ${s.deviceInUse && s.deviceInUse !== 'cpu' ? 'GPU ' + s.deviceInUse : s.threads + ' threads' + (s.deviceInUse ? ' on the CPU' : '')}${s.enabled ? '' : ', DISABLED'})  free disk ${s.freeGB ?? '?'} GB`);
+      if (s.deviceInUse && s.deviceInUse !== 'cpu') console.log('  one track at a time on the GPU, also while music plays');
+      else if (s.mode) console.log(`  mode ${s.mode === 'throttled' ? 'THROTTLED (music playing: 1 job × 2 threads)' : 'full speed'}  — up to ${s.maxJobs} job(s) × ${s.jobThreads} threads now (config: ${s.concurrency} × ${s.threads})`);
+      for (const j of s.jobs || []) console.log(`  ▶ separating ${j.id} ${j.title}  ${Math.round(j.progress * 100)}%  (${mmss(j.elapsedSec)} elapsed${j.device && j.device !== 'cpu' ? ', ' + j.device : j.threads ? ', ' + j.threads + ' threads' : ''})`);
       if (s.queued.length) console.log(`  ${s.queued.length} queued: ${s.queued.slice(0, 8).join(' ')}${s.queued.length > 8 ? ' …' : ''}`);
       if (s.secsPerTrackSec) console.log(`  speed ≈ ${s.secsPerTrackSec}× real time (${mmss(s.secsPerTrackSec * 240)} for a 4 min track)`);
       for (const [id, e] of Object.entries(s.failed || {})) console.log(`  ✗ ${id}: ${e}`);

@@ -57,3 +57,11 @@ test('toolVersion: a real binary reports a version line, a missing one is null',
   assert.match(await toolVersion(process.execPath, ['--version']), /^v\d+/);
   assert.equal(await toolVersion('definitely-not-a-real-binary-xyz'), null);
 });
+
+test('stems say which device separation runs on, once a job has shown it', () => {
+  const on = (deviceInUse) => { const s = healthy(); s.stems.deviceInUse = deviceInUse; return byId(buildHealth(s)).stems; };
+  assert.match(on('cuda').detail, /12\/12 done · on the GPU \(cuda\)/);
+  assert.match(on('cpu').detail, /on the CPU/);
+  assert.doesNotMatch(on(null).detail, /GPU|CPU/);
+  assert.equal(on('cuda').status, 'ok');
+});

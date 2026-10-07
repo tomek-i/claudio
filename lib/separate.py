@@ -1,8 +1,12 @@
 # Stem separation worker for DJ Claude (spawned by lib/stems.mjs).
-#   python separate.py <input audio> <out dir> [threads] [model]
+#   python separate.py <input audio> <out dir> [threads] [model] [device]
 # Decodes with ffmpeg (no torchaudio needed -- there are no win-arm64 torchaudio wheels),
-# runs demucs (htdemucs, 4 stems) on CPU, writes <out dir>/{vocals,drums,bass,other}.wav
+# runs demucs (htdemucs, 4 stems), writes <out dir>/{vocals,drums,bass,other}.wav
 # as 44.1 kHz 16-bit stereo. Prints "PROGRESS <0..1>" lines on stdout.
+# device: "auto" (default) runs on the GPU when torch can see one (cuda, else mps) and on the CPU
+# otherwise; "cpu" never touches the GPU. A GPU run that fails is retried on the CPU, so the track
+# still completes. Prints "DEVICE <cuda|mps|cpu> [note]" when it starts and each time it changes plan.
+import gc
 import os
 import subprocess
 import sys
@@ -32,6 +36,32 @@ def say(msg):
     sys.stdout.flush()
 
 
+def pick_device(want):
+    if want == "cpu":
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    mps = getattr(torch.backends, "mps", None)
+    if mps is not None and mps.is_available():
+        return "mps"
+    return "cpu"
+
+
+def is_oom(e):
+    return isinstance(e, getattr(torch.cuda, "OutOfMemoryError", ())) or "out of memory" in str(e).lower()
+
+
+def free_gpu(model):
+    model.to("cpu")
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+def brief(e):
+    return (str(e).strip().splitlines() or [type(e).__name__])[0][:160]
+
+
 def decode(path):
     p = subprocess.run(
         ["ffmpeg", "-v", "error", "-threads", "1", "-i", path, "-ac", "2", "-ar", str(SR), "-f", "f32le", "pipe:1"],
@@ -56,6 +86,8 @@ def write_wav(path, x):
 def main():
     src, out_dir = sys.argv[1], sys.argv[2]
     model_name = sys.argv[4] if len(sys.argv) > 4 else "htdemucs"
+    device = pick_device(sys.argv[5] if len(sys.argv) > 5 else "auto")
+    say("DEVICE " + device)
     os.makedirs(out_dir, exist_ok=True)
     model = get_model(model_name)
     model.eval()
@@ -77,8 +109,35 @@ def main():
             last[0] = frac
             say("PROGRESS %.3f" % frac)
 
-    with torch.no_grad():
-        sources = apply_model(model, mix[None], shifts=1, split=True, overlap=0.25, progress=False, callback=cb)[0]
+    # the mix stays in main memory: apply_model moves one segment at a time to the device and
+    # collects the result back on the CPU, so a long track does not have to fit on the GPU
+    def run(dev, segment=None):
+        last[0] = 0.0
+        extra = {} if segment is None else {"segment": segment}
+        with torch.no_grad():
+            out = apply_model(model, mix[None], device=dev, shifts=1, split=True, overlap=0.25, progress=False,
+                              callback=cb, **extra)[0]
+        return out.cpu()
+
+    try:
+        sources = run(device)
+    except Exception as e:  # noqa: BLE001
+        if device == "cpu":
+            raise
+        free_gpu(model)
+        sources = None
+        if is_oom(e):
+            # tight on memory: shorter segments before giving up on the GPU
+            seg = min(float(m.segment) for m in getattr(model, "models", [model])) / 2
+            say("DEVICE %s out of GPU memory, trying again with %.1f s segments" % (device, seg))
+            try:
+                sources = run(device, seg)
+            except Exception as e2:  # noqa: BLE001
+                e = e2
+                free_gpu(model)
+        if sources is None:
+            say("DEVICE cpu the GPU run failed (%s), separating on the CPU instead" % brief(e))
+            sources = run("cpu")
     sources = sources * std + mean
     for name, src_t in zip(model.sources, sources):
         write_wav(os.path.join(out_dir, name + ".wav"), src_t.numpy())
