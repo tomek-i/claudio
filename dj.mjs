@@ -3,11 +3,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { FX, FX_DEFAULT_AT } from './lib/fx.mjs';
+import { ROOT, DJ_DIR, CONFIG_FILE, SERVER_FILE, CLI_EXT_DIR } from './lib/paths.mjs';
 
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
+const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
 const BASE = `http://localhost:${PORT}`;
 
@@ -81,10 +81,10 @@ const commands = {
   async start() {
     try { await fetch(BASE + '/api/state'); console.log(`✓ Already running at ${BASE}`); }
     catch {
-      const logFile = path.join(ROOT, '.dj', 'server.log');
+      const logFile = path.join(DJ_DIR, 'server.log');
       fs.mkdirSync(path.dirname(logFile), { recursive: true });
       const fd = fs.openSync(logFile, 'a');
-      const child = spawn(process.execPath, [path.join(ROOT, 'server.mjs')], { detached: true, stdio: ['ignore', fd, fd], cwd: ROOT, windowsHide: true });
+      const child = spawn(process.execPath, [SERVER_FILE], { detached: true, stdio: ['ignore', fd, fd], cwd: ROOT, windowsHide: true });
       child.unref();
       for (let i = 0; i < 40; i++) {
         await new Promise((r) => setTimeout(r, 250));
@@ -197,7 +197,7 @@ const commands = {
   },
   async report() {
     const { buildReport } = await import('./lib/report.mjs');
-    const root = path.join(ROOT, '.dj', 'sessions');
+    const root = path.join(DJ_DIR, 'sessions');
     const id = rest[0] || fs.readdirSync(root).sort().pop();
     if (!id) fail('no sessions recorded yet');
     console.log(await buildReport(path.join(root, id)));
@@ -266,7 +266,7 @@ GLOBAL    --why "reason"   shows your reasoning in the booth feed      --json   
 };
 
 // CLI extensions: every cli-ext/*.mjs default-exports (helpers) => ({ commandName: async fn })
-const extDir = path.join(ROOT, 'cli-ext');
+const extDir = CLI_EXT_DIR;
 if (fs.existsSync(extDir)) {
   for (const f of fs.readdirSync(extDir).filter((x) => x.endsWith('.mjs')).sort()) {
     const mod = await import(pathToFileURL(path.join(extDir, f)).href);

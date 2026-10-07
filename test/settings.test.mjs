@@ -120,3 +120,23 @@ test('keys section: unknown actions, bad keys and duplicates are refused; only o
   assert.equal(applyPatch(cfg, { 'keys.bindings': { 'loop.half': 'key:KeyA' } }).ok, false);
   assert.deepEqual(cfg.keys.bindings, { 'loop.half': 'key:Comma' }, 'a refused set changes nothing');
 });
+
+// ---------------------------------------------------------------- where things are (lib/paths.mjs)
+import fsP from 'node:fs';
+import osP from 'node:os';
+import pathP from 'node:path';
+import { findRoot, ROOT, LIB_DIR, PUBLIC_DIR, SERVER_FILE, CLI_FILE, CLI_EXT_DIR, CONFIG_FILE, DJ_DIR } from '../lib/paths.mjs';
+
+test('paths: the project root is the first folder upwards with a config.json, or DJ_ROOT; the code is found from the code', () => {
+  const tmp = fsP.mkdtempSync(pathP.join(osP.tmpdir(), 'djpaths-'));
+  fsP.mkdirSync(pathP.join(tmp, 'a', 'b', 'c'), { recursive: true });
+  fsP.writeFileSync(pathP.join(tmp, 'a', 'config.json'), '{}');
+  assert.equal(findRoot(pathP.join(tmp, 'a', 'b', 'c'), {}), pathP.join(tmp, 'a'));
+  assert.equal(findRoot(pathP.join(tmp, 'a'), {}), pathP.join(tmp, 'a'));
+  assert.equal(findRoot(pathP.join(tmp, 'a', 'b'), { DJ_ROOT: tmp }), tmp, 'DJ_ROOT wins');
+  fsP.rmSync(tmp, { recursive: true, force: true });
+  // this checkout
+  assert.equal(CONFIG_FILE, pathP.join(ROOT, 'config.json'));
+  assert.equal(DJ_DIR, pathP.join(ROOT, '.dj'));
+  for (const f of [CONFIG_FILE, SERVER_FILE, CLI_FILE, pathP.join(LIB_DIR, 'separate.py'), pathP.join(LIB_DIR, 'key-presets'), pathP.join(PUBLIC_DIR, 'index.html'), pathP.join(PUBLIC_DIR, 'engine.js'), pathP.join(CLI_EXT_DIR, 'stems.mjs')]) assert.ok(fsP.existsSync(f), `${f} exists`);
+});

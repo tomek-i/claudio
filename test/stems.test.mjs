@@ -24,7 +24,7 @@ let p = 0; const iv = setInterval(() => { p += 0.25; console.log('PROGRESS ' + p
 `);
   const tracks = new Map();
   for (let i = 0; i < 6; i++) tracks.set(`t${i}`, { id: `t${i}`, file: `in${i}.wav`, title: `T${i}`, bpm: 128, duration: 100 + i, size: 1, mtimeMs: 1 });
-  const q = new StemQueue({ root, library: { tracks, save() {} }, stemsDir: path.join(root, 'stems'), python: process.execPath, threads: 4, concurrency: 3, minFreeGB: 0, device: 'cpu' });
+  const q = new StemQueue({ root, library: { tracks, save() {} }, stemsDir: path.join(root, 'stems'), python: process.execPath, script: path.join(root, 'lib', 'separate.py'), threads: 4, concurrency: 3, minFreeGB: 0, device: 'cpu' });
   q.mapVocals = async () => ({});
   q.quietSec = 1;
   const peak = { full: 0, throttled: 0 }, threadsSeen = { full: new Set(), throttled: new Set() };
@@ -79,7 +79,7 @@ setTimeout(() => {
   const tracks = new Map();
   for (let i = 0; i < 6; i++) tracks.set(`t${i}`, { id: `t${i}`, file: `in${i}.wav`, title: `T${i}`, bpm: 128, duration: 100 + i, size: 1, mtimeMs: 1 });
   const logs = [];
-  const q = new StemQueue({ root, library: { tracks, save() {} }, stemsDir: path.join(root, 'stems'), python: process.execPath, threads: 4, concurrency, minFreeGB: 0, log: (l) => logs.push(l) });
+  const q = new StemQueue({ root, library: { tracks, save() {} }, stemsDir: path.join(root, 'stems'), python: process.execPath, script: path.join(root, 'lib', 'separate.py'), threads: 4, concurrency, minFreeGB: 0, log: (l) => logs.push(l) });
   q.mapVocals = async () => ({});
   let peak = 0;
   const sample = setInterval(() => { peak = Math.max(peak, q.jobs.size); }, 10).unref();

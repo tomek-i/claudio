@@ -4,11 +4,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Library, AUDIO_EXT, trackId } from './lib/library.mjs';
 import { Downloader } from './lib/downloader.mjs';
 import { StemQueue, STEMS } from './lib/stems.mjs';
 import { VisualsHub, lanAddress } from './lib/visuals.mjs';
+import { ROOT, DJ_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR } from './lib/paths.mjs';
 import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
@@ -24,8 +24,7 @@ import { spawn } from 'node:child_process';
 try { os.setPriority(process.pid, 10); } catch { /* keep the audio tab ahead of us for CPU */ }
 
 // ---- PCM cache: tracks pre-converted to the engine's sample rate so browser decoding is trivial
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const PCM_DIR = path.join(ROOT, '.dj', 'pcm');
+const PCM_DIR = path.join(DJ_DIR, 'pcm');
 const pcmJobs = new Map();
 let engineSampleRate = null;
 function pcmFile(t, sr) {
@@ -68,7 +67,6 @@ async function prewarm() {
   try { for (const t of library.tracks.values()) await pcmFile(t, engineSampleRate).catch(() => {}); } finally { prewarming = false; }
 }
 
-const CONFIG_FILE = path.join(ROOT, 'config.json');
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 let restartPending = []; // settings saved since start that only apply after a restart
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
@@ -93,16 +91,16 @@ let cmdSeq = 0;
 
 const library = new Library({
   dirs: config.libraryDirs.map(resolveDir),
-  cacheFile: path.join(ROOT, '.dj', 'library.json'),
+  cacheFile: path.join(DJ_DIR, 'library.json'),
   targetLoudnessDb: config.targetLoudnessDb,
-  stemsDir: path.join(ROOT, '.dj', 'stems'),
+  stemsDir: path.join(DJ_DIR, 'stems'),
   log: (t) => addLog('system', t),
 });
 const stemCfg = { enabled: true, auto: true, threads: 2, concurrency: 2, model: 'htdemucs', minFreeGB: 3, ...(config.stems || {}) };
 const stems = new StemQueue({
   root: ROOT,
   library,
-  stemsDir: path.join(ROOT, '.dj', 'stems'),
+  stemsDir: path.join(DJ_DIR, 'stems'),
   python: stemCfg.python ? resolveDir(stemCfg.python) : undefined,
   threads: stemCfg.threads,
   concurrency: stemCfg.concurrency,
@@ -119,8 +117,8 @@ library.onChange((ev) => {
 });
 
 // ---- set memory, hot cues, monitor ("ears"), sequencer / auto-DJ
-const memory = new Memory(path.join(ROOT, '.dj', 'memory.json'));
-const cues = new Cues(path.join(ROOT, '.dj', 'cues.json'));
+const memory = new Memory(path.join(DJ_DIR, 'memory.json'));
+const cues = new Cues(path.join(DJ_DIR, 'cues.json'));
 let sequencer = null;
 let lastMix = null; // last mix command sent (anchors for set memory)
 const monitor = new Monitor({
@@ -498,7 +496,7 @@ sequencer = new Sequencer({
 // A session = timestamped actions + engine telemetry + engine audio + screen/mic capture,
 // all under .dj/sessions/<id>/ so silences can be reconciled against what the DJ did.
 let session = null;
-const SESS_ROOT = path.join(ROOT, '.dj', 'sessions');
+const SESS_ROOT = path.join(DJ_DIR, 'sessions');
 function sessionLog(file, obj) { if (session) fs.appendFileSync(path.join(session.dir, file), JSON.stringify(obj) + '\n'); }
 function startSession({ screen = true, mic = true } = {}) {
   if (session) return session.info;
@@ -618,7 +616,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, visuals.signalFromViewer(String(b.viewer || ''), b));
     }
     if (p === '/api/visuals') return send(res, 200, { ...visuals.status(), url: visualsUrl() });
-    if (p === '/visuals') return serveFile(req, res, path.join(ROOT, 'public', 'visuals.html'));
+    if (p === '/visuals') return serveFile(req, res, path.join(PUBLIC_DIR, 'visuals.html'));
 
     // --- control (CLI / Claude)
     if (p === '/api/state') return send(res, 200, liveState());
@@ -814,7 +812,7 @@ const server = http.createServer(async (req, res) => {
         ffmpeg, ffprobe, ytdlp: fs.existsSync(downloader.localBin) ? downloader.localBin : ytdlpOnPath, jobs: downloader.list(), stems: st, freeGB: st.freeGB, minFreeGB: stemCfg.minFreeGB, visuals: visuals.status(),
       }));
     }
-    if (p === '/health') return serveFile(req, res, path.join(ROOT, 'public', 'health.html'));
+    if (p === '/health') return serveFile(req, res, path.join(PUBLIC_DIR, 'health.html'));
 
     // --- settings: the editable part of config.json (schema in lib/settings.mjs, the page at /settings)
     if (p === '/api/settings' && req.method === 'POST') {
@@ -830,11 +828,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ...r, fields: describeSettings(config), restartPending });
     }
     if (p === '/api/settings') return send(res, 200, { fields: describeSettings(config), restartPending });
-    if (p === '/settings') return serveFile(req, res, path.join(ROOT, 'public', 'settings.html'));
+    if (p === '/settings') return serveFile(req, res, path.join(PUBLIC_DIR, 'settings.html'));
     // --- key bindings: the action registry as a module for the pages, and the built-in presets (one JSON file each)
-    if (p === '/keymap.mjs') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' }); return res.end(fs.readFileSync(path.join(ROOT, 'lib', 'keymap.mjs'))); }
+    if (p === '/keymap.mjs') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' }); return res.end(fs.readFileSync(path.join(LIB_DIR, 'keymap.mjs'))); }
     if (p === '/api/keypresets') {
-      const dir = path.join(ROOT, 'lib', 'key-presets');
+      const dir = path.join(LIB_DIR, 'key-presets');
       const presets = fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort().flatMap((f) => {
         try { const j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); return [{ name: String(j.name || path.basename(f, '.json')), description: j.description || '', bindings: j.bindings || {} }]; } catch { return []; }
       });
@@ -842,8 +840,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     // --- static UI
-    const file = path.join(ROOT, 'public', p === '/' ? 'index.html' : p);
-    if (file.startsWith(path.join(ROOT, 'public')) && fs.existsSync(file) && fs.statSync(file).isFile()) return serveFile(req, res, file);
+    const file = path.join(PUBLIC_DIR, p === '/' ? 'index.html' : p);
+    if (file.startsWith(PUBLIC_DIR) && fs.existsSync(file) && fs.statSync(file).isFile()) return serveFile(req, res, file);
     send(res, 404, 'not found');
   } catch (e) {
     console.error(e);

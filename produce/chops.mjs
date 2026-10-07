@@ -7,7 +7,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const { ROOT } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'lib', 'paths.mjs')));
 const LIB = JSON.parse(fs.readFileSync(path.join(ROOT, '.dj/library.json'), 'utf8')).tracks;
 const tr = (id) => LIB[id] || Object.values(LIB).find((t) => t.id === id);
 const SR = 16000, HOP = 0.005;
