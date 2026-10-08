@@ -39,8 +39,15 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # Chocolatey's feed answers 503 now and then, and choco exits 0 all the same: try again, and check for the tool
       - name: Install ffmpeg
-        run: choco install ffmpeg --no-progress -y
+        run: |
+          foreach ($try in 1..4) {
+            choco install ffmpeg --no-progress -y
+            if (Get-Command ffmpeg -ErrorAction SilentlyContinue) { ffmpeg -version | Select-Object -First 1; exit 0 }
+            Start-Sleep -Seconds 20
+          }
+          throw 'ffmpeg could not be installed'
       - run: pnpm install --frozen-lockfile
       # pnpm does not run Electron's install script; this is what fetches its binary
       - name: Download Electron
