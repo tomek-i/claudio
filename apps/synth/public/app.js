@@ -333,6 +333,23 @@ function setOctave(to) {
 
 // a finger or the mouse on the keys: it can slide from key to key, and lower on a key is louder
 const pointers = new Map();   // pointer → the note it holds
+
+// The keyboard folds away, and this browser remembers it. The computer's keys and MIDI play all the same.
+const FOLDED = 'miniclaude.keysHidden';
+function foldKeys(hidden) {
+  for (const note of pointers.values()) lift(note);    // a key under a finger goes with the keyboard
+  pointers.clear();
+  $('keys').hidden = hidden;
+  $('board').classList.toggle('folded', hidden);
+  $('fold').setAttribute('aria-expanded', !hidden);
+  $('fold').textContent = hidden ? 'Show keys' : 'Hide keys';
+  $('fold').title = hidden ? 'Bring the keyboard back' : 'Fold the keyboard away: the page gets its room, the typing keys still play';
+}
+$('fold').addEventListener('click', () => {
+  const hidden = !$('keys').hidden;
+  foldKeys(hidden);
+  try { localStorage.setItem(FOLDED, hidden ? '1' : '0'); } catch { /* a browser that keeps nothing: it is shown again next time */ }
+});
 function keyUnder(e) {
   const key = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.key');
   if (!key || !$('keys').contains(key)) return null;
@@ -509,6 +526,7 @@ document.title = APP_NAME;
 buildPanel();
 buildSteps();
 buildKeys();
+try { if (localStorage.getItem(FOLDED) === '1') foldKeys(true); } catch { /* storage is closed to the page: the keyboard shows */ }
 let wide = innerWidth >= 700;
 addEventListener('resize', () => { if ((innerWidth >= 700) !== wide) { wide = innerWidth >= 700; buildKeys(); } });
 connect();

@@ -65,6 +65,8 @@ You cannot hear the synth; the user can. The page has to be open, and clicked on
 
 After a change, say in one line what you did and what it should sound like, and audition it when a page is open.
 
+The keys on the screen are the bottom row of the window, and the rest of the page scrolls above them. If the user cannot see the sequence or the Claude box without scrolling, "Hide keys" at the right of the keyboard folds it away; the computer's keys and MIDI still play.
+
 ## Slots and undo
 
 Four slots hold four patches: `slot B` switches, `copy C` copies the playing patch to another slot before a risky change. `undo` and `redo` step through the edits, yours and the user's alike.

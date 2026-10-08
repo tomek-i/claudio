@@ -58,6 +58,8 @@ test('it starts with four patches and a riff, and serves the page and the shared
   assert.ok(state.seq.steps.filter(Boolean).length > 4);
   const page = await (await fetch(BASE + '/')).text();
   assert.ok(page.includes(`<title>${APP_NAME}</title>`) && !page.includes('%NAME%'));
+  assert.match(page, /<\/main>\s*(<!--[^>]*-->\s*)?<section class="board"[^>]*>[^]*id="fold"/);   // the keyboard comes after the page, with its "hide"
+  assert.doesNotMatch(await (await fetch(BASE + '/style.css')).text(), /\.board \{[^}]*position:/);   // and is not laid over it
   assert.match(await (await fetch(BASE + '/lib/patch.mjs')).text(), /PARAMS/);
   assert.match(await (await fetch(BASE + '/engine.js')).text(), /class Synth/);
   for (const file of ['app.js', 'engine.js']) {                       // what the page imports is all there to be served
