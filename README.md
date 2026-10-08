@@ -57,6 +57,14 @@ pnpm desktop
 Claude Code and `node dj.mjs …` work the same in both modes: they talk to the server. Browser mode needs no install;
 only `apps/desktop/` has dependencies.
 
+#### An installer
+`pnpm dist` builds the desktop app into an installer in `dist/` (on Windows: `DJ Claude Setup <version>.exe`; it is
+not code-signed, so Windows asks before running it). The installed app is the same window, started from the Start
+menu, with one difference: it has no project folder around it, so it keeps the rig's things (`config.json`, the
+library, `.dj/`) in **Documents/DJ Claude**, made on the first start. It still needs ffmpeg on PATH, and stem
+separation needs a `.venv` in that folder. To drive it from Claude Code, run `node dj.mjs …` from this repository as
+usual: the CLI talks to the server the app started.
+
 ## How it works
 | Piece | What it does |
 |---|---|
