@@ -54,7 +54,7 @@ const HELP = `${APP_NAME} — ${PAGE}
   notes <clip> --del <pitch:start> …   removes notes: notes c2 --del C2:0 E2:4
 
  playing and files
-  play [bar]   stop                on the open page (it is the sound)
+  play [bar]   stop                on the open page (it is the sound, once "Start sound" is clicked on it)
   undo   redo
   export midi <file>               every track in one MIDI file (WAV export is the button on the page)
 
@@ -233,9 +233,10 @@ async function main([cmd = 'help', ...args]) {
     case 'play':
     case 'stop': {
       const bar = cmd === 'play' && args[0] !== undefined ? barArg(args[0]) : 0;
-      const { pages } = await call('POST', '/api/transport', { action: cmd, bar });
-      if (!pages) return console.log(`no page is open: open ${PAGE} first (the page is the sound)`);
-      return console.log(cmd === 'play' ? `playing from bar ${bar + 1} on the page (silent until the page has been clicked once)` : 'stopped');
+      const { pages, awake } = await call('POST', '/api/transport', { action: cmd, bar });
+      if (!pages) return console.log(`no page is open, so nothing sounds: open ${PAGE}`);
+      if (cmd === 'stop') return console.log('stopped');
+      return console.log(`playing from bar ${bar + 1} on the page${awake ? '' : " (sent, but the page's sound is off and a browser keeps a page silent until it is clicked: click Start sound on the page)"}`);
     }
     case 'export': {
       if (args[0] !== 'midi') throw new Error('export midi <file>   (WAV export is the button on the page)');

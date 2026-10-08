@@ -39,7 +39,7 @@ const HELP = `${APP_NAME} synthesizer — ${URL_SHOWN}
   bpm <40-240>   gate <5-100>   swing <0-100>
   transpose <semitones>   clearseq
 
- hearing it (the page makes the sound; it has to be open and clicked once)
+ hearing it (the page makes the sound: it has to be open, and "Start sound" clicked on it)
   play [loops]                   start the sequence on the page (no number: until stop)
   note <notes…> [<seconds>s]     hold a note or a chord: note C3 Eb3 G3 2s
   stop
@@ -88,7 +88,7 @@ const percent = (text) => {
 // what the page did with a request to sound
 function heard({ pages, awake }, what) {
   if (!pages) return console.log(`no page is open, so nothing sounds: open ${URL_SHOWN}`);
-  console.log(awake ? what : `${what} (sent, but the page has not been clicked yet and a browser keeps a page silent until it is: click it once)`);
+  console.log(awake ? what : `${what} (sent, but the page's sound is off and a browser keeps a page silent until it is clicked: click Start sound on the page)`);
 }
 
 async function previewBanner(name) {

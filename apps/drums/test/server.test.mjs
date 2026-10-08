@@ -1,13 +1,17 @@
-// The drum machine's server on a scratch folder and its own port: edits, undo, variations, notes, saving, MIDI.
+// The drum machine's server on a scratch folder and its own port: edits, undo, variations, notes, saving, MIDI,
+// and whether the page can be heard (as the server knows it and as the CLI says it).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createServer } from '../server.mjs';
 
 const PORT = 4868;
 const BASE = `http://127.0.0.1:${PORT}`;
+const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'cl808.mjs');
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'drums-test-'));
 let server;
 
@@ -21,6 +25,10 @@ const edit = async (op) => {
   assert.equal(status, 200, body.error);
   return body;
 };
+// the CLI as Claude runs it, against this server: what it printed
+const cli = (...args) => new Promise((resolve) => {
+  execFile(process.execPath, [CLI, ...args], { env: { ...process.env, CL808_PORT: String(PORT) } }, (err, stdout) => resolve(stdout.trimEnd().split('\n')));
+});
 const kick = (state) => state.slots[state.slot].tracks[0].vel.map((v) => (v > 0 ? 'x' : '.')).join('');
 
 before(() => new Promise((resolve) => { server = createServer({ home }); server.listen(PORT, '127.0.0.1', resolve); }));
@@ -31,7 +39,9 @@ test('it starts on a preset and serves the page and the shared code', async () =
   assert.equal(state.slot, 'A');
   assert.equal(state.slots.A.name, 'Boom bap');
   assert.equal(state.presets.length, 8);
-  assert.match(await (await fetch(BASE + '/')).text(), /<title>/);
+  const page = await (await fetch(BASE + '/')).text();
+  assert.match(page, /<title>/);
+  assert.match(page, /id="startOverlay" role="dialog"[^]*id="startBtn"[^>]*>Start sound</);   // shown from the first paint, no script needed
   assert.match(await (await fetch(BASE + '/lib/timing.mjs')).text(), /stepSeconds/);
   assert.equal((await fetch(BASE + '/lib/../server.mjs')).status, 404);
   assert.equal((await fetch(BASE + '/.cl-808/state.json')).status, 404);
@@ -101,11 +111,36 @@ test('the beat is saved and comes back after a restart; the MIDI export is a MID
 
 test('the page says where it plays from, for the banner: a step, 0 when it does not say', async () => {
   await post('/api/transport', { playing: true, from: 8 });
-  assert.deepEqual({ ...server.store.transport, at: 0 }, { playing: true, at: 0, from: 8 });
+  assert.deepEqual([server.store.transport.playing, server.store.transport.from], [true, 8]);
   await post('/api/transport', { playing: true });
   assert.equal(server.store.transport.from, 0);
   await post('/api/transport', { playing: false, from: 'x' });
-  assert.deepEqual({ ...server.store.transport, at: 0 }, { playing: false, at: 0, from: 0 });
+  assert.deepEqual([server.store.transport.playing, server.store.transport.from], [false, 0]);
+});
+
+test('the server knows whether a page is open and whether it can be heard, and the CLI says so', async () => {
+  const address = `http://localhost:${PORT}`;
+  assert.deepEqual(await get('/api/transport'), { pages: 0, playing: false, awake: false });
+  assert.deepEqual(await cli('open'), [address, 'no page is open, so nothing sounds: open the address in a browser']);
+  const res = await fetch(BASE + '/api/events');                       // a page, not clicked yet
+  const reader = res.body.getReader();
+  await reader.read();
+  await post('/api/transport', { awake: false });
+  assert.deepEqual(await get('/api/transport'), { pages: 1, playing: false, awake: false });
+  const silent = await cli('open');
+  assert.equal(silent[0], address);
+  assert.match(silent[1], /its sound is off .*: click Start sound on the page$/);
+  await post('/api/transport', { awake: true });                       // "Start sound" was clicked
+  await post('/api/transport', { playing: true });                     // Play says nothing about the sound, and leaves it as it is
+  assert.deepEqual(await get('/api/transport'), { pages: 1, playing: true, awake: true });
+  const since = server.store.transport.at;
+  assert.ok(since > 0);
+  await post('/api/transport', { awake: true });                       // and the sound says nothing about when Play was pressed
+  assert.equal(server.store.transport.at, since);
+  assert.deepEqual(await cli('open'), [address, 'a page is open and its sound is on']);
+  await reader.cancel();                                               // the page is closed, or loaded again: the click is forgotten
+  for (let i = 0; i < 50 && server.store.listeners.size; i++) await new Promise((r) => setTimeout(r, 20));
+  assert.deepEqual(await get('/api/transport'), { pages: 0, playing: false, awake: false });
 });
 
 test('the page is told of every change', async () => {

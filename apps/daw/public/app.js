@@ -94,8 +94,40 @@ function frame() {
 const transport = ({ action, bar }) => {
   if (action === 'stop') return engine.stop();
   play(bar);
-  setTimeout(() => { if (engine.blocked) complain('Claude pressed Play: click the page once so the browser lets it make sound'); }, 300);
+  setTimeout(() => { if (engine.blocked) complain('Claude pressed Play: click Start sound so the browser lets the page play'); }, 300);
 };
+
+// ---- the sound: a browser keeps a page silent until it is clicked, so a card asks for that click
+
+let toldSound = null;      // what the server was last told
+function soundChanged() {
+  const on = engine.awake;
+  $('soundLight').classList.toggle('on', on);
+  $('soundText').textContent = on ? 'sound on' : 'sound off';
+  if (on && !$('startOverlay').hidden) { $('startOverlay').hidden = true; $('play').focus(); }   // gone until the page is loaded again
+  if (on === toldSound) return;
+  toldSound = on;
+  post('/api/sound', { awake: on }).catch(() => {});   // so `claudebase play` can say whether anything will be heard
+}
+engine.onSound = soundChanged;
+
+function startSound() {
+  if (!ui.state) { $('startMsg').textContent = 'The server has not answered yet, and the sound is built from the song it holds. Try again in a moment.'; return; }
+  try {
+    engine.wake();
+    soundChanged();                                    // a context made in a click may be running at once, with no change to hear of
+  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; }
+}
+$('startBtn').addEventListener('click', startSound);
+// While the card is up the keys are its own: Enter and Space start the sound, Tab stays on the one button, and the
+// page's shortcuts behind it are not reached. A click beside the button leaves the focus on it.
+$('startOverlay').addEventListener('keydown', (e) => {
+  e.stopPropagation();
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSound(); }
+  else if (e.key === 'Tab') e.preventDefault();
+});
+$('startOverlay').addEventListener('mousedown', (e) => { if (e.target !== $('startBtn')) e.preventDefault(); });
+$('startBtn').focus();
 
 // ---- the Claude box
 
@@ -128,5 +160,6 @@ addEventListener('keydown', (e) => {
   else if (e.key.toLowerCase() === 'l' && ui.state) toggleLoop();
 });
 
+soundChanged();                // a page just loaded cannot sound yet, whatever the one before it told the server
 connect({ transport });
 requestAnimationFrame(frame);

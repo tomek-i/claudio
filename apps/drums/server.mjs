@@ -7,7 +7,9 @@
 //   GET  /api/export.mid       the playing pattern as MIDI (?loops=4)
 //   POST /api/ask | /api/say   a note from the page to Claude | from Claude to the page
 //   GET  /api/wait?ms=         the notes from the page not handed out yet (long poll)
-//   POST /api/transport        the page saying it started or stopped playing, and from which step (for the banner's playhead)
+//   POST /api/transport        the page saying it started or stopped playing, and from which step (for the banner's
+//                              playhead), or whether the browser lets it sound ({ awake }: off until "Start sound" is clicked)
+//   GET  /api/transport        { pages, playing, awake }: is a page open, and can it be heard
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -70,7 +72,11 @@ export function createServer({ home = process.env.CL808_HOME || path.join(HERE, 
           push(store.state());
           store.listeners.add(push);
           const beat = setInterval(() => res.write(': still here\n\n'), 20_000);
-          req.on('close', () => { store.listeners.delete(push); clearInterval(beat); });
+          req.on('close', () => {
+            store.listeners.delete(push);
+            clearInterval(beat);
+            if (!store.listeners.size) store.transport = { playing: false, at: 0, from: 0, awake: false };
+          });
           return;
         }
         case 'POST /api/op': return send(res, 200, store.apply(await readJson(req)));
@@ -81,10 +87,13 @@ export function createServer({ home = process.env.CL808_HOME || path.join(HERE, 
           return send(res, 200, { notes: await store.wait(ms) });
         }
         case 'POST /api/transport': {
-          const { playing, from } = await readJson(req);
-          store.transport = { playing: !!playing, at: Date.now(), from: Math.max(0, Math.floor(Number(from)) || 0) };
+          // the page says what changed, so the sound coming on in the middle of a bar does not move the banner's playhead
+          const said = await readJson(req);
+          if ('playing' in said) Object.assign(store.transport, { playing: !!said.playing, at: Date.now(), from: Math.max(0, Math.floor(Number(said.from)) || 0) });
+          if ('awake' in said) store.transport.awake = !!said.awake;
           return send(res, 200, { ok: true });
         }
+        case 'GET /api/transport': return send(res, 200, { pages: store.listeners.size, playing: store.transport.playing, awake: store.transport.awake });
         case 'GET /api/export.mid': {
           const loops = Math.min(64, Math.max(1, Math.round(Number(url.searchParams.get('loops')) || 1)));
           const name = store.pattern.name.replace(/[^\w -]/g, '').trim() || 'beat';

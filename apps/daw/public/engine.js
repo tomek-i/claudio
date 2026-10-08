@@ -255,10 +255,14 @@ export class Engine {
     this.source = source;
     this.playing = false;
     this.playhead = null;
+    this.onSound = null;                               // called when the browser lets the page sound, or takes that away
   }
 
   wake() {
-    if (!this.ctx) this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    if (!this.ctx) {
+      this.ctx = new AudioContext({ latencyHint: 'interactive' });
+      this.ctx.onstatechange = () => this.onSound?.();
+    }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     const project = this.source();
     if (!this.rig) this.rig = new Rig(this.ctx, project);
@@ -267,6 +271,7 @@ export class Engine {
 
   // a browser lets a page make sound only after it has been clicked or typed in
   get blocked() { return !!this.ctx && this.ctx.state !== 'running'; }
+  get awake() { return this.ctx?.state === 'running'; }
 
   start(pos = 0) {
     if (this.playing) this.stop();

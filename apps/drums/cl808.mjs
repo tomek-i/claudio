@@ -19,7 +19,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const HELP = `Claude-808 drum machine — http://localhost:${PORT}
 
   show [--json]                  the playing pattern (steps: . off, g ghost, o soft, x normal, X accent)
-  open                           start the server if needed and print the address
+  open                           start the server if needed, print the address and whether the page can be heard
   banner [name | --list]         preview the server's startup animations (CL808_BANNER=<name> picks one)
 
  writing a beat
@@ -73,6 +73,7 @@ async function call(method, route, body) {
 }
 
 const edit = (op) => call('POST', '/api/op', op);
+const SILENT = 'a page is open, but its sound is off and a browser keeps a page silent until it is clicked: click Start sound on the page';
 const playing = (state) => state.slots[state.slot];
 const show = (state) => console.log(`slot ${state.slot}  ${toText(playing(state))}`);
 
@@ -111,7 +112,13 @@ async function main([cmd = 'help', ...args]) {
   if (cmd === 'banner') return previewBanner(args[0]);
   await ensureServer();
   switch (cmd) {
-    case 'open': return console.log(`${BASE.replace('127.0.0.1', 'localhost')}`);
+    case 'open': {
+      console.log(`${BASE.replace('127.0.0.1', 'localhost')}`);
+      const page = await call('GET', '/api/transport').catch(() => null);   // a server from before it could say
+      if (!page) return;
+      if (!page.pages) return console.log('no page is open, so nothing sounds: open the address in a browser');
+      return console.log(page.awake ? 'a page is open and its sound is on' : SILENT);
+    }
     case 'show': {
       const state = await call('GET', '/api/state');
       return args.includes('--json') ? console.log(JSON.stringify(playing(state), null, 1)) : show(state);

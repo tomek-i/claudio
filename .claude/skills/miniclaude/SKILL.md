@@ -58,7 +58,7 @@ C4 is middle C. Write basses around C1 to C3, leads around C4 to C6, and write f
 
 ## Hearing it
 
-You cannot hear the synth; the user can. The page has to be open, and clicked once, because a browser keeps a page silent until then; the commands tell you when that is the case, so pass it on.
+You cannot hear the synth; the user can. The page has to be open, and its "Start sound" button clicked (the card the page opens on; the light in its top bar reads "sound off" until then), because a browser keeps a page silent until it is clicked. `play` and `note` tell you when no page is open or its sound is off: pass it on ("click Start sound on the page"). A page that is loaded again has to be clicked again.
 
 - `play` starts the sequence on the page until `stop`; `play 2` plays it twice.
 - `note C3 Eb3 G3 2s` holds a chord for two seconds: a quick way to let the user hear a change.

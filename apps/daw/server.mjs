@@ -6,6 +6,7 @@
 //   POST /api/op               one edit (see Store.apply and applyOp), or several as { op: 'batch', ops }   → the new state
 //   GET  /api/export.mid       the song as a MIDI file, a track per track
 //   POST /api/transport        { action: 'play', bar } or { action: 'stop' }: passed on to the open pages
+//   POST /api/sound            { awake }: the page saying whether the browser lets it sound (not before "Start sound")
 //   POST /api/ask | /api/say   a note from the page to Claude | from Claude to the page
 //   GET  /api/wait?ms=         the notes from the page not handed out yet (long poll)
 import http from 'node:http';
@@ -73,7 +74,11 @@ export function createServer({ home = process.env.CLAUDEBASE_HOME || path.join(H
           store.listeners.add(tell);
           tell('state', store.state());
           const beat = setInterval(() => res.write(': still here\n\n'), 20_000);
-          req.on('close', () => { store.listeners.delete(tell); clearInterval(beat); });
+          req.on('close', () => {
+            store.listeners.delete(tell);
+            clearInterval(beat);
+            if (!store.listeners.size) store.awake = false;   // a page that is loaded again has to be clicked again
+          });
           return;
         }
         case 'POST /api/op': return send(res, 200, store.apply(await readJson(req)));
@@ -81,6 +86,9 @@ export function createServer({ home = process.env.CLAUDEBASE_HOME || path.join(H
           const { action, bar } = await readJson(req);
           return send(res, 200, store.transport(action, bar));
         }
+        case 'POST /api/sound':
+          store.awake = !!(await readJson(req)).awake;
+          return send(res, 200, { ok: true });
         case 'POST /api/ask': return send(res, 200, store.note('you', (await readJson(req)).text));
         case 'POST /api/say': return send(res, 200, store.note('claude', (await readJson(req)).text));
         case 'GET /api/wait': {

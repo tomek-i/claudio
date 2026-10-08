@@ -33,7 +33,7 @@ A track is named by its id (`t2`), its number (`2`) or its name (`bass`). A clip
    - notes: `clip add bass 1 8 "A1:0:3 A1:6:2 A1:10:2 C2:14:2" "F1:16:3 F1:22:2 F1:26:2 G1:30:2"`
 4. Arrange: `clip dup c1 9 2` puts two copies of c1 from bar 9, `clip move c4 17`, `clip resize c2 4`, `clip del c5`.
 5. Mix: `mix bass vol 75`, `mix pad reverb 40`, `mix pluck delay 30`, `mix pluck pan R20`, `mix drums mute` / `mute off`, `solo`.
-6. Let them hear it: `play` or `play 9` starts the open page from that bar, `stop` stops it. `loop 5 8` repeats bars 5 to 8 (`loop off`). If `play` says no page is open, tell the user to open the address.
+6. Let them hear it: `play` or `play 9` starts the open page from that bar, `stop` stops it. `loop 5 8` repeats bars 5 to 8 (`loop off`). If `play` says no page is open, tell the user to open the address; if it says the page's sound is off, tell them to click "Start sound" on the page (the card it opens on: a browser keeps a page silent until it is clicked, and a page that is loaded again has to be clicked again).
 
 ### Drum rows
 

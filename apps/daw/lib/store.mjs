@@ -20,6 +20,7 @@ export class Store {
     this.noteId = 0;
     this.delivered = 0;                              // the last note from the page that `claudebase wait` has handed out
     this.listeners = new Set();                      // the open pages: each is told (event, data)
+    this.awake = false;                              // what the page last said: does the browser let it make sound
     this.waiters = new Set();
     this.load();
   }
@@ -102,13 +103,14 @@ export class Store {
     return state;
   }
 
-  // Play and stop, asked for from the CLI: the pages do the playing, so they are told. Answers how many heard it.
+  // Play and stop, asked for from the CLI: the pages do the playing, so they are told. Answers how many heard it,
+  // and whether the browser lets the page sound (it does not before "Start sound" is clicked).
   transport(action, bar) {
     if (action !== 'play' && action !== 'stop') throw new Error('the transport takes "play" or "stop"');
     const at = Math.round(Number(bar ?? 0));
     if (action === 'play' && !(at >= 0 && at < this.project.bars)) throw new Error(`the song has bars 1 to ${this.project.bars}`);
     for (const tell of this.listeners) tell('transport', action === 'play' ? { action, bar: at } : { action });
-    return { pages: this.listeners.size };
+    return { pages: this.listeners.size, awake: this.awake };
   }
 
   // ---- notes: what is typed into the page for Claude, and what Claude answers

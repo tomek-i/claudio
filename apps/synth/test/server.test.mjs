@@ -58,6 +58,8 @@ test('it starts with four patches and a riff, and serves the page and the shared
   assert.ok(state.seq.steps.filter(Boolean).length > 4);
   const page = await (await fetch(BASE + '/')).text();
   assert.ok(page.includes(`<title>${APP_NAME}</title>`) && !page.includes('%NAME%'));
+  assert.match(page, /id="startOverlay" role="dialog"[^]*id="startBtn"[^>]*>Start sound</);   // shown from the first paint, no script needed
+  assert.ok(!page.includes('Turn the sound on'));
   assert.match(page, /<\/main>\s*(<!--[^>]*-->\s*)?<section class="board"[^>]*>[^]*id="fold"/);   // the keyboard comes after the page, with its "hide"
   assert.doesNotMatch(await (await fetch(BASE + '/style.css')).text(), /\.board \{[^}]*position:/);   // and is not laid over it
   assert.match(await (await fetch(BASE + '/lib/patch.mjs')).text(), /PARAMS/);
@@ -194,13 +196,15 @@ test('the CLI tells a page to sound, hears a note from it and answers', async ()
   const page = await listen();
   await page.next();
   await post('/api/transport', { playing: false, awake: false });
-  assert.match((await cli('note', 'C3', 'Eb3', 'G3', '2s')).out, /^sounding C3 Eb3 G3 for 2 s \(sent, but the page has not been clicked yet/);
+  assert.match((await cli('note', 'C3', 'Eb3', 'G3', '2s')).out, /^sounding C3 Eb3 G3 for 2 s \(sent, but the page's sound is off .*: click Start sound on the page\)$/);
   assert.deepEqual((await page.next()).data, { action: 'notes', notes: [48, 51, 55], seconds: 2, vel: 0.8 });
   await post('/api/transport', { playing: false, awake: true });
   assert.equal((await cli('play')).out, 'playing the sequence until: stop');
   assert.deepEqual((await page.next()).data, { action: 'seq', loops: 0 });
   assert.equal((await cli('stop')).out, 'stopped');
   await page.close();
+  for (let i = 0; i < 50 && server.store.listeners.size; i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(server.store.transport.awake, false);                   // the page is gone, and its click with it
   const waiting = cli('wait', '5');
   await new Promise((r) => setTimeout(r, 300));
   await post('/api/ask', { text: 'more bite' });
