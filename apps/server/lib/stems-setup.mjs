@@ -1,6 +1,6 @@
 // `dj stems setup`: installs the stem separator (PyTorch + demucs) into the project's own .venv, with uv.
 // Nothing outside the project folder is changed: uv brings its own Python 3.12 for the venv.
-//   setupSteps()  the commands, as data (the tests read them; the README lists the same ones for doing it by hand)
+//   setupSteps()  the commands, as data (the tests read them; docs/stems.md lists the same ones for doing it by hand)
 //   runSetup()    runs them. `run` is injected by the tests; by default each command's output goes to the terminal.
 import path from 'node:path';
 import { spawn } from 'node:child_process';
