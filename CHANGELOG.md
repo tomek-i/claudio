@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.0](https://github.com/tomek-i/dj-claude/compare/v0.2.0...v0.3.0) (2026-10-08)
+
+
+### Features
+
+* **desktop:** a start-up window, a dark frame, the logo as the icon, and a maximised start ([be8bb33](https://github.com/tomek-i/dj-claude/commit/be8bb337e4700fdf5f743e26809d70eabef3ef11))
+* **desktop:** an installer for the desktop app ([9546531](https://github.com/tomek-i/dj-claude/commit/9546531d5859e74313623a85cfa53d8fa502e72d))
+* **desktop:** the DJ window opens where it was last closed ([a8e1d0d](https://github.com/tomek-i/dj-claude/commit/a8e1d0d4c660e2a61e4621766a009bfe4f567ddb))
+* **desktop:** the installed app brings the whole project: the CLI, the skills and the tools ([11d4966](https://github.com/tomek-i/dj-claude/commit/11d4966af8765ae20a8d5e51497eac926663e522))
+* **desktop:** the installed app's folder gets a CLAUDE.md of its own ([48e31f7](https://github.com/tomek-i/dj-claude/commit/48e31f789e49e7f6c3a89aded44fbf3d508eb9a8))
+* **settings:** the project folder on the settings page, with "Open folder" and "Open Claude Code here" ([bffca05](https://github.com/tomek-i/dj-claude/commit/bffca058805c3ef9ce276350d655b87dad833580))
+* **stems:** `dj stems setup` installs the stem separator in one command ([fa85eac](https://github.com/tomek-i/dj-claude/commit/fa85eac56b0bb8552f8a46e4e7ef58f20cfba155))
+* **visuals:** the terrain morphs with the tunnel and the particle field ([a8eda31](https://github.com/tomek-i/dj-claude/commit/a8eda3132b2379df0ef791231a337abea9e8ddb9))
+
+
+### Bug fixes
+
+* **desktop:** never show the start dialog in the desktop app ([ff31a1a](https://github.com/tomek-i/dj-claude/commit/ff31a1a7cf9393679d1050e6ffefac73bbbbc7ab))
+* **engine:** a page no longer takes the sound system from another without asking ([87ddccc](https://github.com/tomek-i/dj-claude/commit/87ddccccb4291dd2a40107311b21e860683cbd40))
+* **stems:** only say separation is throttled when there is something to separate ([151c4b1](https://github.com/tomek-i/dj-claude/commit/151c4b18764c9e29d222a7a4eeddfcd36f58a333)), closes [#16](https://github.com/tomek-i/dj-claude/issues/16)
+* **ui:** "Back to the decks" closes the health or settings tab, and no longer opens a second DJ page ([52e6b0c](https://github.com/tomek-i/dj-claude/commit/52e6b0c5fa58db6a36c1d737fca6f45777592b1c))
+* **ui:** a tooltip on every control of the main page ([455c804](https://github.com/tomek-i/dj-claude/commit/455c8049567ed04c0d5d759a3de0548a1f860a50))
+* **ui:** close the 1 px gap under the tab bar in Browse ([8834f9a](https://github.com/tomek-i/dj-claude/commit/8834f9af120a6cdc14150dc4fee1ed7114f39ad3)), closes [#15](https://github.com/tomek-i/dj-claude/issues/15)
+* **ui:** leaving Browse no longer stretches the decks and hides the bottom panel ([6021378](https://github.com/tomek-i/dj-claude/commit/60213781ee14e8f220c621fdd741bb0cfd420ad7)), closes [#14](https://github.com/tomek-i/dj-claude/issues/14)
+* **visuals:** free the old buffers when the quality tier steps down ([b18cdf5](https://github.com/tomek-i/dj-claude/commit/b18cdf5f34b96a877b5a2a713175a3e24ca34449))
+
 ## [0.2.0](https://github.com/tomek-i/dj-claude/compare/v0.1.0...v0.2.0) (2026-10-07)
 
 
