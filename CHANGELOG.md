@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0](https://github.com/tomek-i/dj-claude/compare/v0.3.0...v0.4.0) (2026-10-08)
+
+
+### Features
+
+* **daw:** Claudebase, a small DAW with drum and synth tracks ([1ef8b3a](https://github.com/tomek-i/dj-claude/commit/1ef8b3a53cadfd23ba7260bbde8149fa1297f9fc))
+* **drums:** Claude-808, a drum machine Claude plays with you ([9cbb498](https://github.com/tomek-i/dj-claude/commit/9cbb4983668abc809ca8e345221836a107a43379))
+* **synth:** MiniClaude, a polyphonic synthesizer with a step sequencer ([7d79b32](https://github.com/tomek-i/dj-claude/commit/7d79b32656f4919cd21c0f80ab8ef523fd2a0da3))
+
 ## [0.3.0](https://github.com/tomek-i/dj-claude/compare/v0.2.0...v0.3.0) (2026-10-08)
 
 

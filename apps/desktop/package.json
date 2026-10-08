@@ -1,6 +1,6 @@
 {
   "name": "dj-claude-desktop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "DJ Claude as a desktop app: an Electron window on the same server and page as browser mode.",
   "private": true,
   "type": "module",
