@@ -33,6 +33,7 @@
     "desktop": "pnpm --filter dj-claude-desktop start",
     "dist": "pnpm --filter dj-claude-desktop dist",
     "drums": "node apps/drums/server.mjs",
+    "synth": "node apps/synth/server.mjs",
     "test": "node --test test/*.test.mjs test/server-*.mjs apps/*/test/*.test.mjs",
     "scan": "node dj.mjs scan",
     "setup": "node dj.mjs doctor --fix",
