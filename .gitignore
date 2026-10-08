@@ -5,6 +5,7 @@ bin/
 .venv/
 apps/web/public/samples/src/
 *.log
+apps/drums/.cl-808/
 
 # tooling
 dist/

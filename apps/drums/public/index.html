@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude-808</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2309090c'/%3E%3Crect x='2' y='9' width='3' height='5' fill='%23ff7a45'/%3E%3Crect x='7' y='4' width='3' height='10' fill='%2336d6e7'/%3E%3Crect x='12' y='7' width='3' height='7' fill='%239be564'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Claude-808</div>
+    <button id="play" class="play" aria-pressed="false" title="Play / stop (Space)">Play</button>
+    <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
+    <label class="field swing">Swing <input id="swing" type="range" min="0" max="100" step="1"> <output id="swingOut" for="swing"></output></label>
+    <div class="seg" id="steps" role="group" aria-label="Steps">
+      <button data-steps="16">16</button><button data-steps="32">32</button>
+    </div>
+    <div class="seg" id="slots" role="group" aria-label="Pattern slot"></div>
+    <span class="spacer"></span>
+    <select id="preset" aria-label="Load a preset"><option value="">Presets…</option></select>
+    <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+    <button id="wav" title="Render the pattern to a WAV file">WAV</button>
+    <a id="midi" class="btn" download title="The pattern as MIDI, timing kept">MIDI</a>
+    <span class="status" id="status" role="status"><i class="led"></i><span id="statusText">connecting</span></span>
+  </header>
+
+  <main>
+    <section class="machine" aria-label="Pattern">
+      <div class="bar">
+        <input id="name" class="name" aria-label="Pattern name" maxlength="60" spellcheck="false">
+        <span class="spacer"></span>
+        <button id="straight" title="Hold to hear the beat with every hit on its step: no swing, no offsets">Hold: hear it on the grid</button>
+        <button id="clear">Clear</button>
+      </div>
+      <div id="grid" class="grid"></div>
+      <p class="hint">
+        Click or drag to write steps · <kbd>Shift</kbd>-click for ghost / soft / normal / accent ·
+        <kbd>Alt</kbd>-drag a hit sideways to play it early or late · keys <kbd>1</kbd>–<kbd>8</kbd> tap the voices.
+        A pad sits where the hit sounds, so the swing and the feel show in the grid.
+      </p>
+    </section>
+
+    <section class="tools" aria-label="Groove tools">
+      <div class="card">
+        <h2>Feel</h2>
+        <p>Moves the hits you wrote and how hard they are played. It adds and removes nothing.</p>
+        <div class="line">
+          <select id="feel" aria-label="Feel"></select>
+          <input id="feelAmount" type="range" min="0" max="100" value="60" aria-label="How much">
+        </div>
+        <div class="line">
+          <button id="humanize" class="primary">Humanize</button>
+          <button id="quantize" title="Every hit back on its step">Back on the grid</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Variations</h2>
+        <p>Four beats near this one. Hold one to hear it, click to keep it.</p>
+        <div class="line">
+          <label class="mini" for="wild">Wild</label>
+          <input id="wild" type="range" min="5" max="100" value="40">
+          <button id="vary" class="primary">Make four</button>
+        </div>
+        <div id="candidates" class="candidates"></div>
+      </div>
+
+      <div class="card">
+        <h2>Bar 2 and morph</h2>
+        <p>Write a second bar with a fill, or slide this beat towards the one in another slot.</p>
+        <div class="line"><button id="continue" class="primary">Continue the beat</button></div>
+        <div class="line">
+          <label class="mini" for="morph">Towards</label>
+          <div class="seg small" id="morphTo" role="group" aria-label="Morph towards slot"></div>
+          <input id="morph" type="range" min="0" max="100" value="0" aria-label="How far">
+        </div>
+      </div>
+
+      <div class="card notes">
+        <h2>Claude</h2>
+        <div id="notes" class="log" aria-live="polite"></div>
+        <form id="ask" class="line">
+          <input id="askText" placeholder="make the hats busier, like a UK garage beat" aria-label="A note for Claude" maxlength="500" autocomplete="off">
+          <button class="primary">Send</button>
+        </form>
+        <p class="faint">Claude reads these in Claude Code while it is listening there (ask it to play the drum machine).</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -28,7 +28,7 @@ jobs:
           node-version: 22
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - run: node --test test/*.test.mjs test/server-*.mjs
+      - run: node --test test/*.test.mjs test/server-*.mjs apps/*/test/*.test.mjs
 
   desktop:
     runs-on: windows-latest
