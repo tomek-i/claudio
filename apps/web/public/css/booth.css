@@ -25,5 +25,7 @@
 .msg.crowd { align-self: flex-end; background: #13232a; border: 1px solid #1d3a44; border-radius: 10px 10px 2px 10px; padding: 7px 10px; max-width: 85%; }
 .msg.system { font-size: 11px; color: var(--faint); }
 #ask { display: flex; gap: 8px; }
-#askInput { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+#askInput { flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+/* the hint is a little smaller than what is typed: at the size of the text it does not fit the box beside SEND and mic */
+#askInput::placeholder { font-size: 12.5px; }
 .tts { font-size: 11px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
