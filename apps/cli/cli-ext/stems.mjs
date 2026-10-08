@@ -1,13 +1,28 @@
 // Stems + vocal map commands.
 //   dj stems [id|search|all]   queue separation (default: all)      dj stems status
+//   dj stems setup [--gpu]     install the separator into the project's .venv (--gpu: the CUDA build, for an NVIDIA card)
 //   dj vocals <id|search>      where the vocals are, in bars and times
-export default ({ api, flags, rest, fail, out, fmtTrack, mmss, JSON_OUT }) => ({
+export default ({ api, flags, rest, fail, out, fmtTrack, mmss, JSON_OUT, ROOT, BASE }) => ({
   async stems() {
     const target = rest.join(' ').trim() || 'all';
+    if (target === 'setup') {
+      // runs here, not in the server: it needs no server, and its output is the installer's own
+      const { runSetup } = await import('../../server/lib/stems-setup.mjs');
+      let r;
+      try { r = await runSetup({ root: ROOT, gpu: !!flags.gpu }); } catch (e) { fail(e.message); }
+      console.log(`${r.already ? '✓ already installed' : '\n✓ installed'}: torch ${r.torch}, demucs ${r.demucs}, runs on ${r.device === 'cpu' ? 'the CPU' : `the GPU (${r.device})`}  (${r.python})`);
+      if (r.device === 'cpu' && !flags.gpu && process.platform !== 'darwin') console.log('  with an NVIDIA card, `dj stems setup --gpu` installs the CUDA build instead (about 2.5 GB to download)');
+      // a running server finds the .venv by itself; queue the library there, as it does on a start
+      try {
+        const q = await (await fetch(`${BASE}/api/stems`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: 'all' }), signal: AbortSignal.timeout(5000) })).json();
+        if (q.ok) console.log(`✓ ${q.queued} track(s) queued for separation, ${q.ready} already done (background, idle priority: dj stems status)`);
+      } catch { console.log('  the server is not running: separation starts when it does'); }
+      return;
+    }
     if (target === 'status') {
       const s = await api('/api/stems');
       if (JSON_OUT) return out(s);
-      if (!s.available) console.log('⚠ separator unavailable (no .venv python / demucs)');
+      if (!s.available) console.log('⚠ the separator is not set up: run `dj stems setup`');
       console.log(`Stems: ${s.done}/${s.total} tracks done  (${s.model}, ${s.deviceInUse && s.deviceInUse !== 'cpu' ? 'GPU ' + s.deviceInUse : s.threads + ' threads' + (s.deviceInUse ? ' on the CPU' : '')}${s.enabled ? '' : ', DISABLED'})  free disk ${s.freeGB ?? '?'} GB`);
       if (s.deviceInUse && s.deviceInUse !== 'cpu') console.log('  one track at a time on the GPU, also while music plays');
       else if (s.mode) console.log(`  mode ${s.mode === 'throttled' ? 'THROTTLED (music playing: 1 job × 2 threads)' : 'full speed'}  — up to ${s.maxJobs} job(s) × ${s.jobThreads} threads now (config: ${s.concurrency} × ${s.threads})`);

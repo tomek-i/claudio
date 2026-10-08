@@ -59,6 +59,7 @@ Keep at least 15 GB free and switch off automatic stem separation before a long 
 |---|---|---|
 | The set crashed and the disk is full | `.dj/pcm` (decoded audio) and `.dj/stems` grow with every track. | Delete `.dj/pcm/*`, which is a cache and safe to delete. Delete old folders in `.dj/sessions` and the files in `.dj/produce/out/*`. |
 | Everything is sluggish while playing | Stem separation is running at full speed, or a video is rendering. | 1. Check `dj stems status`.<br>2. Kill the `separate.py` process.<br>3. Switch off "Separate new tracks automatically" on http://localhost:4747/settings.<br>4. Never render a video during a set. |
+| `dj stems status` says the separator is not set up, or health shows "Stem separation: not set up" | There is no `.venv` with PyTorch and demucs in the project folder. | Tell the user it is a download of about 600 MB, then run `node dj.mjs stems setup` (with an NVIDIA card: `--gpu`). It needs `uv`; if that is missing the command prints how to install it. The running server picks the result up and queues the library. |
 | `node dj.mjs stems` queued every track | `stems` without an id means all tracks. | Use `dj stems <id>`. The queue is emptied when the server restarts with "Separate new tracks automatically" switched off. |
 
 ## Downloads

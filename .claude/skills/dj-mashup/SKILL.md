@@ -7,7 +7,7 @@ description: 'Build a live mashup on the DJ table: the sung vocals of one track 
 
 A mashup here is two tracks on two decks. The **bed** plays its drums, bass and other stems with its own vocals muted. The **top** plays only its vocals stem. Both play from the engine with tempo and key matched, so the result is live and can be re-cut at any time.
 
-Both tracks need stems. Run `dj stems <id>` for each track and check progress with `dj stems status`.
+Both tracks need stems. Run `dj stems <id>` for each track and check progress with `dj stems status`. If that says the separator is not set up, `node dj.mjs stems setup` installs it (about 600 MB: ask first).
 
 In this skill the bed is on deck A and the top is on deck B. `<bedId>` and `<topId>` are their library ids.
 
