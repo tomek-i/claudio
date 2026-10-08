@@ -18,6 +18,7 @@ import { describe as describeSettings, applyPatch as applySettings, uiSettings }
 import { banner } from './lib/banner.mjs';
 import { reveal, isLocal, REVEALS } from './lib/reveal.mjs';
 import { starterTracks, downloadStarter } from './lib/starter.mjs';
+import { advanceSet } from './lib/set-clock.mjs';
 import { timeOfBar, beatOfTime, timeOfBeat, deckEffectiveCamelot, effBpm } from './lib/music.mjs';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
@@ -83,6 +84,8 @@ function addLog(kind, text, extra = {}) {
 }
 const inbox = [];          // crowd requests waiting for Claude
 const history = [];        // tracks that have gone live
+let set = null;            // the current set: { start, last } (lib/set-clock.mjs), for the set timer on the page
+let setSent = null;        // the start the pages were last told
 let engineState = null;    // last state pushed by the engine tab
 let engineStateAt = 0;
 let engineId = null;
@@ -285,6 +288,18 @@ function trackHistory(state) {
   history.push({ id: d.trackId, title: d.title, artist: d.artist, deck: name, at: Date.now() });
   sequencer?.onAir(d.trackId);
   addLog('system', `▶ Now playing on ${name}: ${d.artist ? d.artist + ' - ' : ''}${d.title}`);
+}
+
+// The set timer in the page's header. Music on air is the test trackHistory uses: a deck that plays a track and is
+// heard. The pages are told the start when it changes (a set began, or ended in silence), with the server's time so
+// that a page on a machine whose clock is off still counts from the right moment.
+const onAir = (state) => Object.values(state.decks || {}).some((d) => d.playing && d.trackId && (d.audible || 0) >= 0.5);
+const setInfo = () => ({ start: set?.start ?? null, now: Date.now() });
+function tickSet(playing) {
+  set = advanceSet(set, playing, Date.now());
+  if ((set?.start ?? null) === setSent) return;
+  setSent = set?.start ?? null;
+  broadcast('set', setInfo());
 }
 
 function forward(cmd, args, timeoutMs = 20000) {
@@ -548,7 +563,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/events') {
       const id = q.client || `c${Date.now()}`;
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
-      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, recording: !!session, visuals: { viewers: visuals.viewers.size, listeners: visuals.listeners.size }, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
+      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, set: setInfo(), recording: !!session, visuals: { viewers: visuals.viewers.size, listeners: visuals.listeners.size }, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
       clients.set(id, res);
       const ka = setInterval(() => res.write(': ka\n\n'), 15000);
       req.on('close', () => {
@@ -570,7 +585,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/state' && req.method === 'POST') {
       const b = await readBody(req);
-      if (b.client === engineId) { engineState = b.state; engineStateAt = Date.now(); trackHistory(b.state); if (visuals.viewers.size) visuals.setState(liveState()); }
+      if (b.client === engineId) { engineState = b.state; engineStateAt = Date.now(); trackHistory(b.state); tickSet(onAir(b.state)); if (visuals.viewers.size) visuals.setState(liveState()); }
       return send(res, 200, { ok: true });
     }
     if (p === '/api/ack' && req.method === 'POST') {
@@ -890,6 +905,7 @@ setInterval(() => {
   const s = liveState();
   const playing = s.engine.connected && Object.values(s.decks || {}).some((d) => d.playing && (d.audible || 0) > 0.05);
   stems.setMusicPlaying(playing);
+  tickSet(false); // no music for 30 minutes ends the set, also with no engine left to say so
 }, 1000);
 
 server.on('error', (e) => {

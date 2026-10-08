@@ -23,6 +23,7 @@ Claude never touches audio. It runs `node dj.mjs …` commands; the server relay
 | `apps/server/lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
 | `apps/server/lib/sequencer.mjs`, `apps/server/lib/monitor.mjs`, `apps/server/lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
 | `apps/server/lib/settings.mjs`, `apps/server/lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
+| `apps/server/lib/set-clock.mjs`, `apps/web/public/ui/clock.js` | The header's clock: the time of day (12 or 24 hours, as the browser's locale has it) and how long the set has been running. A set starts with the first track on air and ends after 30 minutes without music; the server keeps the start, so a reload of the page does not reset the timer (a restart of the server does). |
 | `apps/server/lib/starter.mjs`, `starter/` | The Creative Commons starter crate behind `dj starter` and the **Download demo tracks** button. |
 | `apps/server/lib/banner.mjs` | The server's startup banner: one of fifteen animations at random, then an equaliser that follows the live deck's beat. |
 | `apps/server/lib/stems.mjs` + `apps/server/lib/separate.py` | Optional stem separation (demucs) so vocals/drums/bass can be muted or swapped live. |

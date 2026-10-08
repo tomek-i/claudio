@@ -4,6 +4,7 @@ import { handlers } from './commands.js';
 import { loadLibrary, refreshHistory, renderJob, renderStarter } from './crate.js';
 import { addFeed } from './booth.js';
 import { receiveUi } from './prefs.js';
+import { receiveSet } from './clock.js';
 import { visualsAudience, visualsSignal } from './visuals-feed.js';
 
 // ------------------------------------------------------------------ server link
@@ -12,6 +13,7 @@ es.addEventListener('hello', (e) => {
   const h = JSON.parse(e.data);
   receiveUi(h.ui);
   showAuto(h.autoDJ);
+  receiveSet(h.set);
   $('#feed').innerHTML = '';
   h.log.forEach(addFeed);
   $('#lbFeed').classList.remove('unread'); $('#boothTab').classList.remove('unread'); // the replayed log is not news
@@ -47,6 +49,7 @@ es.addEventListener('log', (e) => {
 es.addEventListener('job', (e) => renderJob(JSON.parse(e.data)));
 es.addEventListener('starter', (e) => renderStarter(JSON.parse(e.data)));
 es.addEventListener('ui', (e) => receiveUi(JSON.parse(e.data)));
+es.addEventListener('set', (e) => receiveSet(JSON.parse(e.data)));
 es.addEventListener('visuals', (e) => visualsAudience(JSON.parse(e.data)));
 es.addEventListener('visualsRtc', (e) => visualsSignal(JSON.parse(e.data)));
 // ---- the AUTO DJ switch in the header. The server says what it is (`hello`, then `autodj` whenever it changes, also

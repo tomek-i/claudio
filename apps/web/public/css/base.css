@@ -74,6 +74,11 @@ a.status:hover, a.status:focus-visible { color: var(--text); }
 .presets button[aria-pressed="true"] { background: var(--line); color: var(--text); box-shadow: inset 0 -2px 0 var(--claude); }
 .transition { font-family: var(--mono); font-size: 12px; color: var(--claude); }
 .spacer { flex: 1; }
+/* the set timer and the time of day (ui/clock.js): readouts, so mono like the status. Never wrapped, and it gives
+   no width away: a clock that changes shape is read as a change. order: the last thing in the header, at its far end,
+   wherever it is in the markup */
+.topclock { order: 1; flex: none; display: flex; align-items: baseline; gap: 12px; font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: nowrap; }
+.topclock b { font-weight: 600; color: var(--text); }
 /* the buttons on the right of the header: the shortcut list, and the links to the other pages. An arrow marks the
    ones that open a new tab (leaving this page would stop the audio engine). */
 .toplink { display: inline-flex; align-items: center; gap: 6px; height: var(--h); padding: 0 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; font: 600 12px var(--sans); letter-spacing: 0.04em; color: var(--dim); text-decoration: none; white-space: nowrap; cursor: pointer; }

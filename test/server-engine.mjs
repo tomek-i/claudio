@@ -7,9 +7,10 @@ import { scratch, startServer, api, FakeEngine, waitUntil } from './server-harne
 const sc = scratch('engine', { port: 4861 });
 let srv;
 const claim = (client, extra = {}) => api(sc.base, '/api/engine/claim', { client, ...extra });
-// a page's event stream: being connected is what makes it "still there". Returns the ids of the engine events it saw.
+// a page's event stream: being connected is what makes it "still there". Returns the ids of the engine events it saw,
+// and what it was told about the set (in hello, then in each set event).
 async function page(client) {
-  const ctrl = new AbortController(), seen = [];
+  const ctrl = new AbortController(), seen = [], sets = [];
   const res = await fetch(`${sc.base}/api/events?client=${client}`, { signal: ctrl.signal });
   (async () => {
     const dec = new TextDecoder(); let buf = '';
@@ -19,14 +20,46 @@ async function page(client) {
       while ((i = buf.indexOf('\n\n')) >= 0) {
         const block = buf.slice(0, i); buf = buf.slice(i + 2);
         if (/^event: engine$/m.test(block)) seen.push(JSON.parse(/^data: (.*)$/m.exec(block)[1]).id);
+        if (/^event: hello$/m.test(block)) sets.push(JSON.parse(/^data: (.*)$/m.exec(block)[1]).set);
+        if (/^event: set$/m.test(block)) sets.push(JSON.parse(/^data: (.*)$/m.exec(block)[1]));
       }
     }
   })().catch(() => {});
-  return { seen, close: () => ctrl.abort() };
+  return { seen, sets, close: () => ctrl.abort() };
 }
 
 before(async () => { srv = await startServer(sc); });
 after(() => srv?.stop());
+
+// first in the file: it needs a server that has not played anything yet
+test('the set timer: no set until music is on air, then every page is told its start, also one opened later', async () => {
+  const one = await page('page-set');
+  const eng = new FakeEngine(sc.base, 'engine-set');
+  let later;
+  try {
+    assert.ok(await waitUntil(() => one.sets.length));
+    assert.equal(one.sets[0].start, null);
+    await eng.start();
+    await eng.loadTrack('A', sc.fx.main);
+    assert.equal(one.sets.length, 1, 'a loaded deck is not music');
+    const before = Date.now();
+    await eng.set('A', { playing: true, audible: 1 });
+    assert.ok(await waitUntil(() => one.sets.length > 1));
+    const { start, now } = one.sets[1];
+    assert.ok(start >= before && start <= Date.now(), `start ${start}`);
+    assert.ok(now >= start && now <= Date.now(), 'the server says what time it has');
+    // a reload is a new page: it is told the same start, and nothing more is sent while the set goes on
+    later = await page('page-set-reloaded');
+    assert.ok(await waitUntil(() => later.sets.length));
+    assert.equal(later.sets[0].start, start);
+    await eng.set('A', { playing: false });
+    await eng.set('A', { playing: true });
+    assert.equal(one.sets.length, 2);
+  } finally {
+    one.close(); later?.close(); await eng.stop();
+    await waitUntil(async () => !(await api(sc.base, '/api/state')).engine.connected);
+  }
+});
 
 test('a second page does not take the engine from one that is still there; with force it does, and the first is told', async () => {
   const first = new FakeEngine(sc.base, 'page-one');
