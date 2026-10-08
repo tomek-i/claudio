@@ -21,7 +21,8 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
-body { min-height: 100vh; display: flex; flex-direction: column; }
+/* the window is three rows: the top bar, the part that scrolls, the keyboard */
+body { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--mid); outline-offset: 2px; }
 
@@ -71,7 +72,10 @@ kbd { font: 600 11px var(--mono); background: var(--panel2); border: 1px solid v
 .status.bad .led { background: var(--bad); }
 
 /* ---------- the panel ---------- */
-main { padding: 18px; display: grid; gap: 18px; width: 100%; max-width: 1500px; margin: 0 auto; flex: 1; align-content: start; }
+main {
+  padding: 18px; display: grid; grid-template-columns: minmax(0, 1464px); justify-content: center; align-content: start; gap: 18px;
+  flex: 1; min-height: 0; overflow-y: auto; scrollbar-color: #3a3a4a transparent;   /* it scrolls from edge to edge, so the bar is at the window's side */
+}
 .machine { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; min-width: 0; }
 .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .bar.wrap { flex-wrap: wrap; gap: 8px 16px; }
@@ -126,9 +130,13 @@ h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: 
 .log div.claude { align-self: flex-start; background: #241a16; color: #f1cdbb; }
 
 /* ---------- the keyboard ---------- */
-.board { position: sticky; bottom: 0; z-index: 4; background: linear-gradient(#0b0b10, #101016); border-top: 1px solid var(--line); padding: 10px 18px 12px; }
+/* a row of the window of its own, not laid over the page: what is above it scrolls in the room that is left */
+.board { flex: none; background: linear-gradient(#0b0b10, #101016); border-top: 1px solid var(--line); padding: 10px 18px 12px; }
 .board .bar { margin-bottom: 8px; }
 .board .hint { margin: 0; }
+.board #fold { flex: none; }
+.board.folded { padding-block: 6px; }
+.board.folded .bar { margin-bottom: 0; }
 .keys { position: relative; display: flex; height: 118px; max-width: 1464px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .key { padding: 0 0 6px; border-radius: 0 0 5px 5px; align-items: flex-end; letter-spacing: 0; touch-action: none; }
 .key.white { flex: 1 1 0; min-width: 0; height: 100%; background: #e6e5ee; border: 1px solid #09090c; color: #4a4958; font: 600 11px var(--mono); }
@@ -143,4 +151,9 @@ h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: 
   .steps { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .board .hint { display: none; }
   .keys { height: 96px; }
+}
+/* a window too low for three rows (a phone on its side): the page scrolls as a whole and the keyboard is its last part */
+@media (max-height: 560px) {
+  body { height: auto; min-height: 100vh; }
+  main { flex: none; overflow-y: visible; }
 }

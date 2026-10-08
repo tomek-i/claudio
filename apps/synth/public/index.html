@@ -67,7 +67,8 @@
     </div>
   </main>
 
-  <section class="board" aria-label="Keyboard">
+  <!-- the keyboard is the last row of the window, under the part that scrolls, so it never lies on top of anything -->
+  <section class="board" id="board" aria-label="Keyboard">
     <div class="bar">
       <div class="seg" role="group" aria-label="Keyboard octave">
         <button id="octDown" title="An octave down ([)" aria-label="Octave down">−</button>
@@ -78,6 +79,8 @@
         Keys <kbd>Z</kbd> <kbd>S</kbd> <kbd>X</kbd> … <kbd>/</kbd> play the lower octave and <kbd>Q</kbd> <kbd>2</kbd> <kbd>W</kbd> … <kbd>P</kbd> the one above ·
         <kbd>[</kbd> <kbd>]</kbd> octave · <kbd>Space</kbd> play · lower on a key is louder.
       </p>
+      <span class="spacer"></span>
+      <button id="fold" aria-expanded="true" aria-controls="keys" title="Fold the keyboard away: the page gets its room, the typing keys still play">Hide keys</button>
     </div>
     <div id="keys" class="keys"></div>
   </section>

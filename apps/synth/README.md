@@ -26,7 +26,9 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
 - A delay and a reverb, each on a send. Master volume and a limiter.
 - Eight voices. A ninth note takes the voice that is dying away, or the oldest.
 - Played from the keys on the screen (mouse or touch; lower on a key is louder), two rows of the computer's
-  keyboard, and a MIDI keyboard where the browser has Web MIDI.
+  keyboard, and a MIDI keyboard where the browser has Web MIDI. The keys on the screen are the bottom row of the
+  window: the panel, the sequence and the Claude box scroll in the room above them, so nothing is ever underneath.
+  "Hide keys" folds them away (the browser remembers it) and the room goes to the page.
 - A sixteen-step sequence with rests, ties, chords, accents, tempo, gate and swing. Choose a step and play a note
   to write it, or type the bar as text.
 - Eleven presets (bass, lead, pad, pluck, keys) and four patch slots.
