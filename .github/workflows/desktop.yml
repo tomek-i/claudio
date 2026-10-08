@@ -18,10 +18,14 @@ on:
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs
-      - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - .github/workflows/desktop.yml
+      # not for these alone: documentation, pictures, and the version number a release commit bumps
+      - '!**.md'
+      - '!**.png'
+      - '!**.svg'
+      - '!apps/desktop/package.json'
   push:
     branches: [main]
     paths:
@@ -32,10 +36,14 @@ on:
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs
-      - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - .github/workflows/desktop.yml
+      # not for these alone: documentation, pictures, and the version number a release commit bumps
+      - '!**.md'
+      - '!**.png'
+      - '!**.svg'
+      - '!apps/desktop/package.json'
   workflow_dispatch:
 
 permissions:
