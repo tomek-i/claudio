@@ -7,6 +7,7 @@ apps/web/public/samples/src/
 *.log
 apps/drums/.cl-808/
 apps/synth/.miniclaude/
+apps/daw/.claudebase/
 
 # tooling
 dist/

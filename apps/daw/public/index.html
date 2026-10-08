@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>%NAME%</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2309090c'/%3E%3Crect x='2' y='3' width='8' height='3' rx='1' fill='%23ff7a45'/%3E%3Crect x='6' y='7' width='8' height='3' rx='1' fill='%2336d6e7'/%3E%3Crect x='2' y='11' width='5' height='3' rx='1' fill='%239be564'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>%NAME%</div>
+    <button id="play" class="play" aria-pressed="false" title="Play / stop (Space)">Play</button>
+    <output id="pos" class="pos" title="Bar and beat" aria-label="Position, bar and beat">1.1</output>
+    <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
+    <label class="field swing">Swing <input id="swing" type="range" min="0" max="100" step="1"> <output id="swingOut" for="swing"></output></label>
+    <label class="field">Bars <input id="bars" type="number" min="1" max="256" step="1" inputmode="numeric" title="The length of the song"></label>
+    <div class="field" role="group" aria-label="Loop">
+      <button id="loop" aria-pressed="false" title="Repeat these bars while playing (L)">Loop</button>
+      <input id="loopFrom" type="number" min="1" step="1" inputmode="numeric" aria-label="Loop from bar">
+      <span aria-hidden="true">–</span>
+      <input id="loopTo" type="number" min="1" step="1" inputmode="numeric" aria-label="Loop to bar">
+    </div>
+    <label class="field master">Master <input id="master" type="range" min="0" max="100" step="1"></label>
+    <span class="spacer"></span>
+    <select id="template" aria-label="New song from a template"><option value="">New from…</option></select>
+    <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+    <button id="wav" title="Render the whole song to a WAV file">WAV</button>
+    <a id="midi" class="btn" href="/api/export.mid" download title="The song as a MIDI file, a track per track">MIDI</a>
+    <span class="status" id="status" role="status"><i class="led"></i><span id="statusText">connecting</span></span>
+  </header>
+
+  <main>
+    <section class="panel" aria-label="Arrangement">
+      <div class="bar">
+        <input id="name" class="name" aria-label="Song name" maxlength="60" spellcheck="false">
+        <span class="spacer"></span>
+        <button id="addDrums">+ Drum track</button>
+        <button id="addSynth">+ Synth track</button>
+      </div>
+      <div id="arr" class="arr">
+        <div id="arrInner" class="arr-inner">
+          <div class="ruler-row">
+            <div class="head corner">Tracks</div>
+            <div id="ruler" class="ruler" role="group" aria-label="Bars: choose where Play starts"></div>
+          </div>
+          <div id="tracks"></div>
+          <div id="playhead" class="playhead" aria-hidden="true"></div>
+        </div>
+      </div>
+      <p class="hint">
+        Click a bar number to play from there · double-click an empty bar to add a clip · drag a clip to move it, its right
+        edge to make it longer (the content repeats) · on a focused clip: <kbd>←</kbd> <kbd>→</kbd> move,
+        <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> resize, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate, <kbd>Delete</kbd> remove.
+      </p>
+    </section>
+
+    <section class="panel" aria-label="Clip editor">
+      <div class="bar">
+        <h2 id="clipTitle">Clip</h2>
+        <label class="field" id="clipLenField">Content bars <input id="clipLen" type="number" min="1" max="8" step="1" inputmode="numeric" title="How many bars the clip's content is; it repeats until the clip ends"></label>
+        <span class="spacer"></span>
+        <button id="clipDup" title="A copy right after it (Ctrl+D)">Duplicate</button>
+        <button id="clipClear">Clear</button>
+        <button id="clipDel">Delete</button>
+      </div>
+      <p id="noClip" class="empty">Select a clip in the arrangement to edit it here.</p>
+      <div id="steps" class="grid" hidden></div>
+      <div id="rollWrap" hidden>
+        <div id="roll" class="roll">
+          <div id="keys" class="keys" role="group" aria-label="Piano keys: click to hear a pitch"></div>
+          <div id="sheet" class="sheet" role="group" aria-label="Notes">
+            <div id="rollHead" class="rollhead" aria-hidden="true" hidden></div>
+          </div>
+        </div>
+        <form id="notesForm" class="line">
+          <label class="mini" for="notesText">Notes</label>
+          <input id="notesText" spellcheck="false" autocomplete="off" placeholder="C2:0:4 E2:4:2 = pitch:start:length in sixteenths">
+          <button class="primary">Write</button>
+        </form>
+      </div>
+      <p id="drumHint" class="hint" hidden>
+        Click or drag to write steps · <kbd>Shift</kbd>-click or <kbd>V</kbd> for ghost / soft / normal / accent · arrow keys move between steps.
+      </p>
+      <p id="rollHint" class="hint" hidden>
+        Click to add a note · drag it to move, its right edge to change its length · double-click or <kbd>Delete</kbd> removes it ·
+        on a focused note: arrow keys move, <kbd>Shift</kbd>+<kbd>←</kbd> <kbd>→</kbd> length, <kbd>[</kbd> <kbd>]</kbd> velocity.
+        The line under the roll is the same notes as text: edit it and press Write.
+      </p>
+    </section>
+
+    <section class="panel notes" aria-label="Notes for Claude">
+      <h2>Claude</h2>
+      <div id="notes" class="log" aria-live="polite"></div>
+      <form id="ask" class="line">
+        <input id="askText" placeholder="add a bass line under the chords, something bouncy" aria-label="A note for Claude" maxlength="500" autocomplete="off">
+        <button class="primary">Send</button>
+      </form>
+      <p class="faint">Claude reads these in Claude Code while it is listening there (ask it to compose with you in %NAME%).</p>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
