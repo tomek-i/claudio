@@ -39,7 +39,7 @@ To recover the engine:
 | "Audio engine not connected" or "Engine state is stale" | The browser tab was closed, or Chrome throttled a hidden, silent tab. | Follow the recovery steps above. Afterwards keep the tab in its own window with audio playing. For recordings use `tools/produce/record-browser.mjs`, because its Chromium does not throttle. |
 | Loads time out, or the engine goes stale during a set | Chrome throttled the hidden tab (see the row above). | Reload the tab, click "Start engine", then load the tracks again. |
 | The Playwright window closed | That window was the engine, so the engine is gone. | Follow the recovery steps above in a normal browser. |
-| Two tabs both show "Start engine" and take the sound from each other | Only one tab is the sound system at a time. | Close the extra tab, or click "Start engine" in the tab where you want the audio. |
+| A second DJ page, or the desktop app, says "Another window is the sound system" | Only one page is the sound system at a time, and a page does not take it from another without asking. | Close the extra page, or click "Take over" in the one where you want the audio. The decks come up empty there: load the tracks again. |
 
 ## Decks and loops
 

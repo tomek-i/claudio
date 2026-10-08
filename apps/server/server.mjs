@@ -558,6 +558,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/engine/claim' && req.method === 'POST') {
       const b = await readBody(req);
+      // Another page is the sound system and is still there: it keeps the engine unless this one says `force`, which a
+      // page only does once its user has been asked (or it is a tool whose job is to take it). `playing` is for that question.
+      if (engineId && engineId !== b.client && clients.has(engineId) && !b.force) {
+        return send(res, 200, { ok: false, held: true, playing: Object.values(liveState().decks || {}).some((d) => d.playing) });
+      }
       engineId = b.client; broadcast('engine', { id: engineId });
       addLog('system', 'Audio engine online');
       return send(res, 200, { ok: true });

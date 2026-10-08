@@ -2,7 +2,7 @@
 // audio engine, then the DJ page in its place; and the start-up window saying so when the server cannot start.
 // The app runs on a scratch project folder (DJ_ROOT: its own config, port and generated library) and a scratch
 // Electron profile, so it never meets the rig on this machine. Skipped when Electron is not installed (it is the
-// desktop app's own dependency: `pnpm install`). Ports 4859-4860. desktop-driver.mjs is the part inside Electron.
+// desktop app's own dependency: `pnpm install`). Ports 4859-4860 and 4862. desktop-driver.mjs is the part inside Electron.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { REAL, scratch, sleep } from './server-harness.mjs';
+import { REAL, scratch, sleep, api, FakeEngine } from './server-harness.mjs';
 
 let electron = null;
 try { electron = createRequire(path.join(REAL, 'apps', 'desktop', 'package.json'))('electron'); } catch { /* not installed, or its binary is not downloaded */ }
@@ -64,6 +64,7 @@ test('start-up: the start-up window first, then the DJ page with a live engine; 
   const state = ev.find((e) => e.ev === 'state');
   assert.equal(state.engine?.connected, true, JSON.stringify(state));
   assert.equal(state.engine?.started, true, JSON.stringify(state));
+  assert.deepEqual(state.page, { engine: 'live', button: 'Start engine', dialog: false });
   // (a Linux CI screen has no window manager to maximise anything)
   if (process.platform !== 'linux') assert.equal(ev[mainShown].maximized, true, 'the first start is maximised');
 
@@ -96,4 +97,34 @@ test('start-up: a port that something else holds is reported in the start-up win
     assert.equal(r.code, 1, r.out);
     assert.match(r.out, /the server did not start on port 4860/);
   } finally { other.closeAllConnections?.(); other.close(); }
+});
+
+test('start-up: a server whose sound system is another page keeps it; the app asks, and leaves the server running', { skip, timeout: 90000 }, async () => {
+  const sc = scratch('desktop-held', { port: 4862 });
+  // a server as `node dj.mjs start` leaves one: this repository's code (the scratch copy has no page) on the scratch folder
+  const srv = spawn(process.execPath, [path.join(REAL, 'apps', 'server', 'server.mjs')], { cwd: sc.dir, env: { ...process.env, DJ_ROOT: sc.dir, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1' }, stdio: 'ignore', windowsHide: true });
+  srv.stop = () => { try { srv.kill(); } catch { /* gone */ } };
+  for (let i = 0; i < 80 && !(await up(sc)); i++) await sleep(150);
+  const tab = new FakeEngine(sc.base, 'browser-tab');
+  try {
+    await tab.start();
+    await tab.loadTrack('A', sc.fx.main);
+    await tab.set('A', { playing: true, audible: 1 });
+    const r = await run(sc);
+    assert.equal(r.code, 0, r.out);
+    // the DJ page is shown, with the question up and nothing taken
+    const state = r.events.find((e) => e.ev === 'state');
+    assert.deepEqual(state?.page, { engine: 'held', button: 'Take over', dialog: true }, r.out);
+    assert.equal(tab.sent('load').length + tab.sent('pause').length, 0);
+    const now = await api(sc.base, '/api/state');
+    assert.equal(now.engine.connected, true);
+    assert.equal(now.decks.A.playing, true, 'the music the other page plays goes on');
+    assert.match(r.out, /using the server already running/);
+
+    // again, and this time the user answers "Take over": the app's page becomes the sound system, with empty decks
+    const yes = await run(sc, { DRIVE_ANSWER: '1' });
+    assert.deepEqual(yes.events.find((e) => e.ev === 'answered')?.page, { engine: 'live', button: 'Start engine', dialog: false }, yes.out);
+    assert.ok(!(await api(sc.base, '/api/state')).decks.A?.playing, 'the other page is no longer the engine');
+    assert.ok(await up(sc), 'a server the app attached to is left running');
+  } finally { await tab.stop(); srv.stop(); }
 });

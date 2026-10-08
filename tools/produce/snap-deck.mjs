@@ -20,7 +20,7 @@ const launch = { headless: false, args: ['--autoplay-policy=no-user-gesture-requ
 if (process.env.PLAYWRIGHT_CHROMIUM) launch.executablePath = process.env.PLAYWRIGHT_CHROMIUM;
 const browser = await chromium.launch(launch);
 const page = await (await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: SCALE })).newPage();
-await page.goto(process.env.DJ_URL || `http://localhost:${process.env.DJ_PORT || JSON.parse(fs.readFileSync('config.json', 'utf8')).port || 4747}/`, { waitUntil: 'domcontentloaded' });
+await page.goto(process.env.DJ_URL || `http://localhost:${process.env.DJ_PORT || JSON.parse(fs.readFileSync('config.json', 'utf8')).port || 4747}/?takeover`, { waitUntil: 'domcontentloaded' });
 await page.click('#startBtn', { timeout: 15000 }); await sleep(1500);
 let n = 0; const snap = async (name) => { await sleep(400); const f = path.join(OUT, `${String(++n).padStart(2, '0')}-${name}.png`); await page.screenshot({ path: f }); console.log('📸', f); };
 for (const D of ['A', 'B', 'C', 'D']) { dj('pause', D); dj('loop', D, '0'); dj('xfassign', D, 'thru'); }

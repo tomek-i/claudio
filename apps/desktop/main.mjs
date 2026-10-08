@@ -126,8 +126,12 @@ async function checkRig() {
   return down;
 }
 
-// The DJ page loads hidden behind the start-up window and starts the engine by itself (?desktop). True once the
-// server hears from that engine; false when the page did not load or the engine did not start in time.
+// The DJ page loads hidden behind the start-up window and starts the engine by itself (?desktop). The page says how
+// that went (data-engine on its root element, set by app.js):
+//   'live'  it is the sound system, and the server hears from it;
+//   'held'  another window is (the app attached to a server with a browser tab playing): the page does not take the
+//           engine by itself, it asks, so the window has to be shown for the question;
+//   false   the page did not load, or the engine did not start in time.
 async function engineLive(win) {
   let loaded = false, broken = false;
   win.webContents.once('did-finish-load', () => { loaded = true; });
@@ -135,7 +139,10 @@ async function engineLive(win) {
   for (let i = 0; i < 100 && !broken && !win.isDestroyed(); i++) {
     await sleep(200);
     if (!loaded) continue;
-    try { const e = (await getJson('/api/state')).engine; if (e?.connected && e.started && !e.stale) return true; } catch { /* ask again */ }
+    const said = await win.webContents.executeJavaScript('document.documentElement.dataset.engine || ""').catch(() => '');
+    if (said === 'held') return 'held';
+    if (said !== 'live') continue;
+    try { const e = (await getJson('/api/state')).engine; if (e?.connected && e.started && !e.stale) return 'live'; } catch { /* ask again */ }
   }
   return false;
 }
@@ -162,9 +169,9 @@ async function start() {
   main = open(`${ORIGIN}/?desktop`, false, place.bounds);
   main.on('close', () => saveWindow(WINDOW_FILE, { bounds: main.getNormalBounds(), maximized: main.isMaximized() }));
   main.on('closed', () => { main = null; });
-  const live = await engineLive(main);
-  // not live: the page says why (its start dialog comes back with the error), so it is shown all the same
-  step('engine', 'Audio engine', live ? 'ok' : 'warn', live ? 'live' : 'not started: see the page');
+  const engine = await engineLive(main), live = engine === 'live';
+  // not live: the page says why (its start dialog is up, with the error or the question), so it is shown all the same
+  step('engine', 'Audio engine', live ? 'ok' : 'warn', live ? 'live' : engine === 'held' ? 'another window is the sound system: take over on the page' : 'not started: see the page');
   tell('done', down || !live ? 'Started, with problems.' : 'Ready.');
   if (down || !live) await sleep(2500); // long enough to read what is wrong; the page's status light has the rest
   if (!main || !splash) return;

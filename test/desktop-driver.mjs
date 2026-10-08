@@ -3,7 +3,9 @@
 //   { ev: 'win', kind: 'splash' | 'main', visible, maximized, bounds }   a window appeared or changed
 //   { ev: 'gone', kind }                                         a window closed
 //   { ev: 'splash', steps: { <id>: <state> }, failed }           the start-up window's lines changed
-//   { ev: 'state', engine }                                      /api/state, once the DJ page is on screen
+//   { ev: 'state', engine, page }                                /api/state once the DJ page is on screen, and what the
+//                                                                page says of itself (data-engine: live | held)
+//   { ev: 'answered', page }                                     DRIVE_ANSWER=1: the page after its start button was pressed
 // Then it ends the run the way a user would: it closes the DJ page once that is shown, or presses Close on the
 // start-up window when the start failed. DRIVE_USERDATA keeps Electron's own profile out of the user's.
 import { app, BrowserWindow } from 'electron';
@@ -29,7 +31,15 @@ async function look() {
       if (s?.failed && !ending) { ending = true; w.webContents.executeJavaScript(`document.getElementById('close').click()`).catch(() => {}); }
     } else if (now.visible && !ending) {
       ending = true;
-      try { say({ ev: 'state', engine: (await (await fetch(`http://localhost:${process.env.DJ_PORT}/api/state`)).json()).engine }); } catch (e) { say({ ev: 'state', error: e.message }); }
+      const page = await w.webContents.executeJavaScript(`({ engine: document.documentElement.dataset.engine || '', button: document.getElementById('startBtn').textContent, dialog: !document.getElementById('startOverlay').classList.contains('hide') })`).catch(() => null);
+      try { say({ ev: 'state', page, engine: (await (await fetch(`http://localhost:${process.env.DJ_PORT}/api/state`)).json()).engine }); } catch (e) { say({ ev: 'state', error: e.message }); }
+      if (process.env.DRIVE_ANSWER) { // press the page's start button (the answer to "take over?") and wait for it to be the engine
+        await w.webContents.executeJavaScript(`document.getElementById('startBtn').click()`);
+        let after = null;
+        for (let i = 0; i < 50 && after?.engine !== 'live'; i++) { await new Promise((r) => setTimeout(r, 100)); after = await w.webContents.executeJavaScript(`({ engine: document.documentElement.dataset.engine || '', button: document.getElementById('startBtn').textContent, dialog: !document.getElementById('startOverlay').classList.contains('hide') })`).catch(() => null); }
+        await new Promise((r) => setTimeout(r, 600)); // its first state reaches the server
+        say({ ev: 'answered', page: after });
+      }
       if (process.env.DRIVE_BOUNDS) { w.unmaximize(); w.setBounds(JSON.parse(process.env.DRIVE_BOUNDS)); await new Promise((r) => setTimeout(r, 300)); }
       w.close();
     }
