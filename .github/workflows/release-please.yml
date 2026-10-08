@@ -2,11 +2,19 @@
 # last release and keeps a "release" pull request up to date: the next version (feat = minor, fix = patch), the
 # changelog, and the version in package.json and apps/desktop/package.json. Merging that pull request tags the
 # version and publishes the GitHub release. Configuration: release-please-config.json.
+# When that makes a release, the installer job builds the desktop app's Windows installer (`pnpm dist`) from the
+# released commit and attaches it to the release. Run by hand (Actions → release-please → Run workflow, with a tag)
+# it builds that tag and attaches the installer to its release, for a release that has none.
 name: release-please
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to build the installer for and attach it to (v0.3.0)
+        required: true
 
 permissions:
   contents: write
@@ -14,9 +22,39 @@ permissions:
 
 jobs:
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  installer:
+    needs: release-please
+    # after a release was made, or by hand for a given tag (release-please is skipped then, which must not skip this)
+    if: always() && (needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the installer
+        run: pnpm dist
+      - name: Attach it to the release
+        run: gh release upload $env:TAG (Get-ChildItem dist/*.exe).FullName --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

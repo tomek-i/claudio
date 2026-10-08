@@ -1,7 +1,8 @@
 # The tests, on every pull request and every push to main.
 #  - test: the whole suite on Linux. Browser mode has no dependencies, so there is nothing to install but ffmpeg;
 #    the desktop test skips itself there (no Electron).
-#  - desktop: the desktop app's start-up test on Windows, with the real Electron (test/desktop.test.mjs).
+#  - desktop: the desktop app's start-up test on Windows, with the real Electron (test/desktop.test.mjs), and the
+#    installer built as it is for a release (kept with the run for a week, to try a pull request's build).
 name: test
 
 on:
@@ -55,3 +56,11 @@ jobs:
       - run: node --test test/desktop.test.mjs
         env:
           DESKTOP_TEST_REQUIRED: 1
+      - name: Build the installer
+        run: pnpm dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 7
