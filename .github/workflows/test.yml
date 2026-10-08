@@ -1,14 +1,17 @@
-# The tests, on every pull request and every push to main.
-#  - test: the whole suite on Linux. Browser mode has no dependencies, so there is nothing to install but ffmpeg;
-#    the desktop test skips itself there (no Electron).
-#  - desktop: the desktop app's start-up test on Windows, with the real Electron (test/desktop.test.mjs), and the
-#    installer built as it is for a release (kept with the run for a week, to try a pull request's build).
+# The tests that every change gets: the whole suite on Linux, on each pull request and each push to main. About two
+# minutes. Browser mode and the three small apps have no dependencies, so there is nothing to install but ffmpeg;
+# the desktop test skips itself here (no Electron).
+# A change that only touches documentation or a skill's text runs nothing. The slow, Windows-only part (the desktop
+# app with the real Electron, and the installer) is desktop.yml, which runs only when something it covers has changed.
 name: test
 
 on:
   pull_request:
+    paths-ignore: ['**.md', 'docs/**']
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,38 +32,3 @@ jobs:
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: node --test test/*.test.mjs test/server-*.mjs apps/*/test/*.test.mjs
-
-  desktop:
-    runs-on: windows-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      # Chocolatey's feed answers 503 now and then, and choco exits 0 all the same: try again, and check for the tool
-      - name: Install ffmpeg
-        run: |
-          foreach ($try in 1..4) {
-            choco install ffmpeg --no-progress -y
-            if (Get-Command ffmpeg -ErrorAction SilentlyContinue) { ffmpeg -version | Select-Object -First 1; exit 0 }
-            Start-Sleep -Seconds 20
-          }
-          throw 'ffmpeg could not be installed'
-      - run: pnpm install --frozen-lockfile
-      # pnpm does not run Electron's install script; this is what fetches its binary
-      - name: Download Electron
-        run: node apps/desktop/node_modules/electron/install.js
-      - run: node --test test/desktop.test.mjs
-        env:
-          DESKTOP_TEST_REQUIRED: 1
-      - name: Build the installer
-        run: pnpm dist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: installer
-          path: dist/*.exe
-          if-no-files-found: error
-          retention-days: 7
