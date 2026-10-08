@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { buildStamp, prepareRigFolder } from '../apps/desktop/rig-folder.mjs';
+import { buildStamp, installedGuide, prepareRigFolder } from '../apps/desktop/rig-folder.mjs';
 import { findRoot } from '../apps/server/lib/paths.mjs';
 import { REAL } from './server-harness.mjs';
 
@@ -76,7 +76,21 @@ test('a folder made from this repository runs the CLI with Node alone, as its ow
     assert.ok(fs.existsSync(path.join(root, 'tools', 'produce', 'make-video.mjs')));
     const env = { ...process.env }; delete env.DJ_ROOT;
     assert.match(execFileSync(process.execPath, ['dj.mjs', 'help'], { cwd: root, encoding: 'utf8', env }), /SETUP/);
+    // its CLAUDE.md says how to play the rig, word for word as the repository's does, and then describes this folder
+    // and not the source tree
+    const guide = read(root, 'CLAUDE.md'), repo = read(REAL, 'CLAUDE.md').replace(/\r\n/g, '\n');
+    assert.ok(guide.startsWith(repo.slice(0, repo.indexOf('## Layout')).trimEnd()), 'the playing instructions are the same text');
+    assert.match(guide, /load the \*\*dj\*\* skill/);
+    assert.match(guide, /^## This folder$/m);
+    assert.doesNotMatch(guide, /^## Layout|tools\/bench|node --test|release-please/m);
+    // every command and folder it points at is in the folder
+    for (const f of ['apps/server/server.mjs', 'apps/server/lib', 'apps/web/public', 'apps/cli', 'tools/produce', 'starter', 'config.json', 'dj.mjs']) { assert.ok(guide.includes(f.split('/').at(-1)), f); assert.ok(fs.existsSync(path.join(root, f)), f); }
     // nothing of the desktop app's own, and none of its dependencies, is needed there
     assert.ok(!fs.existsSync(path.join(root, 'apps', 'desktop')) && !fs.existsSync(path.join(root, 'node_modules')));
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('installedGuide: the part before "## Layout" is kept, the rest is replaced; a guide without that heading is kept whole', () => {
+  assert.equal(installedGuide('# Rig\r\n\r\n- play\r\n\r\n## Layout\r\n- source\r\n', '## This folder\n- yours\n'), '# Rig\n\n- play\n\n## This folder\n- yours\n');
+  assert.equal(installedGuide('# Rig\n- play\n', '## This folder\n'), '# Rig\n- play\n\n## This folder\n');
 });

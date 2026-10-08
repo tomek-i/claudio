@@ -7,6 +7,8 @@
 // Two kinds of thing go in:
 //  - the app's own (APP_OWNED, and each skill the app ships): replaced whenever the app is a different build from
 //    the one that last wrote them, so an update brings its code, skills and starter list. Edits to them are lost.
+//    CLAUDE.md is one of them, and is not the repository's: it keeps the part that says how to play the rig and
+//    swaps the part about the source code for one about this folder (installedGuide).
 //  - the user's (USER_OWNED): copied once, then never touched.
 // Everything else in the folder (the library, .dj/, bin/, .venv/, skills of the user's own) is left alone.
 // No Electron in here: root.mjs decides when and where, and the tests call this directly.
@@ -16,6 +18,14 @@ import path from 'node:path';
 const APP_OWNED = ['apps/server', 'apps/cli', 'apps/web', 'tools', 'starter', 'dj.mjs', 'CLAUDE.md'];
 const USER_OWNED = ['config.json', '.claude/settings.json'];
 const STAMP = '.dj/app-build'; // which build of the app last wrote its files here
+
+// CLAUDE.md for the installed folder: the repository's, up to its "## Layout" (which describes the source tree, the
+// tests and the benchmarks, none of which a player has or needs), then what is true of this folder instead
+// (apps/desktop/CLAUDE.installed.md). The playing instructions stay one text, written once.
+export function installedGuide(repo, folder) {
+  const cut = repo.search(/^## Layout\b/m);
+  return `${(cut < 0 ? repo : repo.slice(0, cut)).trimEnd()}\n\n${folder.trim()}\n`.replace(/\r\n/g, '\n');
+}
 
 // The build's identity: its version, and when it was packaged (two builds of one version differ).
 export function buildStamp(shipped) {
@@ -49,6 +59,8 @@ export function prepareRigFolder(root, shipped) {
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.cpSync(from, to, { recursive: true, filter: (src) => path.basename(src) !== 'node_modules' });
   }
+  const guide = path.join(shipped, 'CLAUDE.md'), folder = path.join(shipped, 'apps', 'desktop', 'CLAUDE.installed.md');
+  if (fs.existsSync(guide) && fs.existsSync(folder)) fs.writeFileSync(path.join(root, 'CLAUDE.md'), installedGuide(fs.readFileSync(guide, 'utf8'), fs.readFileSync(folder, 'utf8')));
   // last: a copy that was cut short is done again on the next start
   fs.mkdirSync(path.dirname(stampFile), { recursive: true });
   fs.writeFileSync(stampFile, stamp);
