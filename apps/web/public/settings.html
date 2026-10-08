@@ -24,6 +24,16 @@
   </nav>
   <div class="setbody">
     <h2><span id="catname">Settings</span> <small>saved to config.json</small></h2>
+    <!-- the way back to the project folder: with the installed app it is a folder the app made -->
+    <p class="notice folder" id="folder" hidden>
+      <span class="what">Project folder</span> <code id="folderPath" title="Where the rig keeps its settings, library and cache, and where Claude Code plays it from"></code>
+      <span class="do">
+        <button class="btn sm" type="button" id="folderCopy" title="Copy the folder's path">Copy path</button>
+        <button class="btn sm" type="button" data-open="folder" title="Open the folder in the file manager">Open folder</button>
+        <button class="btn sm" type="button" data-open="claude" title="Open a terminal in the folder and start Claude Code there (the claude command)">Open Claude Code here</button>
+      </span>
+      <span class="result" id="folderResult" role="status"></span>
+    </p>
     <p class="notice restart" id="restart" hidden></p>
     <form id="form" novalidate></form>
     <p class="notice" id="nomatch" hidden>No setting matches that search.</p>

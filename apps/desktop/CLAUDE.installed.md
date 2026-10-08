@@ -1,5 +1,5 @@
 ## This folder
-The DJ Claude desktop app made this folder and keeps the rig in it. It is the project folder: run every command from here.
+The DJ Claude desktop app made this folder and keeps the rig in it. It is the project folder: run every command from here. (The user finds it again from the app: Settings shows the path, with "Open folder" and "Open Claude Code here".)
 
 - **The sound system is the app's window**, not a browser tab: the app starts the server (the port is in `config.json`) and the audio engine by itself, with no "Start engine" click. If `node dj.mjs status` cannot reach the server, ask the user to open DJ Claude from the Start menu. `node dj.mjs start` runs the server without the app, with the page in a browser tab; only one of the two is the sound system at a time, and the other asks before it takes over.
 - **Needs on the machine**: Node 20+, and ffmpeg / ffprobe on PATH. `node dj.mjs doctor` and the page at `/health` say what is missing. Stem separation (mashups, vocal maps) is installed with `node dj.mjs stems setup`, a download of about 600 MB: ask first. Recording video needs Playwright (see **dj-video**).

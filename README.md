@@ -65,7 +65,8 @@ asks before running it.
 The installed app is the same window, started from the Start menu, and it brings the whole project with it. On the
 first start it makes **Documents/DJ Claude**: a project folder like this repository, with `dj.mjs`, the skills
 (`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json`, library and `.dj/`. Open Claude Code in
-that folder and it plays the rig exactly as it does here; the start-up window shows where the folder is. What the
+that folder and it plays the rig exactly as it does here. The start-up window shows where the folder is, and the
+Settings page has it too, with **Open folder** and **Open Claude Code here** (a terminal in that folder, running `claude`). What the
 machine needs besides the app: Node 20+ (for `node dj.mjs …`, which is how Claude Code drives it), Claude Code, and
 ffmpeg on PATH. Stem separation needs a `.venv` in that folder (see Stems below).
 
