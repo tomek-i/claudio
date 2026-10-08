@@ -67,6 +67,8 @@ autoBtn.onclick = async () => {
 };
 let libTimer;
 es.addEventListener('library', () => { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); });
+// a track's stems are ready: its row loses the "no stems" mark
+es.addEventListener('stems', (e) => { if (JSON.parse(e.data).status === 'ready') { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); } });
 es.addEventListener('engine', (e) => {
   const { id } = JSON.parse(e.data);
   if (id !== clientId && isEngine) lostEngine('Another window took over as the sound system.<br>Start here to take it back.');

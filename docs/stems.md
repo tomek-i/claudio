@@ -26,6 +26,9 @@ memory, say) is redone on the CPU. `dj stems status` and the health page show wh
 the settings page (`stems.device`) keeps it off the GPU. On the CPU, separation throttles to one job while music
 plays; a GPU takes one track at a time regardless.
 
+In the library on the DJ page a track that has no stems yet carries a small "no stems" tag; a track with stems shows
+nothing, and the tag goes when its separation is done.
+
 `apps/server/lib/separate.py` decodes with ffmpeg and writes WAVs itself, so it also works where torchaudio has no wheel (Windows on
 ARM). Model weights download to `.dj/models/` on first run. Control: `config.json → stems` (`enabled`, `auto`,
 `device`, `concurrency`, `threads`), `dj stems <id|all>`, `dj stems status`, `dj vocals <id>`.
