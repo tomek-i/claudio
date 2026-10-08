@@ -5,6 +5,7 @@
 // desktop app's own dependency: `pnpm install`). Ports 4859-4860. desktop-driver.mjs is the part inside Electron.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -35,9 +36,11 @@ function run(sc, env = {}) {
 const up = async (sc) => { try { return (await fetch(sc.base + '/api/state', { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; } };
 const stopped = async (sc) => { for (let i = 0; i < 50; i++) { if (!(await up(sc))) return true; await sleep(100); } return false; };
 
-test('start-up: the start-up window first, then the DJ page with a live engine; the server stops with the app', { skip, timeout: 90000 }, async () => {
+test('start-up: the start-up window first, then the DJ page with a live engine; the server stops with the app; the window opens where it was closed', { skip, timeout: 120000 }, async () => {
   const sc = scratch('desktop', { port: 4859 });
-  const r = await run(sc);
+  // the driver leaves the window at this place before it closes it, for the second start below
+  const left = { x: 40, y: 40, width: 900, height: 600 };
+  const r = await run(sc, { DRIVE_BOUNDS: JSON.stringify(left) });
   const ev = r.events, at = (f) => ev.findIndex(f);
   assert.equal(r.code, 0, r.out);
 
@@ -65,6 +68,19 @@ test('start-up: the start-up window first, then the DJ page with a live engine; 
   if (process.platform !== 'linux') assert.equal(ev[mainShown].maximized, true, 'the first start is maximised');
 
   assert.ok(await stopped(sc), 'the server the app started stops with it');
+
+  // closed as a plain window at `left`: that is saved with the rig, and the next start opens there
+  // (within a few pixels: on a scaled screen Windows rounds a new window's size to whole device pixels)
+  const near = (a, b) => ['x', 'y', 'width', 'height'].every((k) => Math.abs(a[k] - b[k]) <= 8);
+  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'desktop-window.json'), 'utf8'));
+  assert.equal(saved.maximized, false);
+  assert.ok(near(saved.bounds, left), JSON.stringify(saved));
+  const again = await run(sc);
+  assert.equal(again.code, 0, again.out);
+  const shown = again.events.find((e) => e.ev === 'win' && e.kind === 'main' && e.visible);
+  assert.equal(shown.maximized, false, again.out);
+  assert.ok(near(shown.bounds, left), JSON.stringify(shown));
+  assert.ok(await stopped(sc));
 });
 
 test('start-up: a port that something else holds is reported in the start-up window, and the app exits with 1', { skip, timeout: 90000 }, async () => {

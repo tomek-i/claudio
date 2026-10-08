@@ -8,21 +8,25 @@
 //    does not go stale;
 //  - one thing to launch: the server starts with the app and stops with it;
 //  - a start-up window (splash.html): it is on screen at once, lists each step as it happens (server, checks, audio
-//    engine), and gives way to the DJ page when the engine plays.
+//    engine), and gives way to the DJ page when the engine plays;
+//  - the DJ window opens where it was last closed (window-state.mjs): same screen, same size, maximised or not.
 //
 // The server is not run in this process. It runs as a utility process of its own, because analysis is heavy
 // synchronous work that would freeze the window, and because the server lowers its own priority to keep the audio
 // ahead of it, which must not apply to the window. If a server is already listening on the port (started with
 // `node dj.mjs start`, say), the app uses that one and leaves it running when it quits.
-import { app, BrowserWindow, nativeTheme, shell, utilityProcess } from 'electron';
+import { app, BrowserWindow, nativeTheme, screen, shell, utilityProcess } from 'electron';
 import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONFIG_FILE, ROOT, SERVER_FILE } from '../server/lib/paths.mjs';
+import { CONFIG_FILE, DJ_DIR, ROOT, SERVER_FILE } from '../server/lib/paths.mjs';
 import { banner } from '../server/lib/banner.mjs';
+import { loadWindow, placement, saveWindow } from './window-state.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
 const ORIGIN = `http://localhost:${PORT}`;
+const WINDOW_FILE = path.join(DJ_DIR, 'desktop-window.json');
 
 // the app owns its flags, so these need no separate browser profile
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -147,7 +151,10 @@ async function start() {
 
   const down = await checkRig();
   step('engine', 'Audio engine', 'run', 'starting');
-  main = open(`${ORIGIN}/?desktop`, false);
+  // where it was last closed, when that place is still on a screen; maximised on the first start
+  const place = placement(loadWindow(WINDOW_FILE), screen.getAllDisplays());
+  main = open(`${ORIGIN}/?desktop`, false, place.bounds);
+  main.on('close', () => saveWindow(WINDOW_FILE, { bounds: main.getNormalBounds(), maximized: main.isMaximized() }));
   main.on('closed', () => { main = null; });
   const live = await engineLive(main);
   // not live: the page says why (its start dialog comes back with the error), so it is shown all the same
@@ -156,13 +163,13 @@ async function start() {
   if (down || !live) await sleep(2500); // long enough to read what is wrong; the page's status light has the rest
   if (!main || !splash) return;
   starting = false;
-  main.maximize(); // this shows it too
+  if (place.maximized) main.maximize(); else main.show(); // maximize() shows it too
   splash.close();
 }
 
-function open(url, show = true) {
+function open(url, show = true, bounds = null) {
   const win = new BrowserWindow({
-    width: 1500, height: 950, backgroundColor: '#0b0b10', autoHideMenuBar: true, title: 'DJ Claude', icon: ICON, show,
+    width: 1500, height: 950, ...bounds, backgroundColor: '#0b0b10', autoHideMenuBar: true, title: 'DJ Claude', icon: ICON, show,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false },
   });
   // only the local server's pages are shown in the app; any other link opens in the user's browser
