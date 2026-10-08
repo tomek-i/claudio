@@ -77,6 +77,7 @@ export class StemQueue {
     this.library = library;
     this.stemsDir = stemsDir;
     this.python = python === undefined ? findPython(root) : python;
+    this.findsPython = python === undefined; // no python was handed in: keep looking, `dj stems setup` may make the .venv later
     this.threads = threads;
     this.model = model;
     this.minFreeGB = minFreeGB;
@@ -95,7 +96,10 @@ export class StemQueue {
     for (const e of fs.readdirSync(stemsDir)) if (e.startsWith('.tmp-')) fs.rmSync(path.join(stemsDir, e), { recursive: true, force: true });
   }
 
-  get available() { return !!this.python && fs.existsSync(this.script); }
+  get available() {
+    if (!this.python && this.findsPython) this.python = findPython(this.root);
+    return !!this.python && fs.existsSync(this.script);
+  }
   isDone(id) { return hasAllStems(this.stemsDir, id); }
   stemFile(id, stem) { return stemPath(this.stemsDir, id, stem); }
 

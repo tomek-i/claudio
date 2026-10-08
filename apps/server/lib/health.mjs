@@ -64,7 +64,7 @@ export function buildHealth(s) {
   const st = s.stems || {};
   const failed = Object.keys(st.failed || {}).length;
   checks.push(!st.enabled ? check('stems', 'Stem separation', 'off', 'switched off in config.json')
-    : !st.available ? check('stems', 'Stem separation', 'fail', 'python or apps/server/lib/separate.py not found (expects htdemucs in the project .venv)')
+    : !st.available ? check('stems', 'Stem separation', 'fail', 'not set up: run `node dj.mjs stems setup` in the project folder (it installs the separator into .venv)')
     : failed ? check('stems', 'Stem separation', 'fail', `${plural(failed, 'track')} failed to separate · ${st.done}/${st.total} done`)
     : check('stems', 'Stem separation', 'ok', `${st.done}/${st.total} done${st.deviceInUse ? (st.deviceInUse === 'cpu' ? ' · on the CPU' : ` · on the GPU (${st.deviceInUse})`) : ''}${st.jobs?.length ? ` · ${st.jobs.length} running` : ''}${st.queued?.length ? ` · ${st.queued.length} queued` : ''}`));
 

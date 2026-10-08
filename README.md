@@ -168,16 +168,18 @@ skills walk through it; `tools/produce/songs/README.md` is the song-plan schema.
 ## Stems (vocals / drums / bass / other)
 Optional, project-local. Every track can be split into `.dj/stems/<trackId>/{vocals,drums,bass,other}.wav`
 by demucs (`htdemucs`) in the background at idle priority; the vocal stem also gives each track a vocal map that the
-mixer uses to avoid vocal clashes. Install into `.venv` (no system changes):
+mixer uses to avoid vocal clashes. One command installs it into `.venv` (no system changes; it needs
+[uv](https://docs.astral.sh/uv/), which brings its own Python 3.12):
+```bash
+node dj.mjs stems setup          # about 600 MB; then the library is separated in the background
+node dj.mjs stems setup --gpu    # with an NVIDIA card: the CUDA build of PyTorch (about 2.5 GB to download, 5 GB on disk)
+```
+A running server picks the new `.venv` up without a restart. Without `--gpu` it is the CPU build of PyTorch, which
+cannot see a graphics card even when there is one. What the command runs, to do it by hand:
 ```bash
 uv venv .venv --python 3.12
-uv pip install torch --index-url https://download.pytorch.org/whl/cpu numpy
+uv pip install torch --index-url https://download.pytorch.org/whl/cpu numpy      # --gpu: …/whl/cu126
 uv pip install --no-deps demucs dora-search einops julius pyyaml tqdm omegaconf retrying submitit treetable
-```
-That is the CPU build of PyTorch, which cannot see a graphics card even when there is one. With an NVIDIA card,
-install the CUDA build instead (about 2.5 GB to download, 5 GB on disk); it replaces the second line:
-```bash
-uv pip install torch --index-url https://download.pytorch.org/whl/cu126 numpy
 ```
 `cu126` is CUDA 12.6 and needs a driver from 2024 or later (`nvidia-smi` shows the driver version); the indexes
 PyTorch currently offers are listed at https://pytorch.org/get-started/locally/. On Apple Silicon the default build

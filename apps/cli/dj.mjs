@@ -111,6 +111,7 @@ const commands = {
     console.log(`server     ✓ ${BASE}`);
     console.log(`engine     ${d.engine.connected ? '✓ connected' : '✗ not connected (open the UI and click Start engine)'}`);
     console.log(`yt-dlp     ${d.ytdlp ? '✓ ' + d.ytdlp : '✗ not installed yet (auto-installs on first download, or run: dj doctor --fix)'}`);
+    if (d.stems) console.log(`stems      ${!d.stems.enabled ? '– switched off (config.json → stems.enabled)' : d.stems.available ? '✓ separator installed' : '✗ not set up (run: dj stems setup)'}`);
     console.log(`library    ${d.library.tracks} tracks  (${d.library.analyzing} analysing, ${d.library.queued} queued)`);
     console.log(`folders    ${d.dirs.join(' | ')}`);
     console.log(`downloads  ${d.downloadDir}`);
@@ -255,7 +256,7 @@ FX        fx <rollup|roll|chop|scratchcut|wobble|kills|throw|sweep> [deck] [--at
           perform '<json steps>'   beat-scheduled knob choreography (see dj-mix skill)
 SET       plan add '<json>'|show|clear   queue add <id…>|show|clear   autodj on|off   monitor   rate good|bad [note]   memory
           suggest --mashup   export [session] [--format mp3|m4a]
-TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status]   vocals <id>
+TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status|setup [--gpu]]   vocals <id>
           hotcue <deck> [set <n> [bar:N]] | <n>     savedloop <deck> [set <name> <beats>] | <name>
 KEYS      keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (see apps/cli/cli-ext/keys.mjs)
 VISUALS   visuals [<mode>|auto]   the /visuals page for a second screen: who is watching, or change the mode on every open page

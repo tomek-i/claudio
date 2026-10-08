@@ -802,7 +802,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/jobs') return send(res, 200, downloader.list().map(({ done, log: l, ...j }) => j));
     if (p === '/api/doctor') {
-      return send(res, 200, { ytdlp: downloader.which(), library: library.status(), dirs: library.dirs, downloadDir, engine: liveState().engine, port: PORT });
+      return send(res, 200, { ytdlp: downloader.which(), library: library.status(), dirs: library.dirs, downloadDir, engine: liveState().engine, port: PORT, stems: { enabled: stems.enabled, available: stems.available } });
     }
     if (p === '/api/ytdlp/install' && req.method === 'POST') return send(res, 200, { path: await downloader.ensure() });
 
@@ -895,7 +895,7 @@ server.listen(PORT, () => {
   if (!process.env.DJ_EMBEDDED) banner({ url: `http://localhost:${PORT}`, visuals: visualsUrl(), dirs: library.dirs, tracks: s.total, queued: s.queued, live: config.banner?.loop === false ? null : beat });
   addLog('system', `Server started. ${s.total} tracks in library, ${s.queued} to analyse.`);
   if (stemCfg.auto !== false) {
-    if (!stems.available) addLog('system', '⚠ Stem separation unavailable: no .venv python with demucs (see README)');
+    if (!stems.available) addLog('system', '⚠ Stem separation is not set up: run `node dj.mjs stems setup` (it installs the separator into .venv)');
     else setTimeout(() => { const r = stems.enqueueAll(); if (r.queued) addLog('system', `🎚 Stem separation queued for ${r.queued} track(s) (background, idle priority)`); }, 15000);
   }
 });
