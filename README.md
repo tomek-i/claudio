@@ -1,8 +1,10 @@
-# DJ Claude 🎧
+<h1 align="center"><img src="docs/images/banner.svg" alt="DJ Claude" width="720"></h1>
 
 A DJ rig that **Claude Code plays**. You direct the set in plain text ("play Sandstorm next", "kill the bass", "harder",
 "mix into something darker"); Claude reads the crate, picks tracks, times the mixes on the beat and talks to the booth.
 The browser tab is the sound system and the visuals.
+
+![The DJ page: two decks in a mix, the mixer between them, the library and the booth below](docs/images/decks.png)
 
 ```
 you (typing in Claude Code) ──► Claude + DJ skills ──► node dj.mjs … ──► server ──► browser audio engine ──► speakers

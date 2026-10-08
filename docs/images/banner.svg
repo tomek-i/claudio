@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" width="960" height="240" role="img" aria-label="DJ Claude: a DJ rig that Claude plays">
+  <!-- The README's header. It carries its own dark panel, so it reads the same on a light and on a dark page.
+       The record is the page's icon (see the favicon in apps/web/public/index.html); the colours are the decks'. -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#191922"/>
+      <stop offset="1" stop-color="#09090c"/>
+    </radialGradient>
+    <linearGradient id="bars" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff7a45"/>
+      <stop offset="1" stop-color="#36d6e7"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="240" rx="18" fill="url(#glow)"/>
+  <rect x="0.5" y="0.5" width="959" height="239" rx="17.5" fill="none" stroke="#262631"/>
+
+  <!-- the record -->
+  <g transform="translate(150 120)">
+    <circle r="78" fill="#111114" stroke="#000"/>
+    <g fill="none" stroke="#1d1d24" stroke-width="1.5">
+      <circle r="70"/><circle r="63"/><circle r="56"/>
+    </g>
+    <circle r="46" fill="none" stroke="#ff7a45" stroke-width="9" stroke-dasharray="217 72" stroke-linecap="butt" transform="rotate(-50)"/>
+    <circle r="15" fill="#36d6e7"/>
+  </g>
+
+  <!-- the name, as the page's header writes it -->
+  <g font-family="'Space Grotesk', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700">
+    <text x="270" y="118" font-size="62" letter-spacing="13" fill="#ecebf2">DJ<tspan fill="#ff7a45" dx="4">·</tspan><tspan dx="4">CLAUDE</tspan></text>
+  </g>
+  <text x="273" y="160" font-family="'Space Grotesk', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="21" fill="#a09fb0">A DJ rig that Claude plays. You direct the set.</text>
+
+  <!-- an equaliser, as in the server's startup banner -->
+  <g fill="url(#bars)" transform="translate(790 172)">
+    <rect x="0" y="-34" width="8" height="34" rx="1.5"/>
+    <rect x="13" y="-58" width="8" height="58" rx="1.5"/>
+    <rect x="26" y="-44" width="8" height="44" rx="1.5"/>
+    <rect x="39" y="-76" width="8" height="76" rx="1.5"/>
+    <rect x="52" y="-52" width="8" height="52" rx="1.5"/>
+    <rect x="65" y="-88" width="8" height="88" rx="1.5"/>
+    <rect x="78" y="-62" width="8" height="62" rx="1.5"/>
+    <rect x="91" y="-40" width="8" height="40" rx="1.5"/>
+    <rect x="104" y="-70" width="8" height="70" rx="1.5"/>
+    <rect x="117" y="-28" width="8" height="28" rx="1.5"/>
+  </g>
+</svg>
