@@ -28,11 +28,13 @@ input.fader { position: relative; writing-mode: vertical-lr; direction: rtl; hei
 .fscale i.zero, .mscale i.zero { color: var(--c, var(--text)); font-weight: 600; }
 .fscale i.zero::after { height: 2px; opacity: 1; }
 .xf { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--dim); }
-.xf input { flex: 1; --cap-len: 16px; --cap-wide: 26px; }
+/* The crossfader's cap is the largest on the mixer. It is taller than its row: the row keeps the height it had with a
+   26px cap (the mixer decides how tall the whole deck row is), and the cap reaches 4px into the gap above and below. */
+.xf input { flex: 1; --cap-len: 22px; --cap-wide: 34px; margin-block: -4px; }
 /* etched on the crossfader: plain ticks every eighth above and below the slot and a brighter centre line, where both
-   sides are at full. They span the travel of the cap's centre; the band of the slot itself is masked out. */
+   sides are at full. They span the travel of the cap's centre (half a cap in from each end); the band of the slot itself is masked out. */
 .xftrack { flex: 1; position: relative; display: flex; }
-.xftrack::before { content: ''; position: absolute; inset: 0 8px; pointer-events: none; border-right: 1px solid #ffffff2e;
+.xftrack::before { content: ''; position: absolute; inset: 0 11px; pointer-events: none; border-right: 1px solid #ffffff2e;
   background: linear-gradient(var(--text), var(--text)) 50% 0 / 2px 100% no-repeat,
     repeating-linear-gradient(90deg, #ffffff2e 0 1px, #0000 1px calc(100% / 8));
   -webkit-mask: linear-gradient(#000 0 6px, #0000 6px calc(100% - 6px), #000 calc(100% - 6px)); mask: linear-gradient(#000 0 6px, #0000 6px calc(100% - 6px), #000 calc(100% - 6px)); }
@@ -73,8 +75,10 @@ body[data-layout="stacked"] input.fader { height: auto; }
 body[data-layout="stacked"] .faderwrap { position: relative; padding-left: 18px; }
 body[data-layout="stacked"] .faderwrap .meter { position: absolute; left: 0; top: 8px; height: calc(100% - 16px); margin-block: 0; }
 body[data-layout="stacked"] .fadertrack { align-self: stretch; }
-/* the crossfader row: each deck's side switch (left, through, right) at its end */
+/* the crossfader row: each deck's side switch (left, through, right) at its end. The switches say which side a deck
+   is on, so the "A·C" / "B·D" labels of the classic layout give their width to the fader. */
 body[data-layout="stacked"] .xf { grid-column: 1 / -1; grid-row: 2; }
+body[data-layout="stacked"] .xfside { display: none; }
 body[data-layout="stacked"] .xfsw { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; --c: var(--a); }
 body[data-layout="stacked"] .xfsw[data-deck="B"] { --c: var(--b); }
 .xfsw button { width: 20px; height: var(--h-sm); padding: 0; background: var(--panel2); border: 0; border-right: 1px solid var(--line); color: var(--dim); font: 600 10px var(--mono); cursor: pointer; }
