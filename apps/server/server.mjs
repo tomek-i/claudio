@@ -16,6 +16,7 @@ import { Sequencer } from './lib/sequencer.mjs';
 import { buildHealth, toolVersion } from './lib/health.mjs';
 import { describe as describeSettings, applyPatch as applySettings, uiSettings } from './lib/settings.mjs';
 import { banner } from './lib/banner.mjs';
+import { reveal, isLocal, REVEALS } from './lib/reveal.mjs';
 import { starterTracks, downloadStarter } from './lib/starter.mjs';
 import { timeOfBar, beatOfTime, timeOfBeat, deckEffectiveCamelot, effBpm } from './lib/music.mjs';
 import os from 'node:os';
@@ -833,6 +834,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ...r, fields: describeSettings(config), restartPending });
     }
     if (p === '/api/settings') return send(res, 200, { fields: describeSettings(config), restartPending });
+    // --- the project folder: where it is, and (for a page on this machine only) opening it or Claude Code in it
+    if (p === '/api/folder/open' && req.method === 'POST') {
+      const b = await readBody(req);
+      if (!isLocal(req.socket.remoteAddress)) return send(res, 403, { ok: false, error: 'only a page on the machine the server runs on can open windows there' });
+      if (!REVEALS.includes(b.what)) return send(res, 400, { ok: false, error: `what: one of ${REVEALS.join(', ')}` });
+      return send(res, 200, await reveal(b.what, ROOT));
+    }
+    if (p === '/api/folder') return send(res, 200, { root: ROOT, local: isLocal(req.socket.remoteAddress) });
     if (p === '/settings') return serveFile(req, res, path.join(PUBLIC_DIR, 'settings.html'));
     // --- key bindings: the action registry as a module for the pages, and the built-in presets (one JSON file each)
     if (p === '/keymap.mjs') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' }); return res.end(fs.readFileSync(path.join(LIB_DIR, 'keymap.mjs'))); }

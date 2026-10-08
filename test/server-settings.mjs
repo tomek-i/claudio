@@ -48,3 +48,11 @@ test('a bad value is refused with a message and nothing is written', async () =>
   assert.equal(fs.readFileSync(path.join(sc.dir, 'config.json'), 'utf8'), before);
   assert.equal((await api(sc.base, '/api/stems')).threads, onDisk().stems.threads);
 });
+
+test('the project folder: where it is, and that only a known thing can be opened', async () => {
+  assert.deepEqual(await api(sc.base, '/api/folder'), { root: sc.dir, local: true });
+  // (a real `folder` or `claude` would open a window on this machine: reveal.test.mjs covers the commands)
+  const bad = await api(sc.base, '/api/folder/open', { what: 'shell' });
+  assert.equal(bad.ok, false);
+  assert.match(bad.error, /folder, claude/);
+});

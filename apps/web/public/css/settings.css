@@ -46,6 +46,13 @@ legend + .field { border-top: 0; }
 .switch span { min-width: 24px; }
 .notice { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); line-height: 1.5; }
 .notice.restart { border-color: var(--warn); color: var(--warn); }
+.notice.folder { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.notice.folder[hidden] { display: none; }
+.notice.folder .what { color: var(--dim); }
+.notice.folder code { font: 12px var(--mono); overflow-wrap: anywhere; user-select: all; }
+.notice.folder .do { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.notice.folder .result { flex-basis: 100%; font: 12px var(--mono); color: var(--dim); }
+.notice.folder .result:empty { display: none; }
 .notice.bad { border-color: #ff5050; }
 .actions { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; background: var(--panel); border-top: 1px solid var(--line); }
 .actions .btn:disabled { opacity: 0.4; cursor: default; }

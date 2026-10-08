@@ -122,6 +122,27 @@ async function load() {
   }
 }
 
+// The project folder, above the settings: its path, and for a page on the server's own machine the two ways in.
+async function folder() {
+  let f;
+  try { f = await fetch('/api/folder').then((x) => x.json()); } catch { return; }
+  if (!f?.root) return;
+  $('#folderPath').textContent = f.root;
+  const say = (text) => { $('#folderResult').textContent = text; };
+  $('#folderCopy').onclick = async () => { try { await navigator.clipboard.writeText(f.root); say('Path copied.'); } catch { say('Could not copy: select the path and copy it by hand.'); } };
+  for (const b of $$('#folder [data-open]')) {
+    b.hidden = !f.local; // opening a window on the server's machine is no use to a page on another one
+    b.onclick = async () => {
+      say('');
+      let r;
+      try { r = await post('/api/folder/open', { what: b.dataset.open }); } catch { r = { ok: false, error: 'the server did not answer' }; }
+      say(r.ok ? (b.dataset.open === 'claude' ? 'A terminal opened in the folder, starting Claude Code.' : 'Opened.') : `Could not open it: ${r.error}. The folder is ${f.root}`);
+    };
+  }
+  $('#folder').hidden = false;
+}
+folder();
+
 $('#form').addEventListener('input', changed);
 $('#revert').onclick = () => { render(); $('#result').textContent = 'Changes discarded.'; };
 $('#form').onsubmit = async (e) => {
