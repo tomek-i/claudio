@@ -128,7 +128,9 @@ test('stem queue on automatic with no GPU: the first job says so, then the CPU c
   const r = fakeRig({ gpu: 'cpu' });
   const { q } = r;
   for (const id of ['t0', 't1', 't2', 't3']) q.enqueue(id);
-  await sleep(20);
+  // asked the moment the first job exists: the fake separator says its device as soon as it has started, which on a
+  // fast machine is within milliseconds, so a fixed wait here sometimes found the other jobs running already
+  for (let i = 0; i < 2000 && !q.jobs.size; i++) await sleep(1);
   assert.equal(q.jobs.size, 1, 'one job until the device is known');
   await r.drain();
   assert.equal(r.peak(), 3);

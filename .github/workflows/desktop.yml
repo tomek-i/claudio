@@ -1,0 +1,84 @@
+# The desktop app on Windows, with the real Electron: its start-up test (test/desktop.test.mjs), and the installer.
+# Four to five minutes, most of it installing things, so it does not run on every change:
+#  - on a pull request, only when the desktop app or something it runs has changed (the paths below), and then only the
+#    start-up test;
+#  - on a push to main with such a change, the start-up test and the installer build, so a broken installer is
+#    found before the release that would ship it (the release's own build is in release-please.yml);
+#  - by hand (Actions → desktop → Run workflow), on any branch: both, and the installer is kept with the run for a
+#    week, to try that branch's build.
+name: desktop
+
+on:
+  pull_request:
+    paths:
+      - apps/desktop/**
+      - apps/server/**
+      - apps/web/public/**
+      - apps/cli/**
+      - test/desktop*
+      - test/server-harness.mjs
+      - test/fixtures.mjs
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/desktop.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/desktop/**
+      - apps/server/**
+      - apps/web/public/**
+      - apps/cli/**
+      - test/desktop*
+      - test/server-harness.mjs
+      - test/fixtures.mjs
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/desktop.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # Chocolatey's feed answers 503 now and then, and choco exits 0 all the same: try again, and check for the tool
+      - name: Install ffmpeg
+        run: |
+          foreach ($try in 1..4) {
+            choco install ffmpeg --no-progress -y
+            if (Get-Command ffmpeg -ErrorAction SilentlyContinue) { ffmpeg -version | Select-Object -First 1; exit 0 }
+            Start-Sleep -Seconds 20
+          }
+          throw 'ffmpeg could not be installed'
+      - run: pnpm install --frozen-lockfile
+      # pnpm does not run Electron's install script; this is what fetches its binary
+      - name: Download Electron
+        run: node apps/desktop/node_modules/electron/install.js
+      - run: node --test test/desktop.test.mjs
+        env:
+          DESKTOP_TEST_REQUIRED: 1
+      - name: Build the installer
+        if: github.event_name != 'pull_request'
+        run: pnpm dist
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: installer
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 7
