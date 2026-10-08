@@ -64,7 +64,7 @@ kbd { font: 600 11px var(--mono); background: var(--panel2); border: 1px solid v
 .play[aria-pressed="true"]::before { border: 0; width: 10px; height: 10px; background: currentColor; }
 .field { display: flex; align-items: center; gap: 8px; font: 600 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
 .field input[type="number"] { width: 68px; font: 600 14px var(--mono); color: var(--text); }
-.field.swing input { width: 110px; flex: none; }
+.field.swing input { width: 64px; flex: none; }   /* short: the header has to hold the sound light too, on one row at 1440 px */
 .field output { min-width: 13ch; color: var(--dim); letter-spacing: 0; text-transform: none; }
 .status { display: flex; align-items: center; gap: 7px; font: 12px var(--mono); color: var(--faint); max-width: 34ch; }
 .status #statusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
