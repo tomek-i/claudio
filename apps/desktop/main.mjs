@@ -142,6 +142,8 @@ async function engineLive(win) {
 
 async function start() {
   openSplash();
+  // installed, the project folder is one the app made (root.mjs): say where, it is where Claude Code is opened
+  if (app.isPackaged) step('folder', 'Project folder', 'ok', ROOT);
   step('server', 'Server', 'run', `port ${PORT}`);
   let how;
   try { how = await ensureServer(); } catch (e) {

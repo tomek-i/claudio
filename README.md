@@ -58,12 +58,19 @@ Claude Code and `node dj.mjs …` work the same in both modes: they talk to the 
 only `apps/desktop/` has dependencies.
 
 #### An installer
-`pnpm dist` builds the desktop app into an installer in `dist/` (on Windows: `DJ Claude Setup <version>.exe`; it is
-not code-signed, so Windows asks before running it). The installed app is the same window, started from the Start
-menu, with one difference: it has no project folder around it, so it keeps the rig's things (`config.json`, the
-library, `.dj/`) in **Documents/DJ Claude**, made on the first start. It still needs ffmpeg on PATH, and stem
-separation needs a `.venv` in that folder. To drive it from Claude Code, run `node dj.mjs …` from this repository as
-usual: the CLI talks to the server the app started.
+Each [release](https://github.com/tomek-i/dj-claude/releases) has the Windows installer attached
+(`DJ-Claude-Setup-<version>.exe`); `pnpm dist` builds the same thing into `dist/`. It is not code-signed, so Windows
+asks before running it.
+
+The installed app is the same window, started from the Start menu, and it brings the whole project with it. On the
+first start it makes **Documents/DJ Claude**: a project folder like this repository, with `dj.mjs`, the skills
+(`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json`, library and `.dj/`. Open Claude Code in
+that folder and it plays the rig exactly as it does here; the start-up window shows where the folder is. What the
+machine needs besides the app: Node 20+ (for `node dj.mjs …`, which is how Claude Code drives it), Claude Code, and
+ffmpeg on PATH. Stem separation needs a `.venv` in that folder (see Stems below).
+
+An update replaces the app's own files in that folder (`apps/`, `tools/`, `starter/`, `dj.mjs`, `CLAUDE.md` and the
+skills it ships) and leaves yours alone: `config.json`, `.claude/settings.json`, the library, `.dj/`, skills you added.
 
 ## How it works
 | Piece | What it does |

@@ -14,13 +14,16 @@ module.exports = {
   asar: false,
   npmRebuild: false,
   files: [
-    'package.json', 'dj.mjs',
-    'config.json', 'starter/**',   // copied into the user's folder on the first start (rig-folder.mjs)
-    'apps/desktop/*.{mjs,html,png}',
-    'apps/server/**', 'apps/cli/**', 'apps/web/public/**',
+    'package.json', 'apps/desktop/*.{mjs,html,png}',
+    // the project, as the repository has it: the app runs it from here, and copies it into the user's folder so
+    // Claude Code, the CLI and the skills work there (rig-folder.mjs)
+    'dj.mjs', 'CLAUDE.md', 'config.json', 'starter/**',
+    'apps/server/**', 'apps/cli/**', 'apps/web/public/**', 'tools/produce/**',
+    '.claude/settings.json', '.claude/skills/**',
     '!apps/web/public/samples/src/**',
     '!**/node_modules/**',
   ],
+  artifactName: 'DJ-Claude-Setup-${version}.${ext}', // no spaces: it is a download link on the release page
   win: { target: 'nsis', icon: 'apps/desktop/icon.png' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, shortcutName: 'DJ Claude' },
   mac: { target: 'dmg', icon: 'apps/desktop/icon.png', category: 'public.app-category.music' },
