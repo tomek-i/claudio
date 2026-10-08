@@ -24,7 +24,7 @@ function finish() {
 // the compact card that travels with the pointer: title, BPM, key
 function chipFor(row) {
   const chip = Object.assign(document.createElement('div'), { className: 'dragchip' });
-  const title = Object.assign(document.createElement('b'), { textContent: $('.name', row).firstChild.textContent });
+  const title = Object.assign(document.createElement('b'), { textContent: $('.name .tt', row).firstChild.textContent });
   const bpm = Object.assign(document.createElement('span'), { textContent: row.cells[2].textContent });
   chip.append(title, bpm, $('.keychip', row).cloneNode(true));
   document.body.append(chip);

@@ -49,6 +49,9 @@ for (const th of $$('#lib th[data-sort]')) th.onclick = () => {
   saveView(); renderLibrary(true);
 };
 
+// Stems are the normal case, so a row is marked only where they are missing: not separated yet, still in the queue,
+// or the separator is not installed. The mark goes when the track's separation is done (the `stems` event in link.js).
+const NO_STEMS = '<span class="nostems" title="No stems: this track is not split into vocals, drums, bass and the rest yet, so its stem faders stay off · the background queue separates it once node dj.mjs stems setup has installed the separator">no stems</span>';
 let lastLibKey = '';
 let stale = false; // the table was not rendered while the row was hidden
 document.addEventListener('lower:open', () => { if (stale) renderLibrary(true); refreshQueue(); });
@@ -82,13 +85,14 @@ export function renderLibrary(force) {
   $('#libCount').textContent = rows.length === library.length ? libStatus : `${rows.length} of ${libStatus}`;
   $('#lib tbody').innerHTML = rows.map((t) => {
     const f = fits(t);
-    const cls = [ref && t.id !== ref.id && f.key && f.bpm ? 'match' : ref && (f.key || f.bpm) ? 'near' : '', historyIds.has(t.id) ? 'played' : '', loaded.includes(t.id) ? 'loaded' : ''].join(' ');
+    const on = DECKS.filter((n) => mixer?.decks[n]?.track?.id === t.id); // the decks it is loaded on: one tag each
+    const cls = [ref && t.id !== ref.id && f.key && f.bpm ? 'match' : ref && (f.key || f.bpm) ? 'near' : '', historyIds.has(t.id) ? 'played' : '', on.length ? 'loaded' : ''].join(' ');
     // the dot in the first column: how well the track fits the live deck
     const fit = cls.includes('match') ? 'Fits the live deck: key and tempo both match' : cls.includes('near') ? 'Close to the live deck: its key or its tempo matches' : '';
     return `<tr class="${cls}" data-id="${t.id}" draggable="true" title="Drag onto a deck to load it · touch: hold, then drag">
       <td class="fit"${fit ? ` title="${fit}"` : ''}></td>
       <td class="load">${DECKS.map((n) => `<button class="ld ${n.toLowerCase()}" data-deck="${n}" title="Load on deck ${n}">${n}</button>`).join('')}</td>
-      <td class="name">${esc(t.title)} <small>${esc(t.artist || '')}</small>${t.stems ? ' <span class="stemtag" title="Stems available: vocals, drums, bass and the rest can be faded separately">STEMS</span>' : ''}</td>
+      <td class="name"><div class="nm"><span class="tt">${esc(t.title)} <small>${esc(t.artist || '')}</small></span>${on.map((n) => `<span class="ondeck ${n.toLowerCase()}" title="Loaded on deck ${n}">on ${n}</span>`).join('')}${t.stems ? '' : NO_STEMS}</div></td>
       <td>${t.bpm.toFixed(1)}</td>
       <td><span class="keychip" style="background:${camelotColor(t.camelot)}">${t.camelot}</span></td>
       <td><span class="ebar"><i style="width:${t.energy * 10}%"></i></span> ${t.energy}</td>
