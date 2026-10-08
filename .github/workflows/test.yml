@@ -1,16 +1,48 @@
 # The tests that every change gets: the whole suite on Linux, on each pull request and each push to main. About two
 # minutes. Browser mode and the three small apps have no dependencies, so there is nothing to install but ffmpeg;
 # the desktop test skips itself here (no Electron).
-# A change that only touches documentation or a skill's text runs nothing. The slow, Windows-only part (the desktop
+# A change that only touches documentation, a skill's text, pictures, or what a release commit bumps runs nothing:
+# the paths-ignore lists below (the same list twice). A change to any other file, a comment in a code file included,
+# does run it. The slow, Windows-only part (the desktop
 # app with the real Electron, and the installer) is desktop.yml, which runs only when something it covers has changed.
 name: test
 
 on:
   pull_request:
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore:
+      - '**.md'
+      - docs/**
+      - .claude/skills/**
+      - '**.png'
+      - '**.jpg'
+      - '**.jpeg'
+      - '**.gif'
+      - '**.svg'
+      - '**.webp'
+      - .gitignore
+      # what a release commit touches: the version numbers and the changelog
+      - package.json
+      - apps/desktop/package.json
+      - .release-please-manifest.json
+      - release-please-config.json
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore:
+      - '**.md'
+      - docs/**
+      - .claude/skills/**
+      - '**.png'
+      - '**.jpg'
+      - '**.jpeg'
+      - '**.gif'
+      - '**.svg'
+      - '**.webp'
+      - .gitignore
+      # what a release commit touches: the version numbers and the changelog
+      - package.json
+      - apps/desktop/package.json
+      - .release-please-manifest.json
+      - release-please-config.json
   workflow_dispatch:
 
 permissions:
