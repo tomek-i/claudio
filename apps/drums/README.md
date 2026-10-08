@@ -19,6 +19,7 @@ the beat is saved in (default `apps/drums/.cl-808/`).
 ## What it does
 
 - 16 or 32 steps, eight voices synthesised the way the TR-808 makes them, four pattern slots, tempo, swing, level / tune / mute / solo per voice.
+- A ruler above the grid with bar.beat on every beat (1.1 to 1.4, and 2.1 to 2.4 in a 32-step beat, with a line between the bars). It marks the grid, not the hits: swing and offsets move the pads, never the ruler. Click a number to play from that beat; while it plays, the playhead moves there. The playing column is lit.
 - A step has a velocity (ghost, soft, normal, accent) and an offset: up to 0.4 of a step early, 0.5 late.
 - Feel: four ways of playing the hits you wrote (tight, laid back, pushed, drunk). Adds and removes nothing.
 - Variations: four beats near yours; hold one to hear it, click to keep it.
@@ -36,7 +37,7 @@ rules with a seeded random number generator (`lib/groove.mjs`), so they work wit
 
 ## Layout
 
-- `lib/timing.mjs`: where a hit sounds (step + swing + offset). Playback, WAV and MIDI all use it.
+- `lib/timing.mjs`: where a hit sounds (step + swing + offset). Playback, WAV and MIDI all use it. Also the ruler's bar.beat names.
 - `lib/pattern.mjs`: the pattern, its edits (`applyOp`), rows as text. `lib/kit.mjs`: the voices and levels.
 - `lib/groove.mjs`: humanize, variations, continue, morph. `lib/presets.mjs`. `lib/midi.mjs`.
 - `lib/store.mjs`: slots, undo, saving, notes. `server.mjs`: the HTTP API and static files (the API is listed at its top).

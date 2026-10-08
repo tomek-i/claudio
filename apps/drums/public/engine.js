@@ -170,12 +170,18 @@ export class Engine {
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
 
-  start() {
+  // from: the step to start on (0 is the top of the loop). Called while it plays, it moves the playhead there.
+  start(from = 0) {
     this.wake();
+    // hits already handed to the audio clock cannot be taken back, so a jump waits for them (at most the
+    // look-ahead): none is heard on top of the new start, and none is cut
+    const busyUntil = this.playing ? this.anchorTime + (this.scheduled - this.anchorPos) * stepSeconds(this.bpm) : 0;
+    clearInterval(this.timer);
     this.bpm = this.source().bpm;
-    this.anchorTime = this.ctx.currentTime + 0.08;     // where position `anchorPos` is on the clock
-    this.anchorPos = 0;
-    this.scheduled = -MAX_EARLY;                       // hits before this position are already on their way
+    this.anchorTime = Math.max(this.ctx.currentTime + 0.08, busyUntil);   // where position `anchorPos` is on the clock
+    this.anchorPos = from;
+    this.startStep = from;                             // the steps before it are not played (see hitsInWindow)
+    this.scheduled = from - MAX_EARLY;                 // hits before this position are already on their way
     this.playing = true;
     this.timer = setInterval(() => this.tick(), TICK_MS);
     this.tick();
@@ -186,9 +192,9 @@ export class Engine {
     clearInterval(this.timer);
   }
 
-  // where the playhead is, in steps since play was pressed
+  // where the playhead is, in steps from the top of the first loop (it waits on the start step until the sound does)
   position() {
-    return this.playing ? this.anchorPos + (this.ctx.currentTime - this.anchorTime) / stepSeconds(this.bpm) : 0;
+    return this.playing ? Math.max(this.anchorPos, this.anchorPos + (this.ctx.currentTime - this.anchorTime) / stepSeconds(this.bpm)) : 0;
   }
 
   tick() {
@@ -202,7 +208,7 @@ export class Engine {
     const step = stepSeconds(this.bpm);
     const until = this.anchorPos + (now + LOOKAHEAD - this.anchorTime) / step;
     if (until <= this.scheduled) return;
-    for (const hit of hitsInWindow(pattern, this.scheduled, until)) {
+    for (const hit of hitsInWindow(pattern, this.scheduled, until, { firstStep: this.startStep })) {
       this.kit.trigger(hit, Math.max(now, this.anchorTime + (hit.pos - this.anchorPos) * step));
     }
     this.scheduled = until;

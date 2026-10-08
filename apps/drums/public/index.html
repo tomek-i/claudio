@@ -34,11 +34,14 @@
         <button id="straight" title="Hold to hear the beat with every hit on its step: no swing, no offsets">Hold: hear it on the grid</button>
         <button id="clear">Clear</button>
       </div>
-      <div id="grid" class="grid"></div>
+      <div class="grid">
+        <div id="ruler" class="row ruler" role="group" aria-label="Beats: play from one"></div>
+        <div id="grid" class="rows"></div>
+      </div>
       <p class="hint">
         Click or drag to write steps · <kbd>Shift</kbd>-click for ghost / soft / normal / accent ·
         <kbd>Alt</kbd>-drag a hit sideways to play it early or late · keys <kbd>1</kbd>–<kbd>8</kbd> tap the voices.
-        A pad sits where the hit sounds, so the swing and the feel show in the grid.
+        A pad sits where the hit sounds, so the swing and the feel show in the grid; the ruler above marks the grid itself, bar.beat. Click a number to play from that beat.
       </p>
     </section>
 

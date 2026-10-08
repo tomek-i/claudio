@@ -17,6 +17,9 @@
   --h: 30px;
   --cell: 34px;        /* height of a step */
   --gap: 3px;
+  --bar-gap: 12px;     /* the extra space between bar 1 and bar 2 */
+  --head: #ecebf2;     /* the playhead, */
+  --head-light: #ecebf238;   /* and the light it throws down its column */
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -77,6 +80,7 @@ main { padding: 18px; display: grid; gap: 18px; max-width: 1500px; margin: 0 aut
 .name { font-weight: 600; font-size: 16px; background: transparent !important; border-color: transparent !important; width: min(340px, 50%); padding-left: 4px !important; }
 .name:hover, .name:focus { border-color: var(--line) !important; background: #0d0d12 !important; }
 .grid { display: grid; gap: var(--gap); overflow-x: auto; padding: 0 16px 6px 0; }
+.rows { display: grid; gap: var(--gap); }
 .row { display: flex; align-items: center; gap: 12px; --c: var(--low); }
 .row[data-group="mid"] { --c: var(--mid); }
 .row[data-group="high"] { --c: var(--high); }
@@ -92,15 +96,42 @@ main { padding: 18px; display: grid; gap: 18px; max-width: 1500px; margin: 0 aut
 .strip label { display: flex; flex-direction: column; flex: 1; min-width: 0; font: 11px var(--mono); letter-spacing: 0.04em; color: var(--faint); gap: 0; }
 .strip input[type="range"] { accent-color: var(--c); height: 14px; }
 .cells { display: flex; gap: var(--gap); flex: 1; min-width: 0; }
+/* The columns. A pad (.cell) and a mark of the ruler (.tick) are sized by these same rules, which is what keeps
+   the ruler over the pads at any width. --edge is the border a pad has and a mark has not. */
+.cell, .tick { flex: 1 1 0; min-width: 20px; position: relative; --edge: 0px; }
+:is(.cell, .tick):nth-child(4n + 1):not(:first-child) { margin-left: 5px; }
+:is(.cell, .tick):nth-child(16n + 1):not(:first-child) { margin-left: var(--bar-gap); }
 .cell {
-  flex: 1 1 0; min-width: 20px; height: var(--cell); padding: 0; position: relative; border-radius: 5px;
+  height: var(--cell); padding: 0; border-radius: 5px; --edge: 1px;
   background: #15151c; border: 1px solid #1f1f29; touch-action: none; overflow: visible;
 }
 .cell.beat { background: #1c1c26; border-color: #2b2b38; }
-.cell:nth-child(4n + 1):not(:first-child) { margin-left: 5px; }
-.cell:nth-child(16n + 1):not(:first-child) { margin-left: 12px; }
 .cell:hover { border-color: var(--faint); }
-.cell.now { border-color: var(--text); }
+.cell.now { border-color: var(--head); }
+/* the line between bar 1 and bar 2: in the middle of the space before the bar's first column, through the row gaps */
+:is(.cell, .tick):nth-child(16n + 1):not(:first-child)::before {
+  content: ''; position: absolute; width: 2px; border-radius: 1px; background: var(--dim); pointer-events: none;
+  left: calc(0px - var(--edge) - (var(--gap) + var(--bar-gap)) / 2 - 1px);
+  top: calc(0px - var(--edge)); bottom: calc(0px - var(--edge) - var(--gap));
+}
+/* the playhead: the playing step's mark and pads are lit, and the light fills the gap below each, so it is one
+   column. It lies under the pads (they have a z-index), which keep their colours. Nothing has .now when stopped. */
+:is(.cell, .tick).now::after {
+  content: ''; position: absolute; background: var(--head-light); pointer-events: none;
+  inset: calc(0px - var(--edge)); bottom: calc(0px - var(--edge) - var(--gap));
+}
+.rows .row:last-child .cell.now::after { bottom: calc(0px - var(--edge)); border-radius: 0 0 5px 5px; }
+/* on the ruler it is a solid cap at the foot of the mark, so it never covers a number */
+.tick.now::after { top: auto; height: calc(4px + var(--gap)); border-radius: 2px 2px 0 0; background: var(--head); }
+
+/* the ruler: bar.beat over the first column of every beat; the number's button is as wide as its beat */
+.ruler { height: 20px; }
+.ruler .strip { align-self: stretch; }
+.ruler .cells { align-self: stretch; }
+.beatno {
+  position: absolute; left: 0; top: 0; width: calc(400% + 3 * var(--gap)); height: 100%; padding: 0 6px;
+  justify-content: flex-start; border-radius: 5px; font: 600 11px var(--mono); letter-spacing: 0.04em;
+}
 /* the pad: as tall as the hit is hard, and moved to where the hit sounds (--o, in steps) */
 .cell i {
   position: absolute; left: 3px; right: 3px; bottom: 3px; height: calc((100% - 6px) * (0.3 + 0.7 * var(--v, 0)));
@@ -139,7 +170,7 @@ main { padding: 18px; display: grid; gap: 18px; max-width: 1500px; margin: 0 aut
   .strip label { display: none; }
   .tap { width: 70px; }
   .tap small { display: none; }
-  .cell { min-width: 24px; }
+  .cell, .tick { min-width: 24px; }
   .field output { min-width: 0; }
 }
 @media (prefers-reduced-motion: no-preference) {

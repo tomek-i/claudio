@@ -1,7 +1,7 @@
 // The page: draws the beat the server holds, sends every edit to it (POST /api/op), and plays it. The state
 // comes back on the server's event stream, so an edit made from the CLI shows here as it is made.
 import { VOICES, LEVELS, LEVEL_NAMES, levelOf } from '/lib/kit.mjs';
-import { stepSeconds, swingSteps, clampOffset } from '/lib/timing.mjs';
+import { stepSeconds, swingSteps, clampOffset, beatName, beatSteps } from '/lib/timing.mjs';
 import { SLOTS } from '/lib/pattern.mjs';
 import { FEELS, morph } from '/lib/groove.mjs';
 import { Engine, renderWav } from './engine.js';
@@ -74,8 +74,24 @@ function connect() {
 
 // ---- drawing
 
+// The ruler: one empty mark per step, sized by the same rules as the pads below it (style.css), so its columns
+// are the grid's columns at any width. The number of a beat is a button in the beat's first mark.
+function buildRuler(steps) {
+  const starts = new Set(beatSteps(steps));
+  $('ruler').replaceChildren(
+    el('div', { className: 'strip' }),
+    el('div', { className: 'cells' }, ...Array.from({ length: steps }, (_, s) => {
+      if (!starts.has(s)) return el('span', { className: 'tick' });
+      const name = beatName(s);
+      const b = el('button', { className: 'beatno', title: `Beat ${name}: click = play from here`, ariaLabel: `Play from beat ${name}` }, name);
+      b.dataset.s = s;
+      return el('span', { className: 'tick' }, b);
+    })));
+}
+
 function buildGrid(pattern) {
   builtSteps = pattern.steps;
+  buildRuler(pattern.steps);
   $('grid').replaceChildren(...pattern.tracks.map((track, i) => {
     const voice = VOICES.find((v) => v.id === track.voice);
     const range = (cls, key, min, max, step, title) => el('label', {}, key, el('input', { type: 'range', className: cls, min, max, step, title, ariaLabel: `${voice.name} ${title}` }));
@@ -185,7 +201,7 @@ let shownStep = -1;
 function frame() {
   const step = engine.playing && state ? Math.floor(Math.max(0, engine.position())) % (audition || current()).steps : -1;
   if (step !== shownStep) {
-    for (const row of $('grid').children) {
+    for (const row of [$('ruler'), ...$('grid').children]) {      // the ruler's mark and the pads of that step: one lit column
       const cells = row.lastElementChild.children;
       cells[shownStep]?.classList.remove('now');
       cells[step]?.classList.add('now');
@@ -201,6 +217,20 @@ function togglePlay() {
   $('play').textContent = engine.playing ? 'Stop' : 'Play';
   post('/api/transport', { playing: engine.playing }).catch(() => {});   // the server's banner follows the playhead
 }
+
+// A number on the ruler: play from that beat. While it plays, the playhead moves there.
+function playFrom(step) {
+  engine.start(step);
+  $('play').setAttribute('aria-pressed', true);
+  $('play').textContent = 'Stop';
+  post('/api/transport', { playing: true, from: step }).catch(() => {});
+}
+$('ruler').addEventListener('click', (e) => {
+  const b = e.target.closest('.beatno');
+  if (b) playFrom(Number(b.dataset.s));
+});
+// Space on a number is that button's own click, not the page's play / stop
+$('ruler').addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') e.stopPropagation(); });
 
 // Something heard only while a button is held: it plays if nothing is playing, and stops again on release.
 let startedForAudition = false;
