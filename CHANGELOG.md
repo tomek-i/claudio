@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/tomek-i/dj-claude/compare/v0.4.0...v0.5.0) (2026-10-08)
+
+
+### Features
+
+* **drums:** a ruler of beats above the grid, and a playhead you can see ([1175469](https://github.com/tomek-i/dj-claude/commit/11754692a729c21abc2cad55ca5335adf01557f6)), closes [#44](https://github.com/tomek-i/dj-claude/issues/44)
+* **ui:** a clock and a set timer in the header ([168f5db](https://github.com/tomek-i/dj-claude/commit/168f5db7e2d74ce30cd3ef11c5be4df6d924691e)), closes [#22](https://github.com/tomek-i/dj-claude/issues/22)
+
+
+### Bug fixes
+
+* **apps:** a start card on the drum machine, the synth and the DAW instead of silent pages ([ab39028](https://github.com/tomek-i/dj-claude/commit/ab39028b9abac68a13d67fd596b5bb75de48bc6a)), closes [#38](https://github.com/tomek-i/dj-claude/issues/38)
+* **drums:** the header stays on one row with the sound light in it ([9cedc11](https://github.com/tomek-i/dj-claude/commit/9cedc11efdbf657533e0b7fb24a11cb966793aa7))
+* **synth:** the keyboard no longer covers the sequencer ([37438f4](https://github.com/tomek-i/dj-claude/commit/37438f43c1f772fb29967e7267d993d05663de4b)), closes [#48](https://github.com/tomek-i/dj-claude/issues/48)
+* **ui:** a wider crossfader with a larger cap ([47c8b8f](https://github.com/tomek-i/dj-claude/commit/47c8b8ffd4b35eb6b31ee28046d92849e0dbabd6)), closes [#19](https://github.com/tomek-i/dj-claude/issues/19)
+* **ui:** larger sampler pads and a taller chop keyboard in the bottom panel ([a6f361f](https://github.com/tomek-i/dj-claude/commit/a6f361fb097ab5e34fb3eb21f95e9e2f11085882)), closes [#18](https://github.com/tomek-i/dj-claude/issues/18)
+* **ui:** library rows mark only missing stems and say which deck a track is on ([d3c45ca](https://github.com/tomek-i/dj-claude/commit/d3c45ca4ab8813b1fafa9effbe4acbd78e35556b)), closes [#17](https://github.com/tomek-i/dj-claude/issues/17)
+* **ui:** the header's Keys, Visuals and Settings are buttons, and AUTO DJ off no longer looks disabled ([749c970](https://github.com/tomek-i/dj-claude/commit/749c97044dfa6da7c3dc0c708c89580c08908bd1)), closes [#20](https://github.com/tomek-i/dj-claude/issues/20)
+* **ui:** the request box's hint fits beside SEND ([203889f](https://github.com/tomek-i/dj-claude/commit/203889f8c202318505701f9ca88106cd72214249))
+
 ## [0.4.0](https://github.com/tomek-i/dj-claude/compare/v0.3.0...v0.4.0) (2026-10-08)
 
 
