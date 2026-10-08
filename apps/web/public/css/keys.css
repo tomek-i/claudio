@@ -8,11 +8,9 @@ body.lower-max[data-dock="sampler"] .pad { padding: 26px 8px; font-size: 13px; }
 body.lower-max[data-dock="sampler"] .pad i { font-size: 11px; }
 body.lower-max[data-dock="sampler"] .keys-main { flex: none; gap: 14px; }
 body.lower-max[data-dock="sampler"] .piano { max-width: none; height: min(42vh, 340px); }
-body.lower-max[data-dock="sampler"] .piano .pk.w { height: 100%; }
-body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .keys-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 /* the controls in three named boxes: SOURCE, PLAY, LOOP */
-.kgroups { display: flex; flex-wrap: wrap; gap: 8px; }
+.kgroups { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
 .kg { display: flex; flex-direction: column; gap: 6px; padding: 7px 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
 .kg h4 { margin: 0; display: flex; align-items: baseline; gap: 10px; font: 700 10px var(--mono); letter-spacing: 0.12em; color: var(--text); }
 .kg h4 span { font-weight: 400; letter-spacing: 0; }
@@ -27,10 +25,13 @@ body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .keys .kevents { color: #f2cc60; }
 .keys .btn.sm.rec { background: #ff4d6d; color: #000; }
 .keys input[type="range"] { width: 80px; }
-.piano { position: relative; height: 92px; width: 100%; }
+/* The keyboard takes the height the panel has left under the three boxes, from its old 92px up to the size it has
+   maximised; on a short panel with the boxes on three lines it gives a little way, so that they are not cut off.
+   The keys are sized from it. */
+.piano { position: relative; flex: 1 1 auto; height: 92px; min-height: 72px; max-height: 340px; width: 100%; }
 .piano .pk { position: absolute; top: 0; margin: 0; border: 1px solid #111; border-radius: 0 0 5px 5px; cursor: pointer; font-family: var(--mono); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; padding-bottom: 5px; user-select: none; }
-.piano .pk.w { height: 92px; background: #e9e9ef; color: #333; z-index: 1; }
-.piano .pk.b { height: 56px; background: #1a1a22; color: #ccc; z-index: 2; border-color: #000; }
+.piano .pk.w { height: 100%; background: #e9e9ef; color: #333; z-index: 1; }
+.piano .pk.b { height: 61%; background: #1a1a22; color: #ccc; z-index: 2; border-color: #000; }
 .piano .pk i { font-style: normal; font-weight: 700; font-size: 11px; }
 .piano .pk small { font-size: 10px; opacity: 0.6; }
 .piano .pk.w.on { background: #7ee787; }
@@ -56,7 +57,11 @@ body.lower-max[data-dock="sampler"] .piano .pk.b { height: 61%; }
 .pad:hover { border-color: var(--claude); }
 .pad.empty { color: var(--faint); }
 .pad.hit { background: var(--claude); color: #000; }
-.keys > .pads { flex: none; width: 360px; align-content: start; gap: 6px; }
-.keys > .pads .pad { padding: 12px 6px 11px; font-size: 11px; }
+/* Beside the keyboard the pads have the size they have maximised, and the block grows from 360px to 560px with the
+   panel. The 870px it leaves is what the keyboard's three boxes need to stay on two lines: on three they would not
+   fit the Small panel height. */
+.keys > .pads { flex: none; width: clamp(360px, 100% - 870px, 560px); align-content: start; gap: 10px; }
+.keys > .pads .pad { padding: 26px 8px; font-size: 13px; }
+.keys > .pads .pad i { font-size: 11px; }
 .keys > .pads:empty { display: none; }
 .keys > .pads::before { content: 'SAMPLER'; grid-column: 1 / -1; font: 700 11px var(--mono); letter-spacing: 0.08em; color: var(--text); line-height: 18px; }
