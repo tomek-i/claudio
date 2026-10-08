@@ -2,3 +2,6 @@
 # Electron fetches its own binary the first time it is run (about 370 MB).
 packages:
   - apps/desktop
+allowBuilds:
+  # a Squirrel installer tool that electron-builder lists; the installer here is NSIS, so its build step is not needed
+  electron-winstaller: false

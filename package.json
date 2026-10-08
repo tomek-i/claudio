@@ -31,6 +31,7 @@
   "scripts": {
     "start": "node apps/server/server.mjs",
     "desktop": "pnpm --filter dj-claude-desktop start",
+    "dist": "pnpm --filter dj-claude-desktop dist",
     "test": "node --test test/*.test.mjs test/server-*.mjs",
     "scan": "node dj.mjs scan",
     "setup": "node dj.mjs doctor --fix",

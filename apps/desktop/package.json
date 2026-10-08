@@ -6,9 +6,11 @@
   "type": "module",
   "main": "main.mjs",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --projectDir ../.. --config apps/desktop/electron-builder.config.cjs"
   },
   "devDependencies": {
-    "electron": "^44.0.0"
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3"
   }
 }

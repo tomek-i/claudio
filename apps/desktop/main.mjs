@@ -11,10 +11,14 @@
 //    engine), and gives way to the DJ page when the engine plays;
 //  - the DJ window opens where it was last closed (window-state.mjs): same screen, same size, maximised or not.
 //
+// `pnpm dist` builds it into an installer (electron-builder.config.cjs). Installed, the app keeps the rig's things
+// in the user's Documents (root.mjs), since there is no project folder around it.
+//
 // The server is not run in this process. It runs as a utility process of its own, because analysis is heavy
 // synchronous work that would freeze the window, and because the server lowers its own priority to keep the audio
 // ahead of it, which must not apply to the window. If a server is already listening on the port (started with
 // `node dj.mjs start`, say), the app uses that one and leaves it running when it quits.
+import './root.mjs'; // first: where the project folder is, for paths.mjs below
 import { app, BrowserWindow, nativeTheme, screen, shell, utilityProcess } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
