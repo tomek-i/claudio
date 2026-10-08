@@ -43,6 +43,7 @@ test('it starts on a template and serves the page and the shared code', async ()
   const page = await (await fetch(BASE + '/')).text();
   assert.match(page, new RegExp(`<title>${APP_NAME}</title>`));
   assert.doesNotMatch(page, /%NAME%/);
+  assert.match(page, /id="startOverlay" role="dialog"[^]*id="startBtn"[^>]*>Start sound</);   // shown from the first paint, no script needed
   assert.match(await (await fetch(BASE + '/lib/song.mjs')).text(), /eventsInWindow/);
   assert.match(await (await fetch(BASE + '/engine.js')).text(), /OfflineAudioContext/);
   assert.equal((await fetch(BASE + '/lib/../server.mjs')).status, 404);
@@ -89,7 +90,7 @@ test('a note typed on the page reaches a waiting CLI once, and the answer is sho
 });
 
 test('the page is told of every change, and of play and stop', async () => {
-  assert.deepEqual((await post('/api/transport', { action: 'play', bar: 0 })).body, { pages: 0 });   // nobody is listening
+  assert.deepEqual((await post('/api/transport', { action: 'play', bar: 0 })).body, { pages: 0, awake: false });   // nobody is listening
   const res = await fetch(BASE + '/api/events');
   const reader = res.body.getReader();
   const read = async () => new TextDecoder().decode((await reader.read()).value);
@@ -98,12 +99,15 @@ test('the page is told of every change, and of play and stop', async () => {
   const next = JSON.parse((await read()).replace(/^data: /, ''));
   assert.equal(next.rev, first.rev + 1);
   assert.equal(next.project.swing, 0.33);
-  assert.deepEqual((await post('/api/transport', { action: 'play', bar: 2 })).body, { pages: 1 });
+  assert.deepEqual((await post('/api/transport', { action: 'play', bar: 2 })).body, { pages: 1, awake: false });   // a page, not clicked yet
   assert.equal(await read(), 'event: transport\ndata: {"action":"play","bar":2}\n\n');
   assert.equal((await post('/api/transport', { action: 'play', bar: 99 })).status, 400);
-  await post('/api/transport', { action: 'stop' });
+  await post('/api/sound', { awake: true });                                 // "Start sound" was clicked
+  assert.deepEqual((await post('/api/transport', { action: 'stop' })).body, { pages: 1, awake: true });
   assert.equal(await read(), 'event: transport\ndata: {"action":"stop"}\n\n');
-  await reader.cancel();
+  await reader.cancel();                                                     // the page is closed, or loaded again: the click is forgotten
+  for (let i = 0; i < 50 && server.store.listeners.size; i++) await new Promise((r) => setTimeout(r, 20));
+  assert.equal(server.store.awake, false);
 });
 
 test('Claude composes through the CLI: tracks, clips, rows and notes, each printed back', async () => {
@@ -172,7 +176,10 @@ test('play and stop from the CLI, notes from the page, and the MIDI file', async
   const res = await fetch(BASE + '/api/events');                             // a page
   const reader = res.body.getReader();
   await reader.read();
-  assert.match((await daw('play', '3')).out, /playing from bar 3/);
+  assert.match((await daw('play', '3')).out, /^playing from bar 3 on the page \(sent, but the page's sound is off .*: click Start sound on the page\)$/);
+  await reader.read();
+  await post('/api/sound', { awake: true });
+  assert.equal((await daw('play', '3')).out, 'playing from bar 3 on the page');
   assert.match(new TextDecoder().decode((await reader.read()).value), /"action":"play","bar":2/);
   assert.equal((await daw('stop')).out, 'stopped');
   await reader.cancel();

@@ -28,6 +28,14 @@ the beat is saved in (default `apps/drums/.cl-808/`).
 - Export: WAV (rendered in the browser by the same code that plays it) and MIDI (timing kept).
 - Eight presets.
 
+## Sound
+
+A browser keeps a page silent until it has been clicked. So the page opens on a card with one button, "Start
+sound", and a light in the top bar reads "sound off" until it is clicked and "sound on" after. The card does not
+come back while the page stays open; a page that is loaded again asks again, because the browser forgets the click.
+`cl808 open` prints, under the address, whether a page is open and whether its sound is on ("click Start sound on
+the page" when it is not).
+
 ## Where the AI is
 
 Claude Code is the musician. It reads the beat as text and writes rows, single hits and offsets through the CLI

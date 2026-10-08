@@ -451,5 +451,37 @@ addEventListener('keydown', (e) => {
   else if (/^[1-8]$/.test(e.key) && state) { const t = current().tracks[e.key - 1]; engine.tap(t.voice, t); }
 });
 
+// ---- the sound: a browser keeps a page silent until it is clicked, so a card asks for that click
+
+let toldSound = null;      // what the server was last told
+function soundChanged() {
+  const on = engine.ctx?.state === 'running';
+  $('soundLight').classList.toggle('on', on);
+  $('soundText').textContent = on ? 'sound on' : 'sound off';
+  if (on && !$('startOverlay').hidden) { $('startOverlay').hidden = true; $('play').focus(); }   // gone until the page is loaded again
+  if (on === toldSound) return;
+  toldSound = on;
+  post('/api/transport', { awake: on }).catch(() => {});   // so `cl808 open` can say whether anything will be heard
+}
+
+function startSound() {
+  try {
+    engine.wake();
+    engine.ctx.onstatechange = soundChanged;           // the browser says when the sound is on, and if it takes it away again
+    soundChanged();
+  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; }
+}
+$('startBtn').addEventListener('click', startSound);
+// While the card is up the keys are its own: Enter and Space start the sound, Tab stays on the one button, and the
+// page's shortcuts behind it are not reached. A click beside the button leaves the focus on it.
+$('startOverlay').addEventListener('keydown', (e) => {
+  e.stopPropagation();
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSound(); }
+  else if (e.key === 'Tab') e.preventDefault();
+});
+$('startOverlay').addEventListener('mousedown', (e) => { if (e.target !== $('startBtn')) e.preventDefault(); });
+$('startBtn').focus();
+
+soundChanged();
 connect();
 requestAnimationFrame(frame);

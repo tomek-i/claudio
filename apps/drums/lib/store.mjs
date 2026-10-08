@@ -23,7 +23,8 @@ export class Store {
     this.notes = [];
     this.noteId = 0;
     this.delivered = 0;                              // the last note from the page that `cl808 wait` has handed out
-    this.transport = { playing: false, at: 0, from: 0 };   // whether the page is playing, since when and from which step (for the banner)
+    // what the page last said: is it playing, since when and from which step (for the banner), and does the browser let it sound
+    this.transport = { playing: false, at: 0, from: 0, awake: false };
     this.listeners = new Set();
     this.waiters = new Set();
     this.load();

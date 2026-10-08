@@ -44,6 +44,12 @@ and notes through the CLI (`.claude/skills/claudebase/SKILL.md` teaches it how).
 (`claudebase play 5`) and it reads the notes typed into the page's Claude box (`claudebase wait`). There is no model in the page
 and no API key.
 
+A browser keeps a page silent until it has been clicked. So the page opens on a card with one button, "Start
+sound", and a light in the top bar reads "sound off" until it is clicked and "sound on" after. The card does not
+come back while the page stays open; a page that is loaded again asks again, because the browser forgets the click.
+Until then `claudebase play` says that the page's sound is off ("click Start sound on the page") instead of
+pretending.
+
 ```
 "Night drive"  122 bpm  swing 0%  16 bars  loop 5-16 off  master 80
 bar              1   5   9   13

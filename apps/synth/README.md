@@ -51,8 +51,11 @@ seq     118 bpm   gate 0.6   swing 0
         C2 . C3 . | Eb2 . C3 G2 | C2 . Bb2 C3 | . G2 Bb2 -
 ```
 
-A browser keeps a page silent until it has been clicked or a key has been pressed on it. Until then `miniclaude play`
-says so instead of pretending.
+A browser keeps a page silent until it has been clicked. So the page opens on a card with one button, "Start
+sound", and a light in the top bar reads "sound off" until it is clicked and "sound on" after. The card does not
+come back while the page stays open; a page that is loaded again asks again, because the browser forgets the click.
+Until then `miniclaude play` and `miniclaude note` say that the page's sound is off ("click Start sound on the page")
+instead of pretending.
 
 ## Layout
 

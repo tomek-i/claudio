@@ -469,22 +469,41 @@ function togglePlay() {
   if (engine.playing) engine.stop(); else engine.start();
 }
 
-// the play button and the sound button follow the engine, and the server is told (so `miniclaude play` can say
+// the play button and the sound light follow the engine, and the server is told (so `miniclaude play` can say
 // whether anything will be heard)
 engine.onChange = () => {
+  const on = engine.awake;
   $('play').setAttribute('aria-pressed', engine.playing);
   $('play').textContent = engine.playing ? 'Stop' : 'Play';
-  $('sound').setAttribute('aria-pressed', engine.awake);
-  $('sound').textContent = engine.awake ? 'Sound is on' : 'Turn the sound on';
-  post('/api/transport', { playing: engine.playing, awake: engine.awake }).catch(() => {});
+  $('soundLight').classList.toggle('on', on);
+  $('soundText').textContent = on ? 'sound on' : 'sound off';
+  if (on && !$('startOverlay').hidden) { $('startOverlay').hidden = true; $('play').focus(); }   // gone until the page is loaded again
+  post('/api/transport', { playing: engine.playing, awake: on }).catch(() => {});
 };
-// any click or key on the page is what the browser waits for before it lets the page sound
-for (const type of ['pointerdown', 'keydown']) addEventListener(type, () => { if (state && !engine.awake) engine.wake(); }, true);
+
+// ---- the sound: a browser keeps a page silent until it is clicked, so a card asks for that click
+
+function startSound() {
+  if (!state) { $('startMsg').textContent = 'The server has not answered yet, and the synth is built from the patch it holds. Try again in a moment.'; return; }
+  try {
+    engine.wake();
+    engine.onChange();                                 // a context made in a click may be running at once, with no change to hear of
+  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; }
+}
+$('startBtn').addEventListener('click', startSound);
+// While the card is up the keys are its own: Enter and Space start the sound, Tab stays on the one button, and the
+// page's shortcuts behind it are not reached. A click beside the button leaves the focus on it.
+$('startOverlay').addEventListener('keydown', (e) => {
+  e.stopPropagation();
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startSound(); }
+  else if (e.key === 'Tab') e.preventDefault();
+});
+$('startOverlay').addEventListener('mousedown', (e) => { if (e.target !== $('startBtn')) e.preventDefault(); });
+$('startBtn').focus();
 
 // ---- the bars
 
 $('play').addEventListener('click', togglePlay);
-$('sound').addEventListener('click', () => engine.wake());
 $('bpm').addEventListener('change', () => send({ op: 'seqparam', key: 'bpm', value: Number($('bpm').value) }));
 $('name').addEventListener('change', () => send({ op: 'name', value: $('name').value }));
 for (const key of ['gate', 'swing']) {
@@ -529,5 +548,6 @@ buildKeys();
 try { if (localStorage.getItem(FOLDED) === '1') foldKeys(true); } catch { /* storage is closed to the page: the keyboard shows */ }
 let wide = innerWidth >= 700;
 addEventListener('resize', () => { if ((innerWidth >= 700) !== wide) { wide = innerWidth >= 700; buildKeys(); } });
+engine.onChange();             // a page just loaded cannot sound yet, whatever the one before it told the server
 connect();
 requestAnimationFrame(frame);
