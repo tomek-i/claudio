@@ -35,7 +35,8 @@ const start = Date.now();
 const page = await context.newPage();
 const file = path.resolve(await page.video().path());
 fs.writeFileSync(INFO, JSON.stringify({ start, file, ready: false }));
-await page.goto(URL, { waitUntil: 'domcontentloaded' });
+// ?takeover: this window is meant to become the sound system, also when a browser tab is it now
+await page.goto(URL + (URL.includes('?') ? '&' : '?') + 'takeover', { waitUntil: 'domcontentloaded' });
 await page.click('#startBtn', { timeout: 15000 });
 for (let i = 0; i < 60; i++) { const hidden = await page.evaluate(() => { const o = document.querySelector('#startOverlay'); return !o || o.hidden || getComputedStyle(o).display === 'none' || getComputedStyle(o).opacity === '0'; }); if (hidden) break; await new Promise((r) => setTimeout(r, 500)); }
 fs.writeFileSync(INFO, JSON.stringify({ start, file, ready: true, pid: process.pid }));

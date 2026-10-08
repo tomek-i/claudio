@@ -6,6 +6,8 @@ sessionStorage.setItem('djClient', clientId);
 
 export let mixer = null;
 export let isEngine = false;
+// the user has been told another page is the sound system and that starting here takes it over: the next start may
+export let takeOver = new URLSearchParams(location.search).has('takeover'); // ?takeover: a tool that is there to take it
 export const tracks = new Map(); // id -> full track (with waveform)
 export const ui = { deckStyle: 'cdj', jogRing: 'large', deckLayout: 'stacked', lowerCollapsed: false, lowerHeight: 0, dockTab: 'library', boothPinned: true, layoutPreset: 'mix', meterStyle: 'bar', hotcues: 'pad', jogHint: 'edge', waveGuard: true, waveInertia: true, waveZoom: 110, touchHoldMs: 300, keys: {} }; // the ui.* settings, kept current by prefs.js
 // what the hand is doing on the waveforms, for the renderer: held = deck -> 'scratch' | 'seek' | 'nudge',
@@ -14,6 +16,7 @@ export const wave = { held: new Map(), preview: new Map(), strip: null };
 export const pointer = { deck: null }; // the deck the pointer was last used on: what the [ ] keys act on
 export const setMixer = (m) => { mixer = m; };
 export const setEngine = (on) => { isEngine = on; };
+export const setTakeOver = (on) => { takeOver = on; };
 
 export const liveBpm = () => { const l = liveDeck(); return l ? l.effBpm : null; };
 export const liveDeck = () => mixer.liveDeck();

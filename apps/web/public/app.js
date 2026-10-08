@@ -3,7 +3,7 @@
 import { Mixer, DECK_COLORS, LOOP_MIN, LOOP_MAX, faderOfMaster } from './engine.js';
 import './ui/extra-decks.js';
 import { $, $$, mmss, post } from './ui/util.js';
-import { clientId, mixer, setMixer, setEngine, liveDeck } from './ui/state.js';
+import { clientId, mixer, takeOver, setMixer, setEngine, setTakeOver, liveDeck } from './ui/state.js';
 import { pushState, setStatus } from './ui/link.js';
 import { wireControls } from './ui/controls.js';
 import { renderKeyChip } from './ui/deck.js';
@@ -16,7 +16,10 @@ import './ui/wave.js';
 import './ui/dragdrop.js';
 
 // ------------------------------------------------------------------ engine start
-$('#startBtn').onclick = async () => {
+// auto: started by the page itself (the desktop app), not by a click. Nobody has been asked anything then, so it
+// never takes the engine from another page: it asks first, as a click does when the user was not told beforehand.
+async function start(auto = false) {
+  const force = takeOver && !auto;
   try {
     if (!mixer) { setMixer(new Mixer()); await mixer.ctx.resume(); await mixer.init(); }
     else await mixer.ctx.resume();
@@ -26,14 +29,28 @@ $('#startBtn').onclick = async () => {
     setMixer(null);
     return;
   }
+  const claim = await post('/api/engine/claim', { client: clientId, force });
+  if (claim.held) {
+    // another page is the sound system: say so, and let the next click be the answer
+    mixer.ctx.suspend();
+    setTakeOver(true);
+    $('#overlayMsg').innerHTML = `Another window is the sound system right now${claim.playing ? ', and <b>music is playing</b> there' : ''}.<br>Taking over stops its sound and moves the decks here, empty.`;
+    $('#startBtn').textContent = 'Take over';
+    $('#startOverlay').classList.remove('hide');
+    document.documentElement.dataset.engine = 'held'; // the desktop app's start-up window reads this
+    return;
+  }
+  setTakeOver(false);
   setEngine(true);
-  await post('/api/engine/claim', { client: clientId });
+  $('#startBtn').textContent = 'Start engine';
+  document.documentElement.dataset.engine = 'live';
   $('#startOverlay').classList.add('hide');
   setStatus('on', 'engine live');
   pushState();
   wireControls();
   requestAnimationFrame(frame);
-};
+}
+$('#startBtn').onclick = () => start();
 
 let lastLive = null, lastSlow = 0;
 // a slider follows the engine except while the pointer holds it (not merely while it has focus: a double-click
@@ -138,4 +155,4 @@ refreshHistory();
 
 // the desktop app (apps/desktop) loads the page with ?desktop: it may start sound without a click, so the engine
 // starts by itself
-if (new URLSearchParams(location.search).has('desktop')) $('#startBtn').click();
+if (new URLSearchParams(location.search).has('desktop')) start(true);

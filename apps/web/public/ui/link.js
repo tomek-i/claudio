@@ -1,5 +1,5 @@
 import { $, post } from './util.js';
-import { clientId, mixer, isEngine, setEngine } from './state.js';
+import { clientId, mixer, isEngine, setEngine, setTakeOver } from './state.js';
 import { handlers } from './commands.js';
 import { loadLibrary, refreshHistory, renderJob, renderStarter } from './crate.js';
 import { addFeed } from './booth.js';
@@ -18,10 +18,27 @@ es.addEventListener('hello', (e) => {
   h.jobs.forEach(renderJob);
   visualsAudience(h.visuals);
   if (h.recording && isEngine) startRecording();
-  // server restarted while we were the engine: quietly re-claim
-  if (isEngine && h.engineId !== clientId) { post('/api/engine/claim', { client: clientId }); setStatus('on', 'engine live'); return; }
-  if (h.engineId && h.engineId !== clientId) $('#overlayMsg').innerHTML = 'Another tab is currently the sound system.<br>Start here to take over.';
+  // server restarted while we were the engine: quietly re-claim (unless another page got there first)
+  if (isEngine && h.engineId !== clientId) {
+    setStatus('on', 'engine live');
+    post('/api/engine/claim', { client: clientId }).then((r) => { if (r.held) lostEngine('Another window became the sound system.<br>Start here to take it back.'); });
+    return;
+  }
+  if (h.engineId && h.engineId !== clientId) $('#overlayMsg').innerHTML = 'Another window is currently the sound system.<br>Start here to take over.';
 });
+// This page was the sound system and no longer is: it goes quiet and offers to take the engine back. The message says
+// what a click does, so that click needs no second question.
+function lostEngine(html) {
+  setEngine(false);
+  for (const d of Object.values(mixer.decks)) d.stop();
+  mixer.ctx.suspend();
+  setTakeOver(true);
+  setStatus('', 'engine offline');
+  document.documentElement.dataset.engine = '';
+  $('#overlayMsg').innerHTML = html;
+  $('#startBtn').textContent = 'Take it back';
+  $('#startOverlay').classList.remove('hide');
+}
 es.addEventListener('log', (e) => {
   const entry = JSON.parse(e.data);
   addFeed(entry);
@@ -52,13 +69,7 @@ let libTimer;
 es.addEventListener('library', () => { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); });
 es.addEventListener('engine', (e) => {
   const { id } = JSON.parse(e.data);
-  if (id !== clientId && isEngine) {
-    setEngine(false);
-    for (const d of Object.values(mixer.decks)) d.stop();
-    mixer.ctx.suspend();
-    $('#overlayMsg').innerHTML = 'The engine moved to another tab.<br>Start here to take it back.';
-    $('#startOverlay').classList.remove('hide');
-  }
+  if (id !== clientId && isEngine) lostEngine('Another window took over as the sound system.<br>Start here to take it back.');
 });
 es.addEventListener('cmd', async (e) => {
   const { id, cmd, args } = JSON.parse(e.data);
