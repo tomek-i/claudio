@@ -99,6 +99,15 @@ test('the beat is saved and comes back after a restart; the MIDI export is a MID
   assert.equal(Buffer.from(await res.arrayBuffer()).subarray(0, 4).toString(), 'MThd');
 });
 
+test('the page says where it plays from, for the banner: a step, 0 when it does not say', async () => {
+  await post('/api/transport', { playing: true, from: 8 });
+  assert.deepEqual({ ...server.store.transport, at: 0 }, { playing: true, at: 0, from: 8 });
+  await post('/api/transport', { playing: true });
+  assert.equal(server.store.transport.from, 0);
+  await post('/api/transport', { playing: false, from: 'x' });
+  assert.deepEqual({ ...server.store.transport, at: 0 }, { playing: false, at: 0, from: 0 });
+});
+
 test('the page is told of every change', async () => {
   const res = await fetch(BASE + '/api/events');
   const reader = res.body.getReader();

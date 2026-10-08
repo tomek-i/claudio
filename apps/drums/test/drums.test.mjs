@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LEVELS, VOICE_IDS } from '../lib/kit.mjs';
-import { MAX_EARLY, hitPos, hitTime, hitsInWindow, stepSeconds, swingDelay } from '../lib/timing.mjs';
+import { MAX_EARLY, beatName, beatSteps, hitPos, hitTime, hitsInWindow, stepSeconds, swingDelay } from '../lib/timing.mjs';
 import { applyOp, emptyPattern, normalizePattern, parseRow, resize, toText } from '../lib/pattern.mjs';
 import { FEELS, continuePattern, humanize, morph, variations } from '../lib/groove.mjs';
 import { PRESETS, preset } from '../lib/presets.mjs';
@@ -36,6 +36,29 @@ test('the window finds each hit once, across the loop point, and early hits at t
   assert.ok(all.some((h) => h.voice === 'kick' && Math.abs(h.pos - 15.8) < 1e-9));
   near(all.find((h) => h.voice === 'hat').pos, 1.25);
   assert.equal(hitsInWindow(p, 0, 100, { lastLoop: 0 }).length, 11);
+});
+
+test('the ruler: a beat every four steps, named bar.beat, with a second bar in a 32-step pattern', () => {
+  assert.deepEqual(beatSteps(16).map(beatName), ['1.1', '1.2', '1.3', '1.4']);
+  assert.deepEqual(beatSteps(32), [0, 4, 8, 12, 16, 20, 24, 28]);
+  assert.deepEqual(beatSteps(32).map(beatName), ['1.1', '1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4']);
+  assert.equal(beatName(11), '1.3');               // any step of a beat has the beat's name
+  assert.equal(beatName(16), '2.1');
+});
+
+test('started on a beat, the steps before it are not played, and the loop comes round whole', () => {
+  let p = beat('kick x...x...x...x...', 'hat ...x...x...x...x');
+  p = applyOp(p, { op: 'step', track: 'hat', step: 7, off: 0.5 });      // late enough to sound inside the window before beat 3
+  p = applyOp(p, { op: 'step', track: 'kick', step: 8, off: -0.3 });    // beat 3's own kick, pulled early: it is played
+  p.swing = 0.5;
+  const from = 8;
+  assert.ok(hitsInWindow(p, from - MAX_EARLY, 16).some((h) => h.step === 7), 'without a start step the late hat is in the window');
+  const first = hitsInWindow(p, from - MAX_EARLY, 16, { firstStep: from });
+  assert.deepEqual(first.map((h) => `${h.voice}${h.step}`), ['kick8', 'hat11', 'kick12', 'hat15']);
+  near(first[0].pos, 7.7);
+  const second = hitsInWindow(p, 16, 32, { firstStep: from });
+  assert.equal(second.length, 8);                  // every hit of the loop after, the ones before beat 3 too
+  assert.deepEqual(hitsInWindow(p, 0, 48), hitsInWindow(p, 0, 48, { firstStep: 0 }));
 });
 
 test('muted rows are silent, and a solo silences the rest', () => {

@@ -7,7 +7,7 @@
 //   GET  /api/export.mid       the playing pattern as MIDI (?loops=4)
 //   POST /api/ask | /api/say   a note from the page to Claude | from Claude to the page
 //   GET  /api/wait?ms=         the notes from the page not handed out yet (long poll)
-//   POST /api/transport        the page saying it started or stopped playing (for the banner's playhead)
+//   POST /api/transport        the page saying it started or stopped playing, and from which step (for the banner's playhead)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -80,9 +80,11 @@ export function createServer({ home = process.env.CL808_HOME || path.join(HERE, 
           const ms = Math.min(MAX_WAIT_MS, Math.max(0, Number(url.searchParams.get('ms')) || 0));
           return send(res, 200, { notes: await store.wait(ms) });
         }
-        case 'POST /api/transport':
-          store.transport = { playing: !!(await readJson(req)).playing, at: Date.now() };
+        case 'POST /api/transport': {
+          const { playing, from } = await readJson(req);
+          store.transport = { playing: !!playing, at: Date.now(), from: Math.max(0, Math.floor(Number(from)) || 0) };
           return send(res, 200, { ok: true });
+        }
         case 'GET /api/export.mid': {
           const loops = Math.min(64, Math.max(1, Math.round(Number(url.searchParams.get('loops')) || 1)));
           const name = store.pattern.name.replace(/[^\w -]/g, '').trim() || 'beat';
@@ -114,8 +116,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // the banner's strip: the bar being played and the step the page's playhead is on, while a page is open and playing
   const live = () => {
     const p = store.pattern;
-    const pos = store.transport.playing && store.listeners.size ? ((Date.now() - store.transport.at) / 1000 - 0.08) / stepSeconds(p.bpm) : -1;
-    const step = pos < 0 ? -1 : Math.floor(pos) % p.steps;
+    const since = store.transport.playing && store.listeners.size ? (Date.now() - store.transport.at) / 1000 - 0.08 : -1;
+    const step = since < 0 ? -1 : Math.floor(store.transport.from + since / stepSeconds(p.bpm)) % p.steps;
     return { lanes: lanesOf(p, step >= 16 ? 1 : 0), head: step < 0 ? -1 : step % 16 };
   };
   server.listen(port, '127.0.0.1', () => {
