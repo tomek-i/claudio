@@ -336,7 +336,7 @@ async function handleCmd({ cmd, args = {}, why, source = 'cli' }) {
     args.track = { ...library.summary(t), hotcues: cues.view(t).hotcues, waveform: t.waveform, url: `/audio/${t.id}` };
   }
   if (cmd === 'mix') lastMix = { ts: Date.now(), args: { ...args, track: args.track?.id }, source };
-  if (why) addLog('claude', why);
+  if (why) addLog(source === 'autodj' ? 'system' : 'claude', why); // Auto-DJ is the server's own rules, not Claude
   addLog('action', describe(cmd, args));
   const sentAt = Date.now();
   const r = await forward(cmd, args, cmd === 'load' || cmd === 'mix' ? 60000 : 15000);

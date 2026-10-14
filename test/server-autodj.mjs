@@ -38,7 +38,9 @@ test('auto-DJ cues the queued track, then mixes when untilMixOut/remaining runs 
   assert.equal(mix.args.bars, 8);
   assert.equal(mix.args.in, next.breakdowns?.length ? 'drop' : 'mixin');
   const log = await api(sc.base, '/api/log?n=60');
-  assert.ok(log.some((e) => /^🤖 Auto-DJ: .*bassswap 8 bars/.test(e.text)), 'booth line');
+  const lines = log.filter((e) => /^🤖 Auto-DJ: .*bassswap 8 bars/.test(e.text));
+  assert.equal(lines.length, 1, 'one booth line for the mix');
+  assert.ok(log.filter((e) => e.text.startsWith('🤖 Auto-DJ')).every((e) => e.kind === 'system'), 'Auto-DJ lines are not shown as Claude');
   const st = await cli(sc, ['status']);
   assert.match(st.out, /AUTO\s+auto-DJ on/);
 });

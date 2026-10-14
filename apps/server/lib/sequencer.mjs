@@ -283,7 +283,6 @@ export class Sequencer {
       const mixSec = c.bars * barSec;
       const at = rem > mixSec + 8 * barSec + 3 ? 'phrase' : 'bar';
       const why = `🤖 Auto-DJ: ${ld.title} → ${t.title}: ${c.style} ${c.bars} bar${c.bars > 1 ? 's' : ''}${c.in !== 'mixin' ? ' --in ' + c.in : ''} @${at} (tempo gap ${c.gap.toFixed(1)}%, keys ${c.keys}, ${Math.round(rem)}s left, nothing planned)`;
-      this.ctx.addLog('system', why);
       const r = await this.ctx.runCmd({ cmd: 'mix', args: { from: live, to: deck, style: c.style, bars: c.bars, at, in: c.in, glide: true }, why, source: 'autodj' });
       A.last = { ts: Date.now(), from: live, to: deck, track: t.id, ...c, at, ok: r.ok !== false, error: r.error };
       A.prepared = null;
