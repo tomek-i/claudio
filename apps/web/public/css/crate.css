@@ -1,7 +1,7 @@
 /* ---------- the bottom panel: a bar of tabs, the open tab under it, the booth pinned beside it or a tab itself ---------- */
 .lower { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1px; background: var(--line); flex: 1 0 300px; min-height: 300px; }
 body.booth-pinned:not([data-dock="booth"]) .lower { grid-template-columns: minmax(0, 1fr) 380px; }
-body:not([data-dock="library"]) .lower > .crate, body:not([data-dock="sampler"]) .lower > .keys, body:not(.booth-pinned):not([data-dock="booth"]) .lower > .booth { display: none; }
+body:not([data-dock="library"]) .lower > .crate, body:not([data-dock="sampler"]) .lower > .keys, body:not([data-dock="automation"]) .lower > .lanes, body:not(.booth-pinned):not([data-dock="booth"]) .lower > .booth { display: none; }
 .lowerbar { flex: none; display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 10px 0 8px; background: var(--panel2); border-block: 1px solid var(--line); cursor: row-resize; touch-action: none; user-select: none; font: 11px var(--mono); color: var(--dim); }
 .lowerbar button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .lowerbar button:hover { color: var(--text); }
@@ -89,8 +89,8 @@ body[data-layout="stacked"] .lower { flex: 1 1 300px; min-height: 300px; }
 .setauto { flex-wrap: wrap; row-gap: 4px; }
 .setauto .qadd { flex: 1 1 0; white-space: nowrap; }
 .setauto .qadd:disabled { color: var(--faint); border-color: var(--line); opacity: 0.5; cursor: default; }
-#autoRec.on { color: #ff5a5a; border-color: #ff5a5a; opacity: 1; animation: recblink 1.2s steps(2, start) infinite; }
-#autoPlay.on { color: var(--ok); border-color: var(--ok); opacity: 1; }
+[data-a="rec"].on { color: #ff5a5a; border-color: #ff5a5a; opacity: 1; animation: recblink 1.2s steps(2, start) infinite; }
+[data-a="play"].on, [data-a="export"].on { color: var(--ok); border-color: var(--ok); opacity: 1; }
 @keyframes recblink { to { opacity: 0.45; } }
 .setauto small { flex-basis: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--faint); font: 10px var(--mono); }
 .setrow select, .setform input { flex: 1 1 0; min-width: 0; height: 24px; padding: 0 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font: 12px var(--sans); }
@@ -173,4 +173,5 @@ tr.loaded td.name { color: var(--claude); }
 .starter { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .starter .btn { background: var(--a); border-color: var(--a); color: #000; }
 .starter .btn:disabled { opacity: 0.5; cursor: default; }
-.starter small { font-size: 11px; color: var(--faint); }@media (prefers-reduced-motion: reduce) { #autoRec.on { animation: none; } }
+.starter small { font-size: 11px; color: var(--faint); }
+@media (prefers-reduced-motion: reduce) { [data-a="rec"].on { animation: none; } }

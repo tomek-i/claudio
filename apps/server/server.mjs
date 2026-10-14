@@ -20,6 +20,7 @@ import { banner } from './lib/banner.mjs';
 import { reveal, isLocal, REVEALS } from './lib/reveal.mjs';
 import { starterTracks, downloadStarter } from './lib/starter.mjs';
 import { advanceSet } from './lib/set-clock.mjs';
+import { exportSession } from './lib/export.mjs';
 import { timeOfBar, beatOfTime, timeOfBeat, deckEffectiveCamelot, effBpm } from './lib/music.mjs';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
@@ -324,7 +325,7 @@ function describe(cmd, a) {
   switch (cmd) {
     case 'load': return `Load ${a.track?.artist ? a.track.artist + ' - ' : ''}${a.track?.title} → deck ${a.deck}`;
     case 'mix': return `Mix ${a.from}→${a.to}: ${a.style || 'blend'}${a.bars != null ? ', ' + a.bars + ' bars' : ''}${a.at ? ' @' + a.at : ''}`;
-    case 'automation': return `Automation ${{ record: '⏺ record', play: '▶ play', overdub: '⏺ record over', stop: '■ stop' }[a.op] || a.op}${a.set ? ` (set "${a.set}")` : ''}`;
+    case 'automation': return `Automation ${{ record: '⏺ record', play: '▶ play', overdub: '⏺ record over', stop: '■ stop', export: '⤓ export' }[a.op] || a.op}${a.set ? ` (set "${a.set}")` : ''}`;
     default: return `${cmd} ${Object.entries(a || {}).filter(([k]) => k !== 'track').map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' ')}`;
   }
 }
@@ -784,13 +785,27 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/state') return send(res, 200, liveState());
     if (p === '/api/record/start' && req.method === 'POST') { const b = await readBody(req); return send(res, 200, startSession(b)); }
     if (p === '/api/record/stop' && req.method === 'POST') return send(res, 200, (await stopSession()) || { error: 'not recording' });
+    // a recorded session as a mix file + tracklist in .dj/exports (dj export does it from the CLI); from / to (wall ms)
+    // and name: a set's export (ui/automation.js), from its recording's 0:00 to its end, named after the set
+    if (p === '/api/export' && req.method === 'POST') {
+      const b = await readBody(req);
+      const id = String(b.session || '');
+      if (!/^[\w-]+$/.test(id) || !fs.existsSync(path.join(SESS_ROOT, id, 'session.json'))) return send(res, 200, { ok: false, error: `no recorded session "${id}"` });
+      const name = b.name ? String(b.name).replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || null : null;
+      try {
+        const r = await exportSession(path.join(SESS_ROOT, id), { format: b.format === 'm4a' ? 'm4a' : 'mp3', outDir: path.join(DJ_DIR, 'exports'), libraryFile: path.join(DJ_DIR, 'library.json'),
+          from: Number.isFinite(b.from) ? b.from : null, to: Number.isFinite(b.to) ? b.to : null, name });
+        addLog('action', `⤓ Exported${name ? ` "${name}"` : ''}: .dj/exports/${path.basename(r.audio)} (${mmssOf(r.duration)}, ${r.tracks.length} track${r.tracks.length === 1 ? '' : 's'})`);
+        return send(res, 200, { ok: true, ...r });
+      } catch (e) { addLog('system', `⚠ Export failed: ${e.message}`); return send(res, 200, { ok: false, error: e.message }); }
+    }
     if (p === '/api/record') return send(res, 200, session ? session.info : { recording: false });
     if (p === '/api/telemetry' && req.method === 'POST') { const b = await readBody(req); for (const x of b.samples || []) sessionLog('telemetry.jsonl', x); return send(res, 200, { ok: true }); }
     if (p === '/api/record/chunk' && req.method === 'POST') {
       if (!session) { req.resume(); return send(res, 200, { ok: false }); }
       const chunks = []; for await (const c of req) chunks.push(c);
       fs.appendFileSync(path.join(session.dir, 'engine-audio.webm'), Buffer.concat(chunks));
-      sessionLog('audio-chunks.jsonl', { ts: Number(q.t), seq: Number(q.seq), bytes: chunks.reduce((a, c) => a + c.length, 0) });
+      sessionLog('audio-chunks.jsonl', { ts: Number(q.t), seq: Number(q.seq), bytes: chunks.reduce((a, c) => a + c.length, 0), ...(Number(q.s) ? { start: Number(q.s) } : {}) });
       return send(res, 200, { ok: true });
     }
     if (p === '/api/cmd' && req.method === 'POST') return send(res, 200, await handleCmd(await readBody(req)));
@@ -1019,6 +1034,7 @@ const server = http.createServer(async (req, res) => {
       const b = await readBody(req);
       if (!isLocal(req.socket.remoteAddress)) return send(res, 403, { ok: false, error: 'only a page on the machine the server runs on can open windows there' });
       if (!REVEALS.includes(b.what)) return send(res, 400, { ok: false, error: `what: one of ${REVEALS.join(', ')}` });
+      if (b.what === 'exports') fs.mkdirSync(path.join(DJ_DIR, 'exports'), { recursive: true });
       return send(res, 200, await reveal(b.what, ROOT));
     }
     if (p === '/api/folder') return send(res, 200, { root: ROOT, local: isLocal(req.socket.remoteAddress) });

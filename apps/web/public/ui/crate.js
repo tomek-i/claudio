@@ -3,6 +3,7 @@ import { $, $$, mmss, camelotColor, compatible, post, esc } from './util.js';
 import { mixer, liveDeck } from './state.js';
 import { requestLoad } from './loader.js';
 import { addFeed } from './booth.js';
+import { ask, wireTransport, setActiveSet } from './automation-ui.js';
 
 // ------------------------------------------------------------------ crate
 let library = [], libStatus = '';
@@ -151,7 +152,7 @@ export async function refreshSets() {
   $('#setDecks').hidden = !activeSet;
   const snap = activeSet?.snapshot;
   $('#setOpen').disabled = !snap;
-  showAutomation();
+  setActiveSet(activeSet);
   $('#setSaved').textContent = snap ? `decks ${Object.keys(snap.decks).join(' ')} saved ${new Date(snap.savedAt).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'no decks saved in this set';
   $('#setSaved').title = snap ? `Saved ${new Date(snap.savedAt).toLocaleString()}: ${Object.entries(snap.decks).map(([n, d]) => `${n} ${d.title}`).join(', ')}` : '';
   $('#setBox').classList.toggle('on', !!activeSet);
@@ -198,23 +199,7 @@ $('#setSave').onclick = async () => {
   if (!r.ok) addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${r.error}` });
   refreshSets();
 };
-// a question in the set panel: resolves with the chosen value, or null (Cancel, or no answer in 8 s)
-function ask(text, choices) {
-  const box = $('#setConfirm'), row = $('.choices', box);
-  $('span', box).textContent = text;
-  row.innerHTML = '';
-  box.hidden = false;
-  return new Promise((resolve) => {
-    const done = (v) => { clearTimeout(timer); box.hidden = true; resolve(v); };
-    const timer = setTimeout(() => done(null), 8000);
-    for (const [label, value] of [...choices, ['Cancel', null]]) {
-      const b = Object.assign(document.createElement('button'), { className: 'btn sm', textContent: label });
-      b.onclick = () => done(value);
-      row.append(b);
-    }
-  });
-}
-const confirmOpen = async (text) => (await ask(text, [['Load', true]])) === true;
+const confirmOpen = async (text) => (await ask($('#setConfirm'), text, [['Load', true]])) === true;
 $('#setOpen').onclick = async () => {
   if (!activeSet?.snapshot) return;
   const open = (force) => post('/api/sets', { action: 'open', name: activeSet.name, force }).catch(() => ({ ok: false, error: 'the server did not answer' }));
@@ -225,48 +210,9 @@ $('#setOpen').onclick = async () => {
     if (!r.ok && !r.playing) addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${r.error}` });
   } finally { refreshSets(); }
 };
-// ---- automation (ui/automation.js, through mixer.automation once the engine runs): ● rec · ▶ play · ■ stop
-const automationOf = () => mixer?.automation || null;
-const warn = (text) => addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${text}` });
-let autoTimer = null;
-function showAutomation() {
-  const A = automationOf(), st = A?.state() || { mode: 'idle' }, rec = activeSet?.automation;
-  $('#setAuto').hidden = !activeSet;
-  if (!activeSet) return;
-  const on = st.mode !== 'idle';
-  $('#autoRec').disabled = !A || st.mode === 'rec' || st.mode === 'overdub';
-  $('#autoRec').classList.toggle('on', st.mode === 'rec' || st.mode === 'overdub');
-  $('#autoPlay').disabled = !A || on || !rec;
-  $('#autoPlay').classList.toggle('on', st.mode === 'play' || st.mode === 'overdub');
-  $('#autoStop').disabled = !on;
-  $('#autoInfo').textContent = st.mode === 'rec' ? `⏺ recording ${mmss(st.t)}`
-    : st.mode === 'overdub' ? `⏺ recording over ${mmss(st.t)} / ${mmss(st.duration || 0)}`
-      : st.mode === 'play' ? `▶ ${mmss(st.t)} / ${mmss(st.duration || 0)}`
-        : rec ? `recording ${mmss(rec.duration)} · ${rec.lanes.length} lane${rec.lanes.length === 1 ? '' : 's'}` : 'no recording';
-  $('#autoInfo').title = rec && !on ? `Lanes: ${rec.lanes.join(', ')}` : '';
-  if (on && !autoTimer) autoTimer = setInterval(showAutomation, 250);
-  if (!on && autoTimer) { clearInterval(autoTimer); autoTimer = null; }
-}
-document.addEventListener('automation', () => { showAutomation(); if (automationOf()?.mode === 'idle') refreshSets(); });
-const playingDecks = () => Object.values(mixer?.decks || {}).filter((d) => d.isLive()).map((d) => d.name);
-$('#autoRec').onclick = async () => {
-  const A = automationOf(); if (!A || !activeSet) return;
-  try {
-    if (A.mode === 'play') return A.punchIn();
-    const rec = activeSet.automation;
-    if (!rec) return await A.record(activeSet.name);
-    const how = await ask(`"${activeSet.name}" has a recording (${mmss(rec.duration)}). Record over it: it plays, and a control you touch is replaced from then on. Or start a new one from the decks as they are now.`, [['Record over', 'over'], ['New recording', 'new']]);
-    if (how === 'over') await A.play(activeSet.name, { over: true });
-    else if (how === 'new') await A.record(activeSet.name, { replace: true });
-  } catch (err) { warn(err.message); }
-};
-$('#autoPlay').onclick = async () => {
-  const A = automationOf(); if (!A || !activeSet?.automation) return;
-  const live = playingDecks();
-  if (live.length && !(await ask(`Deck ${live.join(' and ')} ${live.length > 1 ? 'are' : 'is'} playing. Playing the recording puts the set's decks back first, which stops ${live.length > 1 ? 'them' : 'it'}.`, [['Play', true]]))) return;
-  try { await A.play(activeSet.name); } catch (err) { warn(err.message); }
-};
-$('#autoStop').onclick = async () => { try { await automationOf()?.stop(); } catch (err) { warn(err.message); } };
+// ---- automation: ● rec · ▶ play · ■ stop in the Set block (ui/automation-ui.js; the Automation tab has the same)
+wireTransport($('#setAuto'), $('#setConfirm'));
+document.addEventListener('automation', () => { if (mixer?.automation?.mode === 'idle') refreshSets(); });
 document.addEventListener('set:drop', async (e) => {
   if (!activeSet || setIds.includes(e.detail.id)) return;
   await post('/api/sets', { action: 'add', name: activeSet.name, tracks: [e.detail.id], at: e.detail.at }).catch(() => {});

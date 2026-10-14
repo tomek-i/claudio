@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import path from 'node:path';
 import { isLocal, reveal, revealCommand } from '../apps/server/lib/reveal.mjs';
 
 const WIN = 'C:\\Users\\Ann\\Documents\\DJ Claude', NIX = '/home/ann/DJ Claude';
@@ -11,6 +12,10 @@ test('revealCommand: the folder in the file manager of each platform', () => {
   assert.deepEqual(revealCommand('folder', WIN, 'win32'), ['explorer.exe', [WIN]]);
   assert.deepEqual(revealCommand('folder', NIX, 'darwin'), ['open', [NIX]]);
   assert.deepEqual(revealCommand('folder', NIX, 'linux'), ['xdg-open', [NIX]]);
+});
+
+test('revealCommand: the exports (mixes and sets exported) are .dj/exports in the folder', () => {
+  assert.deepEqual(revealCommand('exports', NIX, 'linux'), ['xdg-open', [path.join(NIX, '.dj', 'exports')]]);
 });
 
 test('revealCommand: Claude Code in a terminal that starts in the folder; the path is one argument, never spliced into a shell line', () => {

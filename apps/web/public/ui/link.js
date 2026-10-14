@@ -111,7 +111,11 @@ function startRecording() {
   const dest = mixer.ctx.createMediaStreamDestination();
   mixer.out.connect(dest);
   const mr = new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 });
-  mr.ondataavailable = (ev) => { if (ev.data.size) fetch('/api/record/chunk?seq=' + (recSeq++) + '&t=' + Date.now(), { method: 'POST', body: ev.data }).catch(() => {}); };
+  // s: when this recorder started (wall ms). Opus packs silence into almost nothing, so bytes say little about time;
+  // the export (lib/export.mjs) times a continuous recording from its start instead
+  let started = Date.now();
+  mr.onstart = () => { started = Date.now(); };
+  mr.ondataavailable = (ev) => { if (ev.data.size) fetch('/api/record/chunk?seq=' + (recSeq++) + '&t=' + Date.now() + '&s=' + started, { method: 'POST', body: ev.data }).catch(() => {}); };
   mr.start(1000);
   rec = { mr, dest };
   telemTimer = setInterval(() => {

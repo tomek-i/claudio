@@ -180,13 +180,14 @@ export const handlers = {
 
   perform({ steps, at = 'bar', ref }) { return mixer.perform({ steps, at, ref }); },
   // ---- automation (ui/automation.js): record the set's decks from 0:00, play it back, record over it
-  async automation({ op = 'status', set, replace }) {
+  async automation({ op = 'status', set, replace, format }) {
     const A = mixer.automation;
     if (op === 'record') {
       if (A.mode === 'play') A.punchIn();
       else if (A.mode === 'idle') { if (!set) throw new Error('no active set: choose one (dj sets use "<name>")'); await A.record(set, { replace: !!replace }); }
     } else if (op === 'overdub') { if (!set) throw new Error('no active set'); await A.play(set, { over: true }); }
     else if (op === 'play') { if (!set) throw new Error('no active set'); await A.play(set); }
+    else if (op === 'export') { if (!set) throw new Error('no active set'); await A.exportSet(set, { format }); }
     else if (op === 'stop') { const stopped = await A.stop(); return { ...A.state(), stopped }; }
     return A.state();
   },

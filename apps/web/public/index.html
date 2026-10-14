@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/booth.css">
 <link rel="stylesheet" href="css/mixer.css">
 <link rel="stylesheet" href="css/keys.css">
+<link rel="stylesheet" href="css/lanes.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body data-layout="stacked" data-hotcues="pad">
@@ -163,6 +164,7 @@
   <div class="tabs" role="tablist" aria-label="Bottom panel">
     <button class="tab" role="tab" data-tab="library" title="The library and the queue">Library <span id="lbCount"></span></button>
     <button class="tab" role="tab" data-tab="sampler">Sampler &amp; keys</button>
+    <button class="tab" role="tab" data-tab="automation" title="The active set's automation: a lane per control along the set's time, to see and change what was recorded">Automation</button>
     <button class="tab" role="tab" data-tab="booth" id="boothTab" title="The booth: Claude's decisions, live, and requests to Claude">Booth</button>
   </div>
   <span class="lb-jobs" id="lbJobs"></span>
@@ -224,10 +226,10 @@
         <small id="setSaved"></small>
       </div>
       <div class="setrow setauto" id="setAuto" hidden title="Automation: record everything done on the decks and the mixer from the set's 0:00, and play it back">
-        <button id="autoRec" class="qadd" title="Record: from the decks as they are now. While the recording plays: record over it from here (a control you touch is replaced, the rest plays on)">● rec</button>
-        <button id="autoPlay" class="qadd" title="Put the set's decks back and play its recording from 0:00">▶ play</button>
-        <button id="autoStop" class="qadd" title="Stop recording or playing (the music carries on); a recording is kept in the set">■ stop</button>
-        <small id="autoInfo"></small>
+        <button id="autoRec" data-a="rec" class="qadd" title="Record: from the decks as they are now. While the recording plays: record over it from here (a control you touch is replaced, the rest plays on)">● rec</button>
+        <button id="autoPlay" data-a="play" class="qadd" title="Put the set's decks back and play its recording from 0:00">▶ play</button>
+        <button id="autoStop" data-a="stop" class="qadd" title="Stop recording or playing (the music carries on); a recording is kept in the set">■ stop</button>
+        <small id="autoInfo" data-a="info"></small>
       </div>
       <div class="setconfirm" id="setConfirm" hidden><span></span><div class="choices"></div></div>
       <form id="setForm" class="setform" hidden><input id="setName" maxlength="80" placeholder="Name of the set" aria-label="Name of the new set" autocomplete="off"><button class="qadd">make</button></form>
@@ -239,6 +241,34 @@
   <section class="keys" id="keys">
     <div class="pads" id="pads" title="Sampler"></div>
     <div class="keys-main" id="keysMain" title="Chop keyboard: grab a beat from a deck, play it from the keyboard, record a loop"></div>
+  </section>
+
+  <!-- the active set's automation: a lane per control along the set's time (ui/lanes.js) -->
+  <section class="lanes" id="lanes" aria-label="Automation">
+    <div class="ln-head">
+      <div class="ln-set"><b id="lnSet">No set</b><small id="lnSub"></small></div>
+      <div class="ln-transport" id="lnTransport">
+        <button data-a="rec" class="btn sm" title="Record: from the decks as they are now. While the recording plays: record over it from here">● rec</button>
+        <button data-a="play" class="btn sm" title="Put the set's decks back and play its recording from 0:00">▶ play</button>
+        <button data-a="stop" class="btn sm" title="Stop recording or playing (the music carries on)">■ stop</button>
+        <button data-a="export" class="btn sm" title="Export the set: its recording played from 0:00 in real time and saved as an MP3 with a tracklist">⤓ export</button>
+        <small data-a="info"></small>
+      </div>
+      <div class="ln-tools">
+        <select id="lnAdd" title="Add a lane for a control that has none yet, then double-click in it to add a point"><option value="">+ lane</option></select>
+        <span class="ln-zoom" role="group" aria-label="Zoom"><button id="lnOut" class="btn sm" title="Zoom out (Ctrl + wheel)">−</button><button id="lnFit" class="btn sm" title="The whole recording">fit</button><button id="lnIn" class="btn sm" title="Zoom in (Ctrl + wheel)">+</button></span>
+        <button id="lnUndo" class="btn sm" title="Undo the last change (Ctrl+Z)" disabled>undo</button>
+        <button id="lnRevert" class="btn sm" title="Drop the changes: back to the saved recording" disabled>revert</button>
+        <button id="lnSave" class="btn sm" title="Save the changes in the set (Ctrl+S)" disabled>save</button>
+        <button id="lnExports" class="btn sm" title="Open the folder with the exported sets and mixes">exports ↗</button>
+      </div>
+    </div>
+    <div class="setconfirm" id="lnConfirm" hidden><span></span><div class="choices"></div></div>
+    <div class="ln-body" id="lnBody">
+      <div class="ln-names" id="lnNames"></div>
+      <div class="ln-scroll" id="lnScroll"><div class="ln-spacer" id="lnSpacer"></div><canvas id="lnCanvas"></canvas></div>
+    </div>
+    <p class="ln-empty" id="lnEmpty"></p>
   </section>
 
   <aside class="booth">
