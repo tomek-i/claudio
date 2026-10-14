@@ -97,5 +97,7 @@ when you press **save** (Ctrl+S); **undo** (Ctrl+Z) and **revert** go back. Ctrl
 **⤓ export** (or `dj automation export [--format m4a]`) makes the set a mix file: the recording plays from 0:00 in real
 time while the flight recorder records the master, then exactly 0:00 to its end is saved as
 `.dj/exports/<set>.mp3` with a tracklist (`.txt`) and a cue sheet (`.cue`); "exports ↗" opens that folder. It takes
-as long as the set: the decks are the export's while it runs, and stopping it before the end makes no file. The **mix monitor** flags vocal
+as long as the set: the decks are the export's while it runs, and stopping it before the end makes no file. It asks
+whether to export **silently**: the speakers are off until it is done (`dj automation export` does that unless given
+`--listen`), while the recording, the meters and the visuals still get the master as it is. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.

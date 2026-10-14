@@ -173,3 +173,16 @@ test('a transition (mix) and scratching come back as they were done, not re-run'
   for (const k of ['A.playing', 'B.playing', 'A.low', 'B.low', 'A.vol', 'B.vol', 'xfader']) assert.equal(typeof got[k] === 'number' ? +got[k].toFixed(3) : got[k], typeof want[k] === 'number' ? +want[k].toFixed(3) : want[k], `after the mix: ${k}`);
   near(got['B.pos'], want['B.pos'], 0.02, 'B after the scratches (a hand scratch follows the hand messages as they came)');
 });
+
+test('speakers off (a silent export): what the computer plays goes quiet, the master everything else hears does not', async () => {
+  const m = await rig({});
+  assert.ok(m.out.outs.has(m.speakers) && m.speakers.outs.has(m.ctx.destination), 'master → speakers → the sound card');
+  assert.ok(m.out.outs.has(m.analyser), 'the meters (and the recorder and the visuals, which tap the same) hear the master, not the speakers');
+  assert.ok(!m.speakers.outs.has(m.analyser));
+  m.setSpeakers(false); render(0.2);
+  assert.equal(m.speakers.gain.value, 0, 'off after a short fade');
+  assert.equal(m.state().master.speakers, false, 'and the state says so');
+  m.setSpeakers(true); render(0.2);
+  assert.equal(m.speakers.gain.value, 1);
+  assert.equal('speakers' in m.state().master, false);
+});
