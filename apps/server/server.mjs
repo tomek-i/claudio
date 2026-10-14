@@ -646,7 +646,21 @@ async function setAction(b) {
       for (const f of failed) addLog('system', `⚠ Set "${st.name}": ${f.cmd} on deck ${f.args.deck ?? '—'} failed: ${f.error}`);
       return { set: setDetail(st), restored: true, decks: loaded, missing, failed };
     }
-    default: throw new Error(`unknown action "${b.action}" (create, add, remove, move, options, delete, use, save, open)`);
+    case 'rename': {
+      if (!String(b.to ?? '').trim()) throw new Error('rename needs "to": the new name');
+      const was = sets.get(name);
+      if (!was) throw new Error(`no set called "${name}"`);
+      const st = sets.rename(name, b.to);
+      if (sequencer.set?.name === was.name) sequencer.useSet(st, { played: sequencer.set.played }); // the active one keeps going under its new name
+      addLog('action', `🗂 Renamed the set "${was.name}" to "${st.name}"`);
+      return { set: setDetail(st) };
+    }
+    case 'duplicate': {
+      const st = sets.duplicate(name, b.to);
+      addLog('action', `🗂 Copied the set "${name}" as "${st.name}"`);
+      return { set: setDetail(st) };
+    }
+    default: throw new Error(`unknown action "${b.action}" (create, add, remove, move, options, delete, use, save, open, rename, duplicate)`);
   }
 }
 
@@ -895,7 +909,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/api/sets') {
       if (q.name) { const st = sets.get(q.name); return st ? send(res, 200, setDetail(st)) : send(res, 404, { ok: false, error: `no set called "${q.name}"` }); }
-      return send(res, 200, { sets: sets.list().map(({ tracks, snapshot, automation, ...st }) => ({ ...st, tracks: tracks.length, ...(snapshot ? { saved: { at: snapshot.savedAt, decks: Object.keys(snapshot.decks) } } : {}), ...(automation ? { automation: { duration: automation.duration, lanes: automation.lanes.length } } : {}) })), active: sequencer.setView() });
+      return send(res, 200, { sets: sets.list().map(({ tracks, snapshot, automation, ...st }) => ({ ...st, tracks: tracks.length, duration: Math.round(tracks.reduce((a, t) => a + (library.tracks.get(t.id)?.duration || 0), 0)), ...(snapshot ? { saved: { at: snapshot.savedAt, decks: Object.keys(snapshot.decks) } } : {}), ...(automation ? { automation: { duration: automation.duration, lanes: automation.lanes.length } } : {}) })), active: sequencer.setView() });
     }
     if (p === '/api/autodj' && req.method === 'POST') {
       const b = await readBody(req);

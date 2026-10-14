@@ -58,7 +58,9 @@ test('in order: Auto-DJ cues the set\'s next track, not the best fit from the li
   assert.ok(load, 'Auto-DJ loaded a track');
   assert.equal(load.args.deck, 'B');
   assert.equal(load.args.track.id, far.id, 'the first track of the set, though "second" fits better');
-  const s = await api(sc.base, '/api/state');
+  // Auto-DJ notes what it cued once the engine has said the load is done: a moment after the command went out
+  const s = await waitUntil(async () => { const x = await api(sc.base, '/api/state'); return x.autoDJ.prepared && x; }, 3000);
+  assert.ok(s, 'Auto-DJ notes the track it cued');
   assert.equal(s.activeSet.name, 'Warm Up');
   assert.match(s.autoDJ.prepared.why, /next in the set "Warm Up"/);
 });
@@ -211,4 +213,25 @@ test('a set keeps one automation recording beside it; Auto-DJ and the plan wait 
   assert.ok(!fs.existsSync(path.join(sc.dir, 'sets', 'friday.automation.json')));
   assert.equal((await api(sc.base, '/api/sets?name=Friday')).automation, undefined);
   assert.equal((await api(sc.base, '/api/sets/automation?name=Friday')).ok, false);
+});
+
+test('rename and duplicate: the files (and the recording) move or are copied; the active set keeps going under its new name', async () => {
+  let r = await sets({ action: 'create', name: 'Late', tracks: [main.id, second.id], use: true });
+  assert.equal(r.ok, true, r.error);
+  await api(sc.base, '/api/sets/automation', { name: 'Late', take: { version: 1, duration: 5, entries: [{ at: 1, g: 'A.vol', k: 'set', id: 'A.vol', v: 0.5 }] } });
+  const dir = path.join(sc.dir, 'sets');
+  r = await sets({ action: 'rename', name: 'Late', to: 'Late night' });
+  assert.equal(r.ok, true, r.error);
+  assert.ok(fs.existsSync(path.join(dir, 'late-night.json')) && fs.existsSync(path.join(dir, 'late-night.automation.json')));
+  assert.ok(!fs.existsSync(path.join(dir, 'late.json')) && !fs.existsSync(path.join(dir, 'late.automation.json')));
+  assert.equal((await api(sc.base, '/api/state')).activeSet.name, 'Late night');
+  assert.equal((await sets({ action: 'rename', name: 'Late night', to: 'Friday' })).ok, false, 'not onto another set');
+  r = await sets({ action: 'duplicate', name: 'Late night' });
+  assert.equal(r.set.name, 'Late night copy');
+  assert.deepEqual(r.set.tracks.map((t) => t.id), [main.id, second.id]);
+  assert.ok(fs.existsSync(path.join(dir, 'late-night-copy.automation.json')), 'the recording comes with it');
+  assert.equal((await sets({ action: 'duplicate', name: 'Late night' })).set.name, 'Late night copy 2');
+  const list = (await api(sc.base, '/api/sets')).sets.find((s) => s.name === 'Late night');
+  assert.equal(list.duration, Math.round(main.duration + second.duration), 'the length of its tracks');
+  for (const n of ['Late night', 'Late night copy', 'Late night copy 2']) await sets({ action: 'delete', name: n });
 });

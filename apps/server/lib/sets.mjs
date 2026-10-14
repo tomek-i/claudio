@@ -114,6 +114,31 @@ export class SetStore {
     const copy = structuredClone(s);
     return this.save(fn(copy) || copy);
   }
+  // another name: the file (and its recording) move with it; `to` must not be taken by another set
+  rename(name, to) {
+    const s = this.get(name);
+    if (!s) throw new Error(`no set called "${name}"`);
+    const taken = this.get(to);
+    if (taken && this.file(to) !== this.file(name)) throw new Error(`there is already a set called "${taken.name}"`);
+    const rec = this.automationFile(name), had = fs.existsSync(rec);
+    const out = this.save({ ...s, name: to });
+    if (this.file(to) !== this.file(name)) {
+      if (had) fs.renameSync(rec, this.automationFile(to));
+      fs.rmSync(this.file(name), { force: true });
+    }
+    return out;
+  }
+  // a copy with everything in it (tracks, options, decks, recording) under a free name ("<name> copy", "<name> copy 2"…)
+  duplicate(name, to) {
+    const s = this.get(name);
+    if (!s) throw new Error(`no set called "${name}"`);
+    let n = to || `${s.name} copy`;
+    for (let i = 2; !to && this.get(n); i++) n = `${s.name} copy ${i}`;
+    if (this.get(n)) throw new Error(`there is already a set called "${this.get(n).name}"`);
+    const out = this.save({ ...structuredClone(s), name: n, created: Date.now() });
+    if (fs.existsSync(this.automationFile(name))) fs.copyFileSync(this.automationFile(name), this.automationFile(n));
+    return out;
+  }
   remove(name) {
     const f = this.file(name); if (!fs.existsSync(f)) return false;
     fs.unlinkSync(f); fs.rmSync(this.automationFile(name), { force: true });
