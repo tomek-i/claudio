@@ -27,6 +27,7 @@ export function normalise(s) {
     created: Number(s.created) || Date.now(),
     updated: Number(s.updated) || Date.now(),
     ...(s.snapshot?.decks ? { snapshot: s.snapshot } : {}),
+    ...(s.automation?.duration != null ? { automation: s.automation } : {}),
   };
 }
 
@@ -90,7 +91,7 @@ export class SetStore {
   read(f) { try { return normalise(JSON.parse(fs.readFileSync(f, 'utf8'))); } catch { return null; } }
   list() {
     if (!fs.existsSync(this.dir)) return [];
-    return fs.readdirSync(this.dir).filter((f) => f.endsWith('.json')).map((f) => this.read(path.join(this.dir, f))).filter(Boolean)
+    return fs.readdirSync(this.dir).filter((f) => f.endsWith('.json') && !f.endsWith('.automation.json')).map((f) => this.read(path.join(this.dir, f))).filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name));
   }
   get(name) { const f = this.file(name); return fs.existsSync(f) ? this.read(f) : null; }
@@ -113,5 +114,27 @@ export class SetStore {
     const copy = structuredClone(s);
     return this.save(fn(copy) || copy);
   }
-  remove(name) { const f = this.file(name); if (!fs.existsSync(f)) return false; fs.unlinkSync(f); return true; }
+  remove(name) {
+    const f = this.file(name); if (!fs.existsSync(f)) return false;
+    fs.unlinkSync(f); fs.rmSync(this.automationFile(name), { force: true });
+    return true;
+  }
+
+  // ---- the set's automation (ui/automation.js): one take, beside the set in <name>.automation.json; the set keeps a
+  // summary of it (how long, how many entries, which lanes, when it was saved)
+  automationFile(name) { return this.file(name).replace(/\.json$/, '.automation.json'); }
+  automation(name) { try { return JSON.parse(fs.readFileSync(this.automationFile(name), 'utf8')); } catch { return null; } }
+  saveAutomation(name, take) {
+    if (!take || !Array.isArray(take.entries)) throw new Error('an automation take needs entries');
+    const entries = take.entries.filter((e) => e && Number.isFinite(e.at) && e.k && e.g).sort((a, b) => a.at - b.at);
+    const t = { version: 1, duration: Math.max(Number(take.duration) || 0, entries.at(-1)?.at || 0), entries };
+    const f = this.automationFile(name), tmp = f + '.tmp';
+    fs.mkdirSync(this.dir, { recursive: true });
+    fs.writeFileSync(tmp, JSON.stringify(t));
+    fs.renameSync(tmp, f);
+    const summary = { duration: +t.duration.toFixed(2), entries: entries.length, lanes: [...new Set(entries.map((e) => e.g))].sort(), savedAt: Date.now() };
+    this.update(name, (x) => { x.automation = summary; });
+    return summary;
+  }
+  removeAutomation(name) { fs.rmSync(this.automationFile(name), { force: true }); this.update(name, (x) => { delete x.automation; }); }
 }

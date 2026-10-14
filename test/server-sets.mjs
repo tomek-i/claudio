@@ -171,3 +171,44 @@ test('a saved deck whose track has left the library is reported, the rest is ope
   assert.equal(r.missing[0].deck, 'B');
   assert.ok(!eng.sent('load').some((c) => c.args.deck === 'B'));
 });
+
+test('a set keeps one automation recording beside it; Auto-DJ and the plan wait while one plays back', async () => {
+  const take = { version: 1, duration: 12.5, entries: [
+    { at: 0, g: 'A.transport', k: 'ev', d: 'A', clear: 'transport', clearAt: 0, events: [{ t: 0.1, type: 'start', pos: 20 }] },
+    { at: 3, g: 'A.filter', k: 'set', id: 'A.filter', v: 0.4 },
+    { at: 2, g: 'xfader', k: 'set', id: 'xfader', v: 0.6 }, { bogus: true } ] };
+  let r = await api(sc.base, '/api/sets/automation', { name: 'Friday', take });
+  assert.equal(r.ok, true, r.error);
+  assert.deepEqual(r.automation.lanes, ['A.filter', 'A.transport', 'xfader']);
+  assert.equal(r.automation.entries, 3, 'a broken entry is dropped');
+  const back = await api(sc.base, '/api/sets/automation?name=friday');
+  assert.deepEqual(back.entries.map((e) => e.at), [0, 2, 3], 'kept in time order');
+  assert.ok(fs.existsSync(path.join(sc.dir, 'sets', 'friday.automation.json')));
+  const list = await api(sc.base, '/api/sets');
+  assert.deepEqual(list.sets.find((s) => s.name === 'Friday').automation, { duration: 12.5, lanes: 3 });
+  assert.equal(list.sets.length, 1, 'the recording is not listed as a set of its own');
+  assert.equal((await api(sc.base, '/api/sets?name=Friday')).automation.duration, 12.5);
+  const c = await cli(sc, ['automation']);
+  assert.match(c.out, /recording: 0:12, 3 moves on 3 lanes \(A\.filter A\.transport xfader\)/);
+
+  // the engine says its recording is playing: Auto-DJ keeps out even with the live deck about to run out
+  await cli(sc, ['autodj', 'on']);
+  await sets({ action: 'use', name: null });
+  eng.cmds.length = 0;
+  eng.extraMaster = {};
+  const state = eng.state.bind(eng);
+  eng.state = () => ({ ...state(), automation: { mode: 'play', set: 'Friday', t: 3, duration: 12.5 } });
+  await eng.loadTrack('A', main, { playing: true, audible: 1, position: end(main) - 60, loop: null, rate: 1 }); // (no loop left from above)
+  await eng.set('B', { playing: false, audible: 0, trackId: null, loaded: false });
+  await sleep(1500);
+  assert.equal(eng.sent('load').length, 0, 'no Auto-DJ while the recording plays');
+  assert.equal((await api(sc.base, '/api/state')).automation.mode, 'play');
+  eng.state = state;
+  assert.ok(await waitUntil(() => eng.sent('load')[0], 5000), 'Auto-DJ is back when it stops');
+
+  r = await api(sc.base, '/api/sets/automation', { name: 'Friday', clear: true });
+  assert.equal(r.ok, true);
+  assert.ok(!fs.existsSync(path.join(sc.dir, 'sets', 'friday.automation.json')));
+  assert.equal((await api(sc.base, '/api/sets?name=Friday')).automation, undefined);
+  assert.equal((await api(sc.base, '/api/sets/automation?name=Friday')).ok, false);
+});

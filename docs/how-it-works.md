@@ -74,5 +74,16 @@ A set can also keep **the decks and the mixer**: "save decks" (`dj sets save "<n
 (track, position, cue, tempo, key lock, key shift, EQ, filter, trim, volume, echo, stem levels, crossfader side, deck
 FX, loop), the master volume, the crossfader and whether Auto-DJ is on. "load decks" (`dj sets open "<name>"`) makes it
 the active set and puts all of that back, paused, ready to play. If a deck is playing, it asks first, because
-opening the set stops it. A saved deck whose track has left the library is skipped and named in the booth. The **mix monitor** flags vocal
+opening the set stops it. A saved deck whose track has left the library is skipped and named in the booth.
+
+A set can also keep an **automation recording**: everything done on the decks and the mixer from the set's 0:00, so
+a mix prepared at home plays back the same later (Library tab, "Set": ● rec · ▶ play · ■ stop, or
+`dj automation record|play|over|stop|clear`). Recording saves the decks first, as "save decks" does: they are the
+recording's 0:00, and a deck that is playing when recording starts starts again from there. From then on every change
+the engine makes is kept, whoever makes it (the page, Claude, Auto-DJ): knobs and faders, play / pause / cue / seek,
+tempo, key lock and key shift, loops, hot cues, EQ, filter, echo, trim, stems, deck FX, the crossfader, a whole
+transition, scratching by hand or by pattern, the sampler. Playing puts the set's decks back and replays it from 0:00;
+transport, loops and transitions land on the same audio frames as when they were recorded. Pressing ● rec while it
+plays records over it: a control is replaced from the moment it is touched, the rest plays on as it was. While a
+recording plays, Auto-DJ and Claude's planned steps wait. The recording is `sets/<name>.automation.json`. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.

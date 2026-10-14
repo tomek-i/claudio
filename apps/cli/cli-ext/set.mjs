@@ -3,6 +3,7 @@
 //   queue add <id|search>… | queue show | queue clear | queue rm <n>      track queue
 //   autodj [on|off] [--lead 45]                                          auto-DJ safety net
 //   sets [show|new|add|rm|move|pick|then|use|off|delete] …               saved sets Auto-DJ plays from (dj sets help)
+//   automation [status|record|play|over|stop|clear]                     record the active set's decks, play it back
 //   monitor [--watch N]                                                   mix monitor ("ears")
 //   rate good|bad [note]    memory [--n 10]                              set memory
 //   suggest … [--mashup] [--keylock on|off]                              key-aware suggestions
@@ -139,6 +140,39 @@ ${SETS_HELP}`); };
 ${SETS_HELP}`);
       if (r.missing?.length) console.log(`✗ no match: ${r.missing.join(', ')}`);
       return showSet(r.set);
+    },
+
+    async automation() {
+      const HELP = `dj automation                     what it is doing (recording / playing, where, how long the recording is)
+dj automation record [--replace]  record the active set from here: the decks as they are become its 0:00, everything
+                                  done on the decks and the mixer is kept (knobs, play, loops, cues, FX, scratching…)
+                                  while playing back: record over it from now on (each control you touch is replaced)
+dj automation play                put the set's decks back and play the recording from 0:00
+dj automation over                play it from 0:00 and record over it (a control is replaced from the moment you touch it)
+dj automation stop                stop recording or playing (the music carries on); a recording is saved in the set
+dj automation clear               delete the set's recording`;
+      const sub = rest[0] || 'status';
+      if (sub === 'help') return console.log(HELP);
+      if (sub === 'clear') {
+        const active = (await api('/api/sets')).active?.name;
+        if (!active) fail('no active set (dj sets use "<name>")');
+        const r = await api('/api/sets/automation', { name: active, clear: true });
+        if (!r.ok) fail(r.error);
+        return console.log(`✓ cleared the recording of "${active}"`);
+      }
+      const op = { status: 'status', record: 'record', rec: 'record', play: 'play', over: 'overdub', overdub: 'overdub', stop: 'stop' }[sub];
+      if (!op) fail(HELP);
+      const r = await api('/api/cmd', { cmd: 'automation', args: { op, replace: !!flags.replace }, why: flags.why });
+      if (JSON_OUT) return out(r);
+      if (r.ok === false) fail(r.error);
+      const a = r.result || {};
+      const st = (await api('/api/sets')).active;
+      const take = st ? (await api('/api/sets?name=' + encodeURIComponent(st.name))).automation : null;
+      const word = { idle: 'stopped', rec: '⏺ recording', play: '▶ playing', overdub: '⏺ recording over' }[a.mode] || a.mode;
+      console.log(`🎚 automation ${word}${a.mode !== 'idle' ? ` at ${mmss(a.t)}` : ''}${st ? `  set "${st.name}"` : '  (no active set)'}`);
+      if (a.stopped?.entries != null) console.log(`   saved: ${mmss(a.stopped.duration)}, ${a.stopped.entries} moves`);
+      if (take) console.log(`   recording: ${mmss(take.duration)}, ${take.entries} moves on ${take.lanes.length} lane${take.lanes.length === 1 ? '' : 's'} (${take.lanes.join(' ')})`);
+      else if (st) console.log('   no recording yet: dj automation record');
     },
 
     async monitor() {

@@ -84,6 +84,15 @@ body[data-layout="stacked"] .lower { flex: 1 1 300px; min-height: 300px; }
 /* "Deck A is playing: load the set anyway?" (as .deck-confirm, but in the panel) */
 .setconfirm { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; background: #1f1714; border: 1px solid var(--warn); border-radius: 8px; font-size: 12px; }
 .setconfirm span { flex: 1 1 100%; }
+.setconfirm .choices { display: flex; flex-wrap: wrap; gap: 6px; }
+/* automation: ● rec · ▶ play · ■ stop, and where it is */
+.setauto { flex-wrap: wrap; row-gap: 4px; }
+.setauto .qadd { flex: 1 1 0; white-space: nowrap; }
+.setauto .qadd:disabled { color: var(--faint); border-color: var(--line); opacity: 0.5; cursor: default; }
+#autoRec.on { color: #ff5a5a; border-color: #ff5a5a; opacity: 1; animation: recblink 1.2s steps(2, start) infinite; }
+#autoPlay.on { color: var(--ok); border-color: var(--ok); opacity: 1; }
+@keyframes recblink { to { opacity: 0.45; } }
+.setauto small { flex-basis: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--faint); font: 10px var(--mono); }
 .setrow select, .setform input { flex: 1 1 0; min-width: 0; height: 24px; padding: 0 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font: 12px var(--sans); }
 #setList { display: flex; flex-direction: column; gap: 4px; }
 .setbox { display: flex; flex-direction: column; gap: 8px; margin-left: -6px; padding: 0 6px 6px; border-radius: 10px; } /* the panel scrolls, so it cannot reach out on the right */
@@ -164,4 +173,4 @@ tr.loaded td.name { color: var(--claude); }
 .starter { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .starter .btn { background: var(--a); border-color: var(--a); color: #000; }
 .starter .btn:disabled { opacity: 0.5; cursor: default; }
-.starter small { font-size: 11px; color: var(--faint); }
+.starter small { font-size: 11px; color: var(--faint); }@media (prefers-reduced-motion: reduce) { #autoRec.on { animation: none; } }
