@@ -271,6 +271,7 @@ function liveState() {
     master: engineState.master,
     decks,
     transition: engineState.transition && engineState.transition.endAt > now ? engineState.transition : null,
+    ...(engineState.automation ? { automation: engineState.automation } : {}),
     inbox: inbox.length,
     history: history.slice(-10),
   };
@@ -323,6 +324,7 @@ function describe(cmd, a) {
   switch (cmd) {
     case 'load': return `Load ${a.track?.artist ? a.track.artist + ' - ' : ''}${a.track?.title} → deck ${a.deck}`;
     case 'mix': return `Mix ${a.from}→${a.to}: ${a.style || 'blend'}${a.bars != null ? ', ' + a.bars + ' bars' : ''}${a.at ? ' @' + a.at : ''}`;
+    case 'automation': return `Automation ${{ record: '⏺ record', play: '▶ play', overdub: '⏺ record over', stop: '■ stop' }[a.op] || a.op}${a.set ? ` (set "${a.set}")` : ''}`;
     default: return `${cmd} ${Object.entries(a || {}).filter(([k]) => k !== 'track').map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' ')}`;
   }
 }
@@ -341,6 +343,7 @@ async function handleCmd({ cmd, args = {}, why, source = 'cli', quiet = false })
     args.track = { ...library.summary(t), hotcues: cues.view(t).hotcues, waveform: t.waveform, url: `/audio/${t.id}` };
   }
   if (cmd === 'mix') lastMix = { ts: Date.now(), args: { ...args, track: args.track?.id }, source };
+  if (cmd === 'automation' && !args.set && sequencer.set) args.set = sequencer.set.name; // a recording belongs to the active set
   if (why) addLog(source === 'autodj' ? 'system' : 'claude', why); // Auto-DJ is the server's own rules, not Claude
   if (!quiet) addLog('action', describe(cmd, args));
   const sentAt = Date.now();
@@ -530,6 +533,7 @@ try {
   if (st) sequencer.useSet(st, { played: a.played || [] });
 } catch { /* no active set */ }
 // a set with its tracks as the library knows them (bpm, key, …), which of them have played, and which are missing
+const mmssOf = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 function setDetail(st) {
   const view = sequencer.set?.name === st.name ? sequencer.setView() : null;
   const played = new Set(view?.played || []);
@@ -854,13 +858,29 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: !r.missing.length, ...r, ...(r.missing.length ? { error: `no track matches: ${r.missing.join(', ')}` } : {}) });
     }
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
+    // a set's automation (ui/automation.js records and plays it): sets/<name>.automation.json, its summary in the set
+    if (p === '/api/sets/automation' && req.method === 'POST') {
+      const b = await readBody(req);
+      try {
+        const st = sets.get(b.name);
+        if (!st) throw new Error(`no set called "${b.name}"`);
+        if (b.clear) { sets.removeAutomation(st.name); addLog('action', `🎚 Cleared the automation of the set "${st.name}"`); return send(res, 200, { ok: true, set: setDetail(sets.get(st.name)) }); }
+        const summary = sets.saveAutomation(st.name, b.take);
+        addLog('action', `🎚 Saved the automation of the set "${st.name}": ${mmssOf(summary.duration)}, ${summary.lanes.length} lane${summary.lanes.length === 1 ? '' : 's'}`);
+        return send(res, 200, { ok: true, automation: summary });
+      } catch (e) { return send(res, 200, { ok: false, error: e.message }); }
+    }
+    if (p === '/api/sets/automation') {
+      const take = q.name && sets.get(q.name) ? sets.automation(q.name) : null;
+      return take ? send(res, 200, take) : send(res, 404, { ok: false, error: `the set "${q.name}" has no automation` });
+    }
     if (p === '/api/sets' && req.method === 'POST') {
       const b = await readBody(req);
       try { return send(res, 200, { ok: true, ...(await setAction(b)) }); } catch (e) { return send(res, 200, { ok: false, error: e.message, ...(e.playing ? { playing: e.playing } : {}) }); }
     }
     if (p === '/api/sets') {
       if (q.name) { const st = sets.get(q.name); return st ? send(res, 200, setDetail(st)) : send(res, 404, { ok: false, error: `no set called "${q.name}"` }); }
-      return send(res, 200, { sets: sets.list().map(({ tracks, snapshot, ...st }) => ({ ...st, tracks: tracks.length, ...(snapshot ? { saved: { at: snapshot.savedAt, decks: Object.keys(snapshot.decks) } } : {}) })), active: sequencer.setView() });
+      return send(res, 200, { sets: sets.list().map(({ tracks, snapshot, automation, ...st }) => ({ ...st, tracks: tracks.length, ...(snapshot ? { saved: { at: snapshot.savedAt, decks: Object.keys(snapshot.decks) } } : {}), ...(automation ? { automation: { duration: automation.duration, lanes: automation.lanes.length } } : {}) })), active: sequencer.setView() });
     }
     if (p === '/api/autodj' && req.method === 'POST') {
       const b = await readBody(req);

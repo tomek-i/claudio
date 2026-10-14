@@ -14,6 +14,7 @@ import './ui/lower.js';
 import { renderDeckStrip } from './ui/maximize.js';
 import './ui/wave.js';
 import './ui/dragdrop.js';
+import { automation } from './ui/automation.js';
 
 // ------------------------------------------------------------------ engine start
 // auto: started by the page itself (the desktop app), not by a click. Nobody has been asked anything then, so it
@@ -21,7 +22,7 @@ import './ui/dragdrop.js';
 async function start(auto = false) {
   const force = takeOver && !auto;
   try {
-    if (!mixer) { setMixer(new Mixer()); await mixer.ctx.resume(); await mixer.init(); }
+    if (!mixer) { setMixer(new Mixer()); await mixer.ctx.resume(); await mixer.init(); mixer.automation = automation; }
     else await mixer.ctx.resume();
   } catch (err) {
     $('#overlayMsg').textContent = `Audio engine failed to start: ${err.message}`;

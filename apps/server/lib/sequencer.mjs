@@ -339,6 +339,9 @@ export class Sequencer {
     if (this.ticking) return;
     this.ticking = true;
     try {
+      // a recorded set is playing back (ui/automation.js): it does the mixing; the plan and Auto-DJ wait
+      const mode = this.ctx.liveState().automation?.mode;
+      if (mode === 'play' || mode === 'overdub') return;
       await this.tickPlan(this.ctx.liveState());
       await this.tickAuto(this.ctx.liveState());
     } catch (e) { this.ctx.addLog('system', `⚠ sequencer: ${e.message}`); }

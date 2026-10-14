@@ -214,10 +214,11 @@ export class DeckVoice {
         break;
       }
       case 'events': {
-        // events already due are applied first: `clear` only drops FUTURE events (same as PlayheadModel.clear(now))
+        // events already due are applied first: `clear` only drops FUTURE events (same as PlayheadModel.clear(now)),
+        // those after clearAt when it is given (a replayed recording sends its events ahead, with the time it cleared at)
         if (m.clear) while (this.evq.length && this.evq[0].f <= this.frameNow) this.apply(this.evq.shift(), this.frameNow);
-        if (m.clear === 'all') this.evq.length = 0;
-        else if (m.clear) this.evq = this.evq.filter((e) => !clears(m.clear, e.type));
+        const cf = m.clearAt != null ? Math.round(m.clearAt * sr) : -Infinity;
+        if (m.clear) this.evq = this.evq.filter((e) => e.f <= cf || (m.clear !== 'all' && !clears(m.clear, e.type)));
         for (const e of m.events) {
           const x = { type: e.type, f: Math.round(e.t * sr) };
           if (e.pos != null) x.pos = e.pos * sr;

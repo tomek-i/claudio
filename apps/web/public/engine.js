@@ -20,9 +20,11 @@ const EASE = {
   out: (x) => 1 - (1 - x) * (1 - x),
 };
 
+// A knob, fader or slider: a value with a range that drives one or more AudioParams, set at once or along a path.
+// tap (set by the mixer for the controls automation records, ui/automation.js): told of every set and path.
 export class Ctl {
   constructor(ctx, value, targets, range = [-1, 1]) {
-    this.ctx = ctx; this.v = value; this.targets = targets; this.range = range; this.path = null;
+    this.ctx = ctx; this.v = value; this.targets = targets; this.range = range; this.path = null; this.tap = null;
     for (const { param, fn } of targets) param.value = fn(value);
   }
   value(t = this.ctx.currentTime) {
@@ -54,6 +56,7 @@ export class Ctl {
   }
   set(v) {
     v = clamp(v, ...this.range);
+    this.tap?.('set', v);
     this.hold();
     const now = this.ctx.currentTime;
     for (const { param, fn } of this.targets) param.linearRampToValueAtTime(fn(v), now + 0.012);
@@ -65,6 +68,7 @@ export class Ctl {
     points = points.map((p) => ({ ...p, v: clamp(p.v, ...this.range) })).filter((p, i, a) => i === 0 || p.t > a[i - 1].t);
     if (points[0].t < now + 0.01) points[0].t = now + 0.01;
     if (points.length < 2) return this.set(points[0].v);
+    this.tap?.('auto', points);
     const held = this.v;
     const t0 = points[0].t, t1 = points[points.length - 1].t, dur = t1 - t0;
     this.path = { points };
@@ -192,6 +196,7 @@ class DeckFx {
   }
   set(type, amount, rampSec = 0) {
     if (!FX_TYPES.includes(type)) throw new Error(`fx type must be one of ${FX_TYPES.join(', ')}`);
+    this.deck.mixer._tap({ k: 'fx', d: this.deck.name, type, amount: amount ?? null, ramp: rampSec }, this.deck);
     const now = this.ctx.currentTime, X = 0.025;
     if (type === this.type) {
       if (this.ctl && amount != null) { if (rampSec > 0) this.ctl.ramp(amount, now + 0.01, rampSec); else this.ctl.set(amount); }
@@ -303,11 +308,15 @@ class Deck {
   }
 
   post(m, transfer) { this.node.port.postMessage(m, transfer || []); }
-  _ev(events, clear) {
+  // the deck's transport timeline (seek / start / stop / rate / curve / loop at audio-clock times). clear drops the
+  // pending events of that kind after clearAt (default now: automation replays ahead of time and passes the time the
+  // clear was made at, shifted onto its own clock).
+  _ev(events, clear, clearAt) {
     const now = this.ctx.currentTime;
-    if (clear) this.model.clear(now, clear);
+    this.mixer._tap({ k: 'ev', d: this.name, clear: clear || null, clearAt: clear ? clearAt ?? now : null, events }, this);
+    if (clear) this.model.clear(clearAt ?? now, clear);
     for (const e of events) this.model.add(e);
-    this.post({ type: 'events', clear, events });
+    this.post({ type: 'events', clear, ...(clearAt != null ? { clearAt } : {}), events });
     this.model.compact(now - 2);
   }
   onWorklet(m) {
@@ -365,6 +374,8 @@ class Deck {
   // force: replace the track even while the deck is live (the page asks for Shift or a confirm first)
   async load(track, { force = false } = {}) {
     if (this.isLive() && !force) throw new Error(`deck ${this.name} is live on air — mix away from it first`);
+    this.mixer._tap({ k: 'load', d: this.name, track: track.id }, this);
+    this.tapMute = true; // what loading does by itself (stop, resets) comes back when the load is replayed
     this.stop();
     const seq = ++this.loadSeq;
     this.loading = true; this.track = track; this.buffer = null; this.zoom = null; this.stemsLoaded = false; this.warning = null;
@@ -388,7 +399,7 @@ class Deck {
       this.setKeylock(true); this.setKeyShift(0);
       this.fx.set('none');
       this.cut.gain.cancelScheduledValues(now); this.cut.gain.setValueAtTime(1, now);
-    } finally { if (seq === this.loadSeq) this.loading = false; }
+    } finally { if (seq === this.loadSeq) { this.loading = false; this.tapMute = false; } }
     // waveform detail is cosmetic: built off-thread after the deck is ready
     if (srcs.zoom) this.zoom = srcs.zoom;
     else this.mixer.requestZoom(srcs.zoomUrls).then((z) => { if (this.track === track) this.zoom = z; }).catch(() => {});
@@ -403,6 +414,7 @@ class Deck {
   }
   setXfSide(side) {
     if (!['left', 'right', 'thru'].includes(side)) throw new Error('side must be left, right or thru');
+    this.mixer._tap({ k: 'xf', d: this.name, side }, this);
     this.xfSide = side;
     const tg = this.mixer.xfader.targets.find((x) => x.deck === this.name);
     if (tg) this.mixer.xfader.refreshTarget(tg);
@@ -544,8 +556,8 @@ class Deck {
   }
 
   // ---- key
-  setKeylock(on) { this.keylock = !!on; this.post({ type: 'keylock', on: this.keylock }); }
-  setKeyShift(semis) { this.keyShift = clamp(Math.round(Number(semis) || 0), -6, 6); this.post({ type: 'semis', v: this.keyShift }); }
+  setKeylock(on) { this.keylock = !!on; this.mixer?._tap({ k: 'key', d: this.name, keylock: this.keylock }, this); this.post({ type: 'keylock', on: this.keylock }); }
+  setKeyShift(semis) { this.keyShift = clamp(Math.round(Number(semis) || 0), -6, 6); this.mixer?._tap({ k: 'key', d: this.name, shift: this.keyShift }, this); this.post({ type: 'semis', v: this.keyShift }); }
   effectiveSemis() { return this.keyShift + (this.keylock ? 0 : 12 * Math.log2(this.rate)); }
   effectiveCamelot() { return this.track?.camelot ? shiftCamelot(this.track.camelot, Math.round(this.effectiveSemis())) : null; }
 
@@ -553,6 +565,7 @@ class Deck {
   grab() {
     if (!this.buffer || this.handActive || this.awaitHandoff) return false;
     const now = this.ctx.currentTime;
+    this.mixer._tap({ k: 'hand', d: this.name, op: 'grab', slip: this.slip }, this);
     this.hand = { wasPlaying: this.playing, slip: this.slip, lastMove: performance.now(), vel: 0 };
     this.rep = { t: now, pos: this.position(now), rate: 0, playing: this.hand.wasPlaying };
     this.handActive = true;
@@ -566,11 +579,13 @@ class Deck {
   }
   handMove(dSec, vel) {
     if (!this.handActive) return;
+    this.mixer._tap({ k: 'hand', d: this.name, op: 'move', dSec, vel }, this);
     this.hand.lastMove = performance.now(); this.hand.vel = vel;
     this.post({ type: 'handMove', d: dSec, vel });
   }
   release() {
     if (!this.handActive) return;
+    this.mixer._tap({ k: 'hand', d: this.name, op: 'release' }, this);
     clearInterval(this.handIdle);
     const h = this.hand, t = this.ctx.currentTime + 0.015;
     if (h.wasPlaying && h.slip) {
@@ -657,6 +672,7 @@ class Sampler {
     this.pads.push({ pad: 7, kind: 'empty', name: '—', buffer: null }, { pad: 8, kind: 'empty', name: '—', buffer: null });
     this.riserBpm = 128;
     this.lastHit = new Array(8).fill(0);
+    this.noteSeq = 0;
     this.loadManifest(); // real recorded one-shots override the synth fallbacks when present
   }
   async loadManifest(url = 'samples/manifest.json') {
@@ -682,6 +698,7 @@ class Sampler {
   trigger(pad, when, gain = 1) {
     const p = this.pads[pad - 1];
     if (!p) throw new Error('pad must be 1-8');
+    this.mixer._tap({ k: 'trig', pad, when: when ?? this.ctx.currentTime, gain });
     if (!p.buffer) throw new Error(`pad ${pad} is empty — fill it with: dj sampler ${pad} --load <trackId> --from <sec> --beats 2`);
     let rate = 1;
     if (p.fitBeats) { // recorded riser: stretch (varispeed) so it lasts fitBeats at the live tempo
@@ -715,6 +732,7 @@ class Sampler {
     for (let i = 0; i < n; i++) { const g = i / n; L[i] *= g; R[i] *= g; L[L.length - 1 - i] *= g; R[R.length - 1 - i] *= g; }
     const name = (info.title || 'slice').slice(0, 12);
     this.pads[pad - 1] = { pad, kind: 'slice', name, buffer: this.toBuffer({ L, R }), source: { trackId: info.id, from: +start.toFixed(3), beats: Number(beats) || 2 } };
+    if (!this.replayPads?.has(pad)) this.mixer._tap({ k: 'capture', pad, track: info.id, from: start, beats: Number(beats) || 2 });
     return { pad, name, from: +start.toFixed(2), seconds: +len.toFixed(2) };
   }
   async grab(pad, deckName, beats = 1, stem = null, from = null) {
@@ -738,11 +756,14 @@ class Sampler {
     const name = `${stem ? stem.slice(0, 3) + '·' : ''}${(d.track.title || 'chop').slice(0, 10)}`;
     const rootMidi = estimateMidi(L, R, this.ctx.sampleRate); // what note the chop sings, for scale lock
     this.pads[pad - 1] = { pad, kind: 'slice', name, buffer: this.toBuffer({ L, R }), rootMidi, source: { trackId: d.track.id, from: +start.toFixed(3), beats: Number(beats) || 1, stem: stem || null, bpm: d.track.bpm } };
+    if (!this.replayPads?.has(pad)) this.mixer._tap({ k: 'grab', pad, d: d.name, beats: Number(beats) || 1, stem: stem || null, from: start }); // the start as it was found: replayed exactly
     return { pad, name, deck: d.name, from: +start.toFixed(2), beats: Number(beats) || 1, stem: stem || null, rootMidi };
   }
   note(pad, semis = 0, when = this.ctx.currentTime + 0.005, gain = 1) {
     const p = this.pads[pad - 1];
     if (!p?.buffer) throw new Error(`pad ${pad} is empty — grab something into it first`);
+    const nid = ++this.noteSeq;
+    this.mixer._tap({ k: 'note', pad, semis, when, gain, nid });
     const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
     src.buffer = p.buffer; src.playbackRate.value = Math.pow(2, clamp(Number(semis) || 0, -36, 36) / 12);
     g.gain.value = clamp(gain, 0, 1.5);
@@ -750,7 +771,7 @@ class Sampler {
     src.start(when);
     src.onended = () => g.disconnect();
     this.lastHit[pad - 1] = this.mixer.epoch(when);
-    return { pad, semis, stop: (t = this.ctx.currentTime) => { const tt = Math.max(t, when); g.gain.setTargetAtTime(0, tt, 0.012); try { src.stop(tt + 0.1); } catch { /* already ended */ } } };
+    return { pad, semis, nid, stop: (t = this.ctx.currentTime) => { this.mixer._tap({ k: 'noteoff', nid, t }); const tt = Math.max(t, when); g.gain.setTargetAtTime(0, tt, 0.012); try { src.stop(tt + 0.1); } catch { /* already ended */ } } };
   }
   state() { return this.pads.map((p) => ({ pad: p.pad, name: p.name, kind: p.kind, ...(p.source ? { source: p.source } : {}) })); }
 }
@@ -870,6 +891,44 @@ export class Mixer {
     this.decks = {};
     this.transition = null;
     this.zoomJobs = new Map(); this.zoomSeq = 0;
+    this.tap = null; this.replaying = false; // automation (ui/automation.js): the recorder, and "this call is a replay"
+  }
+
+  // ---- automation: every change the engine makes goes through here as an entry (times are audio-clock times);
+  // the recorder (ui/automation.js) keeps them. Nothing is told while a recording is being replayed, or about what a
+  // deck does by itself while it loads (deck.tapMute).
+  _tap(entry, deck) {
+    if (!this.tap || this.replaying || deck?.tapMute) return;
+    try { this.tap(entry, this.ctx.currentTime); } catch (e) { console.warn('[automation] tap', e); }
+  }
+  // the controls automation knows by name, both ways (ui/automation.js replays an entry on the control it names)
+  controls() {
+    const out = { master: this.master, xfader: this.xfader, 'sampler.vol': this.sampler.vol };
+    for (const d of Object.values(this.decks)) {
+      Object.assign(out, { [`${d.name}.vol`]: d.vol, [`${d.name}.filter`]: d.filter, [`${d.name}.echo`]: d.echo, [`${d.name}.trim`]: d.trimDb,
+        [`${d.name}.eq.low`]: d.eq.low, [`${d.name}.eq.mid`]: d.eq.mid, [`${d.name}.eq.high`]: d.eq.high });
+      for (const s of STEMS) out[`${d.name}.stem.${s}`] = d.stem[s];
+    }
+    return out;
+  }
+  // the AudioParams written directly (not through a Ctl), by name: the echo's time and feedback, each deck's scratch cuts
+  params() {
+    const out = { 'echo.time': this.delay.delayTime, 'echo.feedback': this.feedback.gain };
+    for (const d of Object.values(this.decks)) out[`${d.name}.cut`] = d.cut.gain;
+    return out;
+  }
+  wireTaps() {
+    for (const [id, ctl] of Object.entries(this.controls())) {
+      const deck = this.decks[id.split('.')[0]];
+      ctl.tap = (op, v) => this._tap(op === 'set' ? { k: 'set', id, v } : { k: 'auto', id, pts: v }, deck);
+    }
+    for (const [id, param] of Object.entries(this.params())) {
+      const deck = this.decks[id.split('.')[0]];
+      for (const m of ['setValueAtTime', 'linearRampToValueAtTime', 'setTargetAtTime', 'cancelScheduledValues']) {
+        const f = param[m].bind(param);
+        param[m] = (...a) => { this._tap({ k: 'param', id, m, a }, deck); return f(...a); };
+      }
+    }
   }
 
   async init() {
@@ -880,6 +939,7 @@ export class Mixer {
     for (const n of DECKS) this.decks[n] = new Deck(this, n);
     this.xfader = new Ctl(this.ctx, 0, Object.values(this.decks).map((d) => ({ param: d.xf.gain, fn: (x) => d.xfGain(x), deck: d.name })), [0, 1]);
     this.sampler = new Sampler(this);
+    this.wireTaps();
     try {
       this.zoomWorker = new Worker(new URL('./zoom-worker.js', import.meta.url), { type: 'module' });
       this.zoomWorker.onmessage = (e) => {
@@ -1285,6 +1345,7 @@ export class Mixer {
       decks,
       sampler: this.sampler?.state(),
       transition: this.transition,
+      ...(this.automation ? { automation: this.automation.state() } : {}),
     };
   }
 }
