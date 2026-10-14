@@ -63,8 +63,8 @@ export function wireTransport(root, box) {
   if (ex) ex.onclick = guard(async () => {
     const A = automationOf(); if (!A || !current?.automation) return;
     const live = playingDecks();
-    const go = await ask(box, `Export "${current.name}": the recording plays from 0:00 in real time (${mmss(current.automation.duration)}) while it is recorded, then it is saved as an MP3 with a tracklist in .dj/exports. The decks are not yours meanwhile.${live.length ? ` Deck ${live.join(' and ')} ${live.length > 1 ? 'are' : 'is'} playing and stops: the set's decks are put back first.` : ''}`, [['Export', true]]);
-    if (go) await A.exportSet(current.name);
+    const how = await ask(box, `Export "${current.name}": the recording plays from 0:00 in real time (${mmss(current.automation.duration)}) while it is recorded, then it is saved as an MP3 with a tracklist in .dj/exports. The decks are not yours meanwhile. Silently: the speakers are off until it is done (the file gets everything).${live.length ? ` Deck ${live.join(' and ')} ${live.length > 1 ? 'are' : 'is'} playing and stops: the set's decks are put back first.` : ''}`, [['Export silently', 'silent'], ['Export and listen', 'listen']]);
+    if (how) await A.exportSet(current.name, { listen: how === 'listen' });
   });
   render();
 }
@@ -74,7 +74,7 @@ export function render() {
   const A = automationOf(), st = A?.state() || { mode: 'idle' }, rec = current?.automation, on = st.mode !== 'idle' || !!st.exporting;
   const info = st.exporting === 'starting' ? '⤓ export: starting the recorder…'
     : st.exporting === 'saving' ? '⤓ export: saving the file…'
-      : st.exporting ? `⤓ exporting ${mmss(st.t)} / ${mmss(st.duration || 0)}`
+      : st.exporting ? `⤓ exporting ${mmss(st.t)} / ${mmss(st.duration || 0)}${st.silent ? ' · speakers off' : ''}`
         : st.mode === 'rec' ? `⏺ recording ${mmss(st.t)}`
           : st.mode === 'overdub' ? `⏺ recording over ${mmss(st.t)} / ${mmss(st.duration || 0)}`
             : st.mode === 'play' ? `▶ ${mmss(st.t)} / ${mmss(st.duration || 0)}`

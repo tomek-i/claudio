@@ -880,7 +880,10 @@ export class Mixer {
     this.echoIn.connect(this.delay); this.delay.connect(this.echoTone).connect(this.feedback).connect(this.delay);
     this.echoTone.connect(this.bus);
 
-    this.bus.connect(this.masterGain).connect(this.limiter).connect(this.out).connect(ctx.destination);
+    // speakers: only what this computer plays out loud. Everything else (meters, the recorder, the visuals) listens to
+    // `out`, so the speakers can be off while a set exports and the export still gets every sample (setSpeakers)
+    this.speakers = ctx.createGain();
+    this.bus.connect(this.masterGain).connect(this.limiter).connect(this.out).connect(this.speakers).connect(ctx.destination);
     this.out.connect(this.analyser);
     // stereo tap for the master meter: an analyser mixes its input down to one channel, so one per side
     const split = ctx.createChannelSplitter(2);
@@ -894,6 +897,12 @@ export class Mixer {
     this.tap = null; this.replaying = false; // automation (ui/automation.js): the recorder, and "this call is a replay"
   }
 
+  // the speakers on or off (a short fade, no click); the master carries on everywhere else
+  setSpeakers(on, fade = 0.08) {
+    const g = this.speakers.gain, now = this.ctx.currentTime;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(on ? 1 : 0, now + fade);
+    this.speakersOn = !!on;
+  }
   // ---- automation: every change the engine makes goes through here as an entry (times are audio-clock times);
   // the recorder (ui/automation.js) keeps them. Nothing is told while a recording is being replayed, or about what a
   // deck does by itself while it loads (deck.tapMute).
@@ -1341,7 +1350,7 @@ export class Mixer {
     for (const [n, d] of Object.entries(this.decks)) if (n === 'A' || n === 'B' || d.track) decks[n] = d.state();
     return {
       started: this.ctx.state === 'running',
-      master: { volume: +this.master.value().toFixed(2), xfader: +this.xfader.value().toFixed(2) },
+      master: { volume: +this.master.value().toFixed(2), xfader: +this.xfader.value().toFixed(2), ...(this.speakersOn === false ? { speakers: false } : {}) },
       decks,
       sampler: this.sampler?.state(),
       transition: this.transition,
