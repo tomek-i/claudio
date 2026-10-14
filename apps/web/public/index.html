@@ -212,6 +212,15 @@
     <aside class="upnext" aria-label="Up next">
       <h3>Up next <button id="queueClear" title="Empty the queue" hidden>clear</button></h3>
       <div id="upnext"></div>
+      <div class="setbox" id="setBox">
+      <h3>Set <button id="setNew" aria-expanded="false" aria-controls="setForm" title="Make a new set: a list of tracks Auto-DJ plays from">new</button></h3>
+      <div class="setrow">
+        <select id="setPick" title="The set Auto-DJ plays from, after the queue · No set = it picks from the whole library"><option value="">No set</option></select>
+        <button id="setMode" class="qadd" hidden title="How Auto-DJ takes the next track of the set: the one that fits the live deck best, or the next in the list">fit</button>
+      </div>
+      <form id="setForm" class="setform" hidden><input id="setName" maxlength="80" placeholder="Name of the set" aria-label="Name of the new set" autocomplete="off"><button class="qadd">make</button></form>
+      <div id="setList"></div>
+      </div>
     </aside>
   </section>
 

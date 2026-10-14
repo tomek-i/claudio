@@ -21,6 +21,7 @@ Claude never touches audio. It runs `node dj.mjs …` commands; the server relay
 | `apps/server/lib/analyze.mjs` | BPM and beat grid, downbeat, key (Camelot), loudness, energy 1–10, intro/breakdowns/drops/outro, section labels, auto hot cues. |
 | `apps/server/lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |
 | `apps/server/lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
+| `apps/server/lib/sets.mjs` | Saved sets: named track lists in `sets/` that the auto-DJ plays from. |
 | `apps/server/lib/sequencer.mjs`, `apps/server/lib/monitor.mjs`, `apps/server/lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
 | `apps/server/lib/settings.mjs`, `apps/server/lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
 | `apps/server/lib/set-clock.mjs`, `apps/web/public/ui/clock.js` | The header's clock: the time of day (12 or 24 hours, as the browser's locale has it) and how long the set has been running. A set starts with the first track on air and ends after 30 minutes without music; the server keeps the start, so a reload of the page does not reset the timer (a restart of the server does). |
@@ -62,5 +63,10 @@ Transitions are scheduled on the audio clock, so they land on the beat even with
 `--at now|bar|phrase`, with the incoming track entering at its `mixin`, `intro` or `drop`. `dj perform` schedules knob
 choreography per beat; `dj plan add` schedules any command for a future bar, mix-out point or wall-clock time.
 
-The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. The **mix monitor** flags vocal
+The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. It uses no AI: it takes the
+queue first, then the active **set** if there is one, then the best match from the library. A set is a named track list
+in `sets/` (one JSON file each), made on the page (Library tab, "Set" under "Up next": drag tracks from the library onto it) or with
+`dj sets`. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
+happens when all of it has played (carry on from the library, or stop). What of the set has played is kept across a
+restart in `.dj/active-set.json`. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.

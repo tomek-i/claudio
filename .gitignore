@@ -1,6 +1,7 @@
 # what the rig generates or downloads
 .dj/
 library/
+sets/
 bin/
 .venv/
 apps/web/public/samples/src/

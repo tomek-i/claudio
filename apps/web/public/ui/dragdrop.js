@@ -6,11 +6,24 @@ import { requestLoad, importFiles } from './loader.js';
 // A library row (mouse: HTML drag and drop · touch: long-press, then drag) or audio files from the computer can be
 // dropped on a deck to load it; files dropped on the crate are imported only. Both inputs share the same three
 // steps (begin / over / finish) and the same drop (loader.js). While a drag is on, the decks light up in their own
-// colour and the hidden decks C and D show as drop zones.
+// colour and the hidden decks C and D show as drop zones. A row can also be dropped on the active set (ui/crate.js),
+// before the set's track it is let go on.
 const TRACK = 'application/x-dj-track';
 const deckAt = (el) => el?.closest?.('.deck[data-deck]') || null;
 const ready = () => !!mixer?.xfader;
 const refused = (deckEl, force) => mixer.decks[deckEl.dataset.deck].isLive() && !force;
+const setAt = (el) => el?.closest?.('#setBox.on') || null;
+// where in the set a drop lands: before the track under the pointer (1-based), or at the end
+function setSpot(el) {
+  const item = el?.closest?.('#setList .un');
+  return item ? [...$('#setList').children].indexOf(item) + 1 : undefined;
+}
+function overSet(el) {
+  const box = $('#setBox'), on = !!setAt(el), item = on ? el.closest?.('#setList .un') : null;
+  box.classList.toggle('drop-over', on);
+  for (const x of $$('#setList .un')) x.classList.toggle('drop-before', x === item);
+}
+const dropOnSet = (id, el) => document.dispatchEvent(new CustomEvent('set:drop', { detail: { id, at: setSpot(el) } }));
 
 function begin() { document.body.classList.add('dragging'); }
 function over(deckEl, no = false) {
@@ -18,7 +31,7 @@ function over(deckEl, no = false) {
 }
 function finish() {
   document.body.classList.remove('dragging', 'touch-drag');
-  over(null); $('.crate').classList.remove('drop-over');
+  over(null); overSet(null); $('.crate').classList.remove('drop-over');
   $$('.dragchip').forEach((c) => c.remove());
 }
 // the compact card that travels with the pointer: title, BPM, key
@@ -49,9 +62,11 @@ document.addEventListener('dragover', (e) => {
   if (kind === 'files') e.preventDefault(); // a file let go anywhere else must not make the browser open it over the decks
   if (!ready()) { e.dataTransfer.dropEffect = 'none'; return; }
   begin();
-  const deckEl = deckAt(e.target), onCrate = kind === 'files' && !!e.target.closest?.('.crate');
+  const deckEl = deckAt(e.target), onCrate = kind === 'files' && !!e.target.closest?.('.crate'), onSet = kind === 'track' && setAt(e.target);
   $('.crate').classList.toggle('drop-over', onCrate);
-  if (deckEl) { e.preventDefault(); over(deckEl, refused(deckEl, e.shiftKey)); e.dataTransfer.dropEffect = 'copy'; }
+  overSet(kind === 'track' ? e.target : null);
+  if (onSet) { e.preventDefault(); over(null); e.dataTransfer.dropEffect = 'copy'; }
+  else if (deckEl) { e.preventDefault(); over(deckEl, refused(deckEl, e.shiftKey)); e.dataTransfer.dropEffect = 'copy'; }
   else { over(null); e.dataTransfer.dropEffect = onCrate ? 'copy' : 'none'; }
 });
 document.addEventListener('drop', (e) => {
@@ -60,9 +75,11 @@ document.addEventListener('drop', (e) => {
   e.preventDefault();
   const deckEl = deckAt(e.target), deck = deckEl?.dataset.deck, opts = { force: e.shiftKey };
   const files = [...(e.dataTransfer.files || [])], onCrate = !!e.target.closest?.('.crate');
+  const onSet = kind === 'track' && setAt(e.target);
   finish();
   if (!ready()) return;
-  if (kind === 'track' && deck) requestLoad(deck, e.dataTransfer.getData(TRACK), opts);
+  if (onSet) dropOnSet(e.dataTransfer.getData(TRACK), e.target);
+  else if (kind === 'track' && deck) requestLoad(deck, e.dataTransfer.getData(TRACK), opts);
   else if (kind === 'files' && (deck || onCrate)) importFiles(files, deck || null, opts);
 });
 document.addEventListener('dragend', finish);
@@ -101,7 +118,8 @@ document.addEventListener('touchmove', (e) => {
   e.preventDefault(); // held: the finger drags the track, not the page
   press.x = t.clientX; press.y = t.clientY;
   moveChip(t.clientX, t.clientY);
-  over(deckAt(document.elementFromPoint(t.clientX, t.clientY)));
+  const under = document.elementFromPoint(t.clientX, t.clientY);
+  over(deckAt(under)); overSet(under);
   // near the top or bottom edge the page scrolls, so a deck that is off screen can be reached
   const edge = t.clientY < 56 ? -1 : t.clientY > innerHeight - 56 ? 1 : 0;
   clearInterval(press.scroll);
@@ -109,9 +127,10 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: false });
 document.addEventListener('touchend', () => {
   if (!press) return;
-  const { held, id, x, y } = press, deck = held ? deckAt(document.elementFromPoint(x, y))?.dataset.deck : null;
+  const { held, id, x, y } = press, under = held ? document.elementFromPoint(x, y) : null, deck = deckAt(under)?.dataset.deck;
   cancelPress();
-  if (deck) requestLoad(deck, id, { touch: true });
+  if (held && setAt(under)) dropOnSet(id, under);
+  else if (deck) requestLoad(deck, id, { touch: true });
 });
 document.addEventListener('touchcancel', cancelPress);
 document.addEventListener('contextmenu', (e) => { if (press) e.preventDefault(); }); // the browser's own long-press menu

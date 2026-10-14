@@ -38,3 +38,4 @@ export const CLI_EXT_DIR = path.join(HERE, '..', '..', 'cli', 'cli-ext');
 export const CONFIG_FILE = path.join(ROOT, 'config.json');
 export const DJ_DIR = path.join(ROOT, '.dj');                  // analysis cache, stems, sessions, logs
 export const STARTER_DIR = path.join(ROOT, 'starter');
+export const SETS_DIR = path.join(ROOT, 'sets');               // saved sets (lib/sets.mjs): the user's, beside library/

@@ -286,14 +286,14 @@ export class Library {
     return list.slice(0, Number(limit) || 50).map((t) => this.summary(t));
   }
 
-  suggest({ from, direction = 'hold', exclude = [], limit = 10, targetBpm, refCamelot, keylock = false, memory } = {}) {
+  suggest({ from, direction = 'hold', exclude = [], only, limit = 10, targetBpm, refCamelot, keylock = false, memory } = {}) {
     const ref = this.get(from);
     if (!ref) return [];
     const bpmRef = targetBpm || ref.bpm;
     const refKey = refCamelot || ref.camelot;
     const out = [];
     for (const t of this.tracks.values()) {
-      if (t.id === ref.id || exclude.includes(t.id) || !t.bpm) continue;
+      if (t.id === ref.id || exclude.includes(t.id) || !t.bpm || (only && !only.has(t.id))) continue; // only: a Set of ids to choose from
       const k = this.keyPlan(refKey, t, bpmRef, keylock);
       const bd = bpmDistancePct(bpmRef, t.bpm);
       const de = (t.energy || 5) - (ref.energy || 5);
