@@ -4,7 +4,7 @@ import { onUi, saveUi } from './prefs.js';
 import { hint, onBindings } from './bindings.js';
 
 // ------------------------------------------------------------------ the bottom panel: tabs · hide / show / resize
-// One bar of tabs (Library, Sampler & keys, Automation, Booth) with the open tab under it: ui.dockTab. The booth can stay pinned
+// One bar of tabs (Library, Sets, Sampler & keys, Automation, Booth) with the open tab under it: ui.dockTab. The booth can stay pinned
 // as a column beside the other two (ui.boothPinned). ui.lowerCollapsed and ui.lowerHeight (0 = automatic) hold the
 // rest. The bar is also the divider: drag it to resize, double-click for the automatic height, S / M / L set a
 // height. Hidden, the bar still carries the track count, downloads and the latest booth line. `peek` shows the
@@ -34,7 +34,7 @@ function applyLower() {
   if (was && !collapsed) document.dispatchEvent(new Event('lower:open'));
 }
 // ---- which tab is open, and whether the booth is pinned beside it
-const TABS = ['library', 'sampler', 'automation', 'booth'];
+const TABS = ['library', 'sets', 'sampler', 'automation', 'booth'];
 export const dockTab = () => (TABS.includes(ui.dockTab) ? ui.dockTab : 'library');
 export const boothShown = () => !document.body.classList.contains('lower-collapsed') && (dockTab() === 'booth' || ui.boothPinned !== false);
 function applyDock() {

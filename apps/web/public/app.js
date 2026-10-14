@@ -16,6 +16,7 @@ import './ui/wave.js';
 import './ui/dragdrop.js';
 import { automation } from './ui/automation.js';
 import './ui/lanes.js';
+import './ui/sets.js';
 
 // ------------------------------------------------------------------ engine start
 // auto: started by the page itself (the desktop app), not by a click. Nobody has been asked anything then, so it

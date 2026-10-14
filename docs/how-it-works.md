@@ -65,8 +65,10 @@ choreography per beat; `dj plan add` schedules any command for a future bar, mix
 
 The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. It uses no AI: it takes the
 queue first, then the active **set** if there is one, then the best match from the library. A set is a named track list
-in `sets/` (one JSON file each), made on the page (Library tab, "Set" under "Up next": drag tracks from the library onto it) or with
-`dj sets`. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
+in `sets/` (one JSON file each), made in the **Sets** tab or with `dj sets`. The Sets tab has the library on the left
+(drag a track across to add it) and your sets on the right: ★ marks the one Auto-DJ plays from (pick another, or "No
+set"), and the open set can be renamed, copied or deleted, its tracks reordered by dragging or taken out with ×, and its
+decks saved and loaded. The Library tab says under "Up next" which set Auto-DJ plays from. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
 happens when all of it has played (carry on from the library, or stop). What of the set has played is kept across a
 restart in `.dj/active-set.json`.
 
@@ -77,7 +79,7 @@ the active set and puts all of that back, paused, ready to play. If a deck is pl
 opening the set stops it. A saved deck whose track has left the library is skipped and named in the booth.
 
 A set can also keep an **automation recording**: everything done on the decks and the mixer from the set's 0:00, so
-a mix prepared at home plays back the same later (Library tab, "Set": ● rec · ▶ play · ■ stop, or
+a mix prepared at home plays back the same later (the **Automation** tab: ● rec · ▶ play · ■ stop, or
 `dj automation record|play|over|stop|clear`). Recording saves the decks first, as "save decks" does: they are the
 recording's 0:00, and a deck that is playing when recording starts starts again from there. From then on every change
 the engine makes is kept, whoever makes it (the page, Claude, Auto-DJ): knobs and faders, play / pause / cue / seek,

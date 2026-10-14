@@ -1,7 +1,8 @@
 import { $, post } from './util.js';
 import { clientId, mixer, isEngine, setEngine, setTakeOver } from './state.js';
 import { handlers } from './commands.js';
-import { loadLibrary, refreshHistory, renderJob, renderStarter, refreshSets } from './crate.js';
+import { loadLibrary, refreshHistory, renderJob, renderStarter } from './crate.js';
+import { refreshSets } from './sets.js';
 import { addFeed } from './booth.js';
 import { receiveUi } from './prefs.js';
 import { receiveSet } from './clock.js';

@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/mixer.css">
 <link rel="stylesheet" href="css/keys.css">
 <link rel="stylesheet" href="css/lanes.css">
+<link rel="stylesheet" href="css/sets.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body data-layout="stacked" data-hotcues="pad">
@@ -163,6 +164,7 @@
 <div class="lowerbar" id="lowerBar" aria-label="Bottom panel" title="Drag to resize the bottom panel · double-click = automatic height">
   <div class="tabs" role="tablist" aria-label="Bottom panel">
     <button class="tab" role="tab" data-tab="library" title="The library and the queue">Library <span id="lbCount"></span></button>
+    <button class="tab" role="tab" data-tab="sets" title="Sets: prepare the tracks of a set beside the library, its order and options, its decks">Sets</button>
     <button class="tab" role="tab" data-tab="sampler">Sampler &amp; keys</button>
     <button class="tab" role="tab" data-tab="automation" title="The active set's automation: a lane per control along the set's time, to see and change what was recorded">Automation</button>
     <button class="tab" role="tab" data-tab="booth" id="boothTab" title="The booth: Claude's decisions, live, and requests to Claude">Booth</button>
@@ -214,33 +216,46 @@
     <aside class="upnext" aria-label="Up next">
       <h3>Up next <button id="queueClear" title="Empty the queue" hidden>clear</button></h3>
       <div id="upnext"></div>
-      <div class="setbox" id="setBox">
-      <h3>Set <button id="setNew" aria-expanded="false" aria-controls="setForm" title="Make a new set: a list of tracks Auto-DJ plays from">new</button></h3>
-      <div class="setrow">
-        <select id="setPick" title="The set Auto-DJ plays from, after the queue · No set = it picks from the whole library"><option value="">No set</option></select>
-        <button id="setMode" class="qadd" hidden title="How Auto-DJ takes the next track of the set: the one that fits the live deck best, or the next in the list">fit</button>
-      </div>
-      <div class="setrow setdecks" id="setDecks" hidden>
-        <button id="setSave" class="qadd" title="Keep the decks and the mixer as they are now in this set: tracks, positions, tempo, key, EQ, filter, FX, loops, the crossfader">save decks</button>
-        <button id="setOpen" class="qadd" title="Put the decks and the mixer back as they were saved in this set (paused)">load decks</button>
-        <small id="setSaved"></small>
-      </div>
-      <div class="setrow setauto" id="setAuto" hidden title="Automation: record everything done on the decks and the mixer from the set's 0:00, and play it back">
-        <button id="autoRec" data-a="rec" class="qadd" title="Record: from the decks as they are now. While the recording plays: record over it from here (a control you touch is replaced, the rest plays on)">● rec</button>
-        <button id="autoPlay" data-a="play" class="qadd" title="Put the set's decks back and play its recording from 0:00">▶ play</button>
-        <button id="autoStop" data-a="stop" class="qadd" title="Stop recording or playing (the music carries on); a recording is kept in the set">■ stop</button>
-        <small id="autoInfo" data-a="info"></small>
-      </div>
-      <div class="setconfirm" id="setConfirm" hidden><span></span><div class="choices"></div></div>
-      <form id="setForm" class="setform" hidden><input id="setName" maxlength="80" placeholder="Name of the set" aria-label="Name of the new set" autocomplete="off"><button class="qadd">make</button></form>
-      <div id="setList"></div>
-      </div>
+      <p class="hint upset" id="upSet" hidden></p>
     </aside>
   </section>
 
   <section class="keys" id="keys">
     <div class="pads" id="pads" title="Sampler"></div>
     <div class="keys-main" id="keysMain" title="Chop keyboard: grab a beat from a deck, play it from the keyboard, record a loop"></div>
+  </section>
+
+  <!-- sets: the library on the left (the Library tab's own table, moved here while this tab is open), the sets and the
+       open one on the right (ui/sets.js) -->
+  <section class="setsview" id="setsView" aria-label="Sets">
+    <div class="sv-lib" id="svLib"></div>
+    <aside class="sv-panel" aria-label="Sets">
+      <div class="sv-head"><h3>Sets</h3><button id="svNew" class="qadd" aria-expanded="false" aria-controls="svForm" title="Make a new set">+ new</button></div>
+      <form id="svForm" class="setform" hidden><input id="svName" maxlength="80" placeholder="Name of the new set" aria-label="Name of the new set" autocomplete="off"><button class="qadd">make</button></form>
+      <div class="sv-sets" id="svSets" role="listbox" aria-label="Your sets"></div>
+      <div class="setconfirm" id="svConfirm" hidden><span></span><div class="choices"></div></div>
+      <div class="sv-set" id="svSet" hidden>
+        <div class="sv-title">
+          <b id="svTitle"></b>
+          <form id="svRenameForm" hidden><input id="svRename" maxlength="80" aria-label="New name of the set" autocomplete="off"></form>
+          <button id="svEdit" class="sv-icon" title="Rename the set">✎</button>
+          <button id="svDup" class="sv-icon" title="Make a copy of the set (tracks, options, decks and recording)">⧉</button>
+          <button id="svDel" class="sv-icon" title="Delete the set (and its recording)">🗑</button>
+        </div>
+        <div class="sv-opts">
+          <span class="seg" id="svPick" role="group" aria-label="How Auto-DJ picks the next track of the set"><button data-v="fit" title="The track of the set that fits the live deck best">best fit</button><button data-v="order" title="The next track in the list">in order</button></span>
+          <span class="seg" id="svThen" role="group" aria-label="When every track of the set has played"><button data-v="library" title="When all have played: carry on from the whole library">then library</button><button data-v="stop" title="When all have played: stop">then stop</button></span>
+        </div>
+        <div class="setrow setdecks" id="setDecks">
+          <button id="setSave" class="qadd" title="Keep the decks and the mixer as they are now in this set: tracks, positions, tempo, key, EQ, filter, FX, loops, the crossfader">save decks</button>
+          <button id="setOpen" class="qadd" title="Put the decks and the mixer back as they were saved in this set (paused)">load decks</button>
+          <small id="setSaved"></small>
+        </div>
+        <div class="sv-auto"><small id="svAuto"></small><button id="svAutoGo" class="qadd" title="Record, play, edit and export the set's automation">automation →</button></div>
+        <div class="sv-sum" id="svSum"></div>
+        <div class="sv-tracks sv-drop" id="svTracks"></div>
+      </div>
+    </aside>
   </section>
 
   <!-- the active set's automation: a lane per control along the set's time (ui/lanes.js) -->

@@ -6,22 +6,22 @@ import { requestLoad, importFiles } from './loader.js';
 // A library row (mouse: HTML drag and drop · touch: long-press, then drag) or audio files from the computer can be
 // dropped on a deck to load it; files dropped on the crate are imported only. Both inputs share the same three
 // steps (begin / over / finish) and the same drop (loader.js). While a drag is on, the decks light up in their own
-// colour and the hidden decks C and D show as drop zones. A row can also be dropped on the active set (ui/crate.js),
+// colour and the hidden decks C and D show as drop zones. A row can also be dropped on the active set (ui/sets.js),
 // before the set's track it is let go on.
 const TRACK = 'application/x-dj-track';
 const deckAt = (el) => el?.closest?.('.deck[data-deck]') || null;
 const ready = () => !!mixer?.xfader;
 const refused = (deckEl, force) => mixer.decks[deckEl.dataset.deck].isLive() && !force;
-const setAt = (el) => el?.closest?.('#setBox.on') || null;
+const setAt = (el) => el?.closest?.('#svTracks.on') || null;
 // where in the set a drop lands: before the track under the pointer (1-based), or at the end
 function setSpot(el) {
-  const item = el?.closest?.('#setList .un');
-  return item ? [...$('#setList').children].indexOf(item) + 1 : undefined;
+  const item = el?.closest?.('#svTracks .svt');
+  return item ? Number(item.dataset.i) : undefined;
 }
 function overSet(el) {
-  const box = $('#setBox'), on = !!setAt(el), item = on ? el.closest?.('#setList .un') : null;
+  const box = $('#svTracks'), on = !!setAt(el), item = on ? el.closest?.('#svTracks .svt') : null;
   box.classList.toggle('drop-over', on);
-  for (const x of $$('#setList .un')) x.classList.toggle('drop-before', x === item);
+  for (const x of $$('#svTracks .svt')) x.classList.toggle('drop-before', x === item);
 }
 const dropOnSet = (id, el) => document.dispatchEvent(new CustomEvent('set:drop', { detail: { id, at: setSpot(el) } }));
 
