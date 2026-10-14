@@ -150,6 +150,9 @@ dj automation record [--replace]  record the active set from here: the decks as 
 dj automation play                put the set's decks back and play the recording from 0:00
 dj automation over                play it from 0:00 and record over it (a control is replaced from the moment you touch it)
 dj automation stop                stop recording or playing (the music carries on); a recording is saved in the set
+dj automation export [--format mp3|m4a]
+                                  the set as a mix file: the recording plays from 0:00 in real time while it is
+                                  recorded, then .dj/exports/<set>.mp3 (+ .txt tracklist, .cue) is written
 dj automation clear               delete the set's recording`;
       const sub = rest[0] || 'status';
       if (sub === 'help') return console.log(HELP);
@@ -160,16 +163,18 @@ dj automation clear               delete the set's recording`;
         if (!r.ok) fail(r.error);
         return console.log(`✓ cleared the recording of "${active}"`);
       }
-      const op = { status: 'status', record: 'record', rec: 'record', play: 'play', over: 'overdub', overdub: 'overdub', stop: 'stop' }[sub];
+      const op = { status: 'status', record: 'record', rec: 'record', play: 'play', over: 'overdub', overdub: 'overdub', stop: 'stop', export: 'export' }[sub];
       if (!op) fail(HELP);
-      const r = await api('/api/cmd', { cmd: 'automation', args: { op, replace: !!flags.replace }, why: flags.why });
+      const r = await api('/api/cmd', { cmd: 'automation', args: { op, replace: !!flags.replace, ...(flags.format ? { format: flags.format === 'm4a' ? 'm4a' : 'mp3' } : {}) }, why: flags.why });
       if (JSON_OUT) return out(r);
       if (r.ok === false) fail(r.error);
       const a = r.result || {};
       const st = (await api('/api/sets')).active;
       const take = st ? (await api('/api/sets?name=' + encodeURIComponent(st.name))).automation : null;
-      const word = { idle: 'stopped', rec: '⏺ recording', play: '▶ playing', overdub: '⏺ recording over' }[a.mode] || a.mode;
-      console.log(`🎚 automation ${word}${a.mode !== 'idle' ? ` at ${mmss(a.t)}` : ''}${st ? `  set "${st.name}"` : '  (no active set)'}`);
+      const word = a.exporting ? `⤓ exporting (${a.exporting})` : { idle: 'stopped', rec: '⏺ recording', play: '▶ playing', overdub: '⏺ recording over' }[a.mode] || a.mode;
+      console.log(`🎚 automation ${word}${a.mode !== 'idle' ? ` at ${mmss(a.t)}${a.duration ? ' / ' + mmss(a.duration) : ''}` : ''}${st ? `  set "${st.name}"` : '  (no active set)'}`);
+      if (op === 'export' && a.exporting) console.log(`   it plays in real time: the file is ready in about ${mmss((a.duration || 0) + 5)} (dj automation shows where it is)`);
+      if (a.lastExport) console.log(a.lastExport.ok ? `   last export: .dj/exports/${a.lastExport.file} (${mmss(a.lastExport.duration)}, ${a.lastExport.tracks} tracks)` : `   last export failed: ${a.lastExport.error}`);
       if (a.stopped?.entries != null) console.log(`   saved: ${mmss(a.stopped.duration)}, ${a.stopped.entries} moves`);
       if (take) console.log(`   recording: ${mmss(take.duration)}, ${take.entries} moves on ${take.lanes.length} lane${take.lanes.length === 1 ? '' : 's'} (${take.lanes.join(' ')})`);
       else if (st) console.log('   no recording yet: dj automation record');

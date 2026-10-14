@@ -39,7 +39,7 @@ test('coerce: types and ranges', () => {
   assert.match(coerce(field('ui.waveGuard'), 'yes').error, /on or off/);
   assert.deepEqual(coerce(field('ui.lowerCollapsed'), true), { value: true });
   assert.deepEqual(coerce(field('ui.dockTab'), 'sampler'), { value: 'sampler' });
-  assert.match(coerce(field('ui.dockTab'), 'attic').error, /one of: Library, Sampler & keys, Booth/);
+  assert.match(coerce(field('ui.dockTab'), 'attic').error, /one of: Library, Sampler & keys, Automation, Booth/);
   assert.deepEqual(coerce(field('ui.boothPinned'), false), { value: false });
   assert.deepEqual(coerce(field('ui.layoutPreset'), 'browse'), { value: 'browse' });
   assert.deepEqual(coerce(field('ui.waveGuard'), false), { value: false });

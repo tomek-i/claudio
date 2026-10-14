@@ -110,7 +110,9 @@ function tracksFromActions(actions) {
   return out;
 }
 
-export async function exportSession(dir, { format = 'mp3', outDir, libraryFile, log = () => {} } = {}) {
+// from / to (wall ms, optional): only that part of the session (a set's recording: from its 0:00 to its end);
+// name (optional): the files' name instead of the session id
+export async function exportSession(dir, { format = 'mp3', outDir, libraryFile, log = () => {}, from = null, to = null, name: base = null } = {}) {
   const info = JSON.parse(fs.readFileSync(path.join(dir, 'session.json'), 'utf8'));
   const webm = path.join(dir, 'engine-audio.webm');
   if (!fs.existsSync(webm) || fs.statSync(webm).size < 1000) throw new Error('this session has no engine audio (engine-audio.webm)');
@@ -139,22 +141,37 @@ export async function exportSession(dir, { format = 'mp3', outDir, libraryFile, 
 
     // 2) render
     const ext = format === 'm4a' ? 'm4a' : 'mp3';
-    const out = path.join(outDir, `${info.id}.${ext}`);
+    const out = path.join(outDir, `${base || info.id}.${ext}`);
+    const tl = buildTimeline(chunks, segments);
+    const all = good.reduce((a, s) => a + s.duration, 0);
+    // one recorder that said when it started: its audio runs with the wall clock from then (bytes are no clock: Opus
+    // makes silence almost free); otherwise the chunks' bytes and times (buildTimeline)
+    const start = segments.length === 1 && chunks.length && chunks.every((c) => c.start === chunks[0].start) ? chunks[0].start : null;
+    const toAudio = (wall) => (start != null ? Math.max(0, Math.min(all, (wall - start) / 1000)) : tl.toAudio(wall));
+    const a0 = from != null ? Math.max(0, Math.min(all, toAudio(from))) : 0;
+    const a1 = to != null ? Math.max(a0, Math.min(all, toAudio(to))) : all;
+    const cut = from != null || to != null ? ['-ss', a0.toFixed(3), '-to', a1.toFixed(3)] : [];
     const codec = ext === 'mp3' ? ['-c:a', 'libmp3lame', '-b:a', '320k'] : ['-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart'];
     const inputs = good.flatMap((s) => ['-i', s.file]);
     const filter = good.length > 1 ? ['-filter_complex', `${good.map((_, i) => `[${i}:a]`).join('')}concat=n=${good.length}:v=0:a=1[a]`, '-map', '[a]'] : ['-map', '0:a'];
-    await run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', ...inputs, ...filter, '-ar', '48000', '-ac', '2', ...codec,
-      '-metadata', `title=DJ Claude — ${info.id}`, '-metadata', 'artist=DJ Claude', out]);
+    await run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', ...inputs, ...filter, ...cut, '-ar', '48000', '-ac', '2', ...codec,
+      '-metadata', `title=DJ Claude — ${base || info.id}`, '-metadata', 'artist=DJ Claude', out]);
 
     // 3) tracklist
-    const tl = buildTimeline(chunks, segments);
-    let entries = tel.length ? tracksFromTelemetry(tel) : [];
+    const telIn = from != null ? tel.filter((s) => s.t >= from) : tel; // a part: what played before it does not count
+    let entries = telIn.length ? tracksFromTelemetry(telIn) : [];
     let source = 'telemetry';
     if (!entries.length) { entries = tracksFromActions(actions); source = 'actions'; }
-    const total = good.reduce((a, s) => a + s.duration, 0);
-    const list = entries.map((e) => {
+    const total = a1 - a0;
+    let timed = entries.map((e) => ({ ...e, raw: toAudio(e.wall) - a0 })); // raw: where it is in the file (< 0: before it)
+    if (from != null || to != null) { // a part: what started in it, and what was already playing when it began (unless
+      // something else starts at once, as when a set's decks are put back for its 0:00)
+      const inside = timed.filter((e) => e.raw >= 0 && e.raw <= total), before = timed.filter((e) => e.raw < 0).pop();
+      timed = before && !(inside[0] && inside[0].raw < 2) ? [before, ...inside] : inside;
+    }
+    const list = timed.map((e) => {
       const t = lib.get(e.id);
-      const at = Math.max(0, Math.min(total, tl.toAudio(e.wall)));
+      const at = Math.max(0, Math.min(total, e.raw));
       return { id: e.id, at: +at.toFixed(2), wall: e.wall, artist: t?.artist || null, title: t?.title || titleFromActions.get(e.id) || e.id };
     }).filter((e, i, a) => i === 0 || e.at > a[i - 1].at + 1);
     if (list.length) list[0].at = 0;
@@ -179,7 +196,7 @@ export async function exportSession(dir, { format = 'mp3', outDir, libraryFile, 
         `    INDEX 01 ${cueTime(e.at)}`,
       ]),
     ].join('\n') + '\n';
-    const txtFile = path.join(outDir, `${info.id}.txt`), cueFile = path.join(outDir, `${info.id}.cue`);
+    const txtFile = path.join(outDir, `${base || info.id}.txt`), cueFile = path.join(outDir, `${base || info.id}.cue`);
     fs.writeFileSync(txtFile, txt);
     fs.writeFileSync(cueFile, cue);
     return { audio: out, txt: txtFile, cue: cueFile, duration: +total.toFixed(1), tracks: list, gaps: tl.gaps, segments: segments.length, source };

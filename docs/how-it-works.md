@@ -85,5 +85,17 @@ tempo, key lock and key shift, loops, hot cues, EQ, filter, echo, trim, stems, d
 transition, scratching by hand or by pattern, the sampler. Playing puts the set's decks back and replays it from 0:00;
 transport, loops and transitions land on the same audio frames as when they were recorded. Pressing ● rec while it
 plays records over it: a control is replaced from the moment it is touched, the rest plays on as it was. While a
-recording plays, Auto-DJ and Claude's planned steps wait. The recording is `sets/<name>.automation.json`. The **mix monitor** flags vocal
+recording plays, Auto-DJ and Claude's planned steps wait. The recording is `sets/<name>.automation.json`.
+
+The **Automation** tab (bottom panel) shows the active set's recording as lanes along its time: a curve for each control
+that moved (volume, EQ, filter, echo, trim, stems, the crossfader, the master), and a row of marks for each deck's
+transport (play, stop, seek, loops, scratches, loads), key, crossfader side and FX, the echo and the sampler. Drag a
+point of a curve (Shift: its value only), double-click in a curve to add one, pick a point or a mark and press Delete
+to remove it, drag a mark along the time; "+ lane" adds a curve for a control that has none yet. Changes are kept
+when you press **save** (Ctrl+S); **undo** (Ctrl+Z) and **revert** go back. Ctrl + wheel zooms, "fit" shows it all.
+
+**⤓ export** (or `dj automation export [--format m4a]`) makes the set a mix file: the recording plays from 0:00 in real
+time while the flight recorder records the master, then exactly 0:00 to its end is saved as
+`.dj/exports/<set>.mp3` with a tracklist (`.txt`) and a cue sheet (`.cue`); "exports ↗" opens that folder. It takes
+as long as the set: the decks are the export's while it runs, and stopping it before the end makes no file. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.
