@@ -218,6 +218,12 @@
         <select id="setPick" title="The set Auto-DJ plays from, after the queue · No set = it picks from the whole library"><option value="">No set</option></select>
         <button id="setMode" class="qadd" hidden title="How Auto-DJ takes the next track of the set: the one that fits the live deck best, or the next in the list">fit</button>
       </div>
+      <div class="setrow setdecks" id="setDecks" hidden>
+        <button id="setSave" class="qadd" title="Keep the decks and the mixer as they are now in this set: tracks, positions, tempo, key, EQ, filter, FX, loops, the crossfader">save decks</button>
+        <button id="setOpen" class="qadd" title="Put the decks and the mixer back as they were saved in this set (paused)">load decks</button>
+        <small id="setSaved"></small>
+      </div>
+      <div class="setconfirm" id="setConfirm" hidden><span></span><button class="btn sm yes">Load</button><button class="btn sm no">Cancel</button></div>
       <form id="setForm" class="setform" hidden><input id="setName" maxlength="80" placeholder="Name of the set" aria-label="Name of the new set" autocomplete="off"><button class="qadd">make</button></form>
       <div id="setList"></div>
       </div>

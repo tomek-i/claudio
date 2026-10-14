@@ -68,5 +68,11 @@ queue first, then the active **set** if there is one, then the best match from t
 in `sets/` (one JSON file each), made on the page (Library tab, "Set" under "Up next": drag tracks from the library onto it) or with
 `dj sets`. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
 happens when all of it has played (carry on from the library, or stop). What of the set has played is kept across a
-restart in `.dj/active-set.json`. The **mix monitor** flags vocal
+restart in `.dj/active-set.json`.
+
+A set can also keep **the decks and the mixer**: "save decks" (`dj sets save "<name>"`) stores what is on each deck
+(track, position, cue, tempo, key lock, key shift, EQ, filter, trim, volume, echo, stem levels, crossfader side, deck
+FX, loop), the master volume, the crossfader and whether Auto-DJ is on. "load decks" (`dj sets open "<name>"`) makes it
+the active set and puts all of that back, paused, ready to play. If a deck is playing, it asks first, because
+opening the set stops it. A saved deck whose track has left the library is skipped and named in the booth. The **mix monitor** flags vocal
 clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.

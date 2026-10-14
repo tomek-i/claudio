@@ -36,8 +36,8 @@ export async function loadTrack(deck, track, opts) {
 }
 
 export const handlers = {
-  async load({ deck, track, cue }) {
-    const d = await loadTrack(deck, track);
+  async load({ deck, track, cue, force }) { // force: even over a deck that is on air (a set being opened has paused it)
+    const d = await loadTrack(deck, track, { force: !!force });
     if (cue != null) { d.cuePoint = parsePos(d, cue); d.startPos = d.cuePoint; }
     return { deck: d.name, title: track.title, bpm: track.bpm, camelot: track.camelot, cue: +d.cuePoint.toFixed(2), stems: d.stemsLoaded, keylock: d.keylock, ...(d.warning ? { warning: d.warning } : {}) };
   },

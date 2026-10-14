@@ -256,7 +256,7 @@ FX        fx <rollup|roll|chop|scratchcut|wobble|kills|throw|sweep> [deck] [--at
           perform '<json steps>'   beat-scheduled knob choreography (see dj-mix skill)
 SET       plan add '<json>'|show|clear   queue add <id…>|show|clear   autodj on|off   monitor   rate good|bad [note]   memory
           suggest --mashup   export [session] [--format mp3|m4a]
-          sets [show|new|add|rm|move|pick|then|use|off|delete]   saved sets Auto-DJ plays from (dj sets help)
+          sets [show|new|add|rm|move|pick|then|use|off|save|open|delete]   saved sets: tracks Auto-DJ plays from, decks + mixer (dj sets help)
 TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status|setup [--gpu]]   vocals <id>
           hotcue <deck> [set <n> [bar:N]] | <n>     savedloop <deck> [set <name> <beats>] | <name>
 KEYS      keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (see apps/cli/cli-ext/keys.mjs)

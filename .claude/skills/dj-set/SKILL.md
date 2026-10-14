@@ -90,7 +90,7 @@ Read `auto-dj.md` in this folder when you need to predict or explain what the au
 
 When you queue tracks, the auto-DJ and plan steps with `"track": "next"` take from the queue. A track leaves the queue when it goes on air.
 
-A saved set (`dj sets`, `dj sets help`) is a named track list the user keeps, in `sets/`. While one is active, the auto-DJ plays from it after the queue, in order or by best fit, and `dj status` shows `set "<name>" played/total` on the `AUTO` line. When the user asks you to build a set, make one with `dj sets new "<name>" <track…> --use` and leave it to them to change.
+A saved set (`dj sets`, `dj sets help`) is a named track list the user keeps, in `sets/`. While one is active, the auto-DJ plays from it after the queue, in order or by best fit, and `dj status` shows `set "<name>" played/total` on the `AUTO` line. When the user asks you to build a set, make one with `dj sets new "<name>" <track…> --use` and leave it to them to change. `dj sets save "<name>"` keeps the decks and the mixer in it and `dj sets open "<name>"` puts them back, paused; it refuses while a deck is playing unless you add `--force`, so ask the user first.
 
 ## End of the set
 
