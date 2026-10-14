@@ -1,4 +1,4 @@
-// Timeline sequencer + track queue + auto-DJ safety net (server side, ticks every 250 ms).
+// Timeline sequencer + track queue + the set Auto-DJ plays from + auto-DJ safety net (server side, ticks every 250 ms).
 //
 // Plan step: { id, when, cmd, args, why }
 //   when: {deck, bar}            fire when that deck reaches bar N (1-based, like bar:N)
@@ -23,6 +23,7 @@ export class Sequencer {
     this.steps = [];
     this.seq = 0;
     this.queue = [];               // [{id, title, artist, addedAt}]
+    this.set = null;               // the set Auto-DJ plays from: { name, pick, then, ids, played: Set, done } (lib/sets.mjs)
     const a = ctx.config?.autoDJ || {};
     this.auto = { enabled: a.enabled !== false, leadSec: Number(a.leadSec) || 45, busy: false, cooldownUntil: 0, prepared: null, last: null };
   }
@@ -186,7 +187,47 @@ export class Sequencer {
     this.ctx.addLog('system', `⏭ Skipped as the next track: ${t?.title || id}`);
     return id;
   }
-  onAir(id) { const i = this.queue.findIndex((q) => q.id === id); if (i >= 0) this.queue.splice(i, 1); }
+  onAir(id) {
+    const i = this.queue.findIndex((q) => q.id === id); if (i >= 0) this.queue.splice(i, 1);
+    if (this.set?.ids.includes(id) && !this.set.played.has(id)) { this.set.played.add(id); this.ctx.onSet?.(this.setView()); }
+  }
+
+  // ---------------------------------------------------------------- the set Auto-DJ plays from
+  // After the queue, Auto-DJ takes its tracks from the active set (in order, or the one that fits the live deck best)
+  // and, when all of them have played, from the whole library or nowhere (the set's `then`). `played` is what has
+  // gone live since the set was chosen; using the same set again keeps it, `restart` empties it.
+  useSet(set, { played, restart = false } = {}) {
+    if (!set) { const had = this.set; this.set = null; if (had) this.ctx.addLog('system', `🗂 No set: Auto-DJ picks from the whole library`); this.ctx.onSet?.(null); return null; }
+    const same = this.set?.name === set.name && !restart;
+    const keep = played ? new Set(played) : same ? this.set.played : new Set();
+    const ids = set.tracks.map((t) => t.id);
+    this.set = { name: set.name, pick: set.pick, then: set.then, ids, played: new Set([...keep].filter((id) => ids.includes(id))), done: false };
+    this.auto.prepared = null; // choose again from the set as it is now (a cued track of the set stays: it is already loaded)
+    if (!same) this.ctx.addLog('system', `🗂 Set "${set.name}": ${ids.length} track${ids.length === 1 ? '' : 's'}, Auto-DJ plays them ${set.pick === 'order' ? 'in order' : 'by best fit'}`);
+    this.ctx.onSet?.(this.setView());
+    return this.setView();
+  }
+  setView() {
+    const S = this.set; if (!S) return null;
+    const lib = this.ctx.library.tracks;
+    return { name: S.name, pick: S.pick, then: S.then, total: S.ids.length, played: S.ids.filter((id) => S.played.has(id)), missing: S.ids.filter((id) => !lib.has(id)), done: S.done };
+  }
+  pickFromSet(s, ld, idle) {
+    const S = this.set; if (!S) return null;
+    const onDecks = new Set(Object.values(s.decks || {}).map((d) => d.trackId).filter(Boolean));
+    const left = S.ids.filter((id) => !S.played.has(id) && !onDecks.has(id) && !this.skipped?.has(id) && this.ctx.library.tracks.has(id));
+    if (!left.length) {
+      if (!S.done) { S.done = true; this.ctx.addLog('system', `🗂 Every track of the set "${S.name}" has played${S.then === 'stop' ? ': Auto-DJ stops here' : ': Auto-DJ carries on from the library'}`); this.ctx.onSet?.(this.setView()); }
+      return null;
+    }
+    S.done = false;
+    if (S.pick === 'order') return { t: this.ctx.library.tracks.get(left[0]), why: `next in the set "${S.name}"`, fromSet: true };
+    const idleDeck = s.decks[idle?.name] || {};
+    const list = this.ctx.library.suggest({ from: ld.trackId, only: new Set(left), limit: 1, targetBpm: effBpm(ld) || undefined, refCamelot: deckEffectiveCamelot(ld), keylock: !!idleDeck.keylock, memory: this.ctx.memory });
+    return list.length
+      ? { t: this.ctx.library.tracks.get(list[0].id), why: `best fit in the set "${S.name}" (${list[0].reasons.slice(0, 2).join(', ')})`, fromSet: true }
+      : { t: this.ctx.library.tracks.get(left[0]), why: `from the set "${S.name}"`, fromSet: true }; // the live track is not in the library: no fit to measure
+  }
 
   // ---------------------------------------------------------------- auto-DJ
   setAuto(on, leadSec) {
@@ -215,14 +256,18 @@ export class Sequencer {
 
   pickNext(s, live, idle) {
     const ld = s.decks[live];
-    // a track Claude already loaded (and hasn't played) wins
-    if (idle?.track && idle.track !== ld.trackId && !this.skipped?.has(idle.track)) { const t = this.ctx.library.tracks.get(idle.track); if (t) return { t, why: 'already loaded' }; }
+    // a track Claude already loaded (and hasn't played) wins; with a set active only a track of the set does (a track
+    // left on the deck from before would otherwise jump the set: to play something else next, queue it)
+    if (idle?.track && idle.track !== ld.trackId && !this.skipped?.has(idle.track) && (!this.set || (this.set.ids.includes(idle.track) && !this.set.played.has(idle.track)))) { const t = this.ctx.library.tracks.get(idle.track); if (t) return { t, why: 'already loaded' }; }
     while (this.queue.length) {
       const q = this.queue[0];
       const t = this.ctx.library.tracks.get(q.id);
       if (t) return { t, why: 'from the queue', fromQueue: true };
       this.queue.shift();
     }
+    const fromSet = this.pickFromSet(s, ld, idle);
+    if (fromSet) return fromSet;
+    if (this.set?.done && this.set.then === 'stop') return null;
     const exclude = [...this.ctx.history.map((h) => h.id), ...Object.values(s.decks || {}).map((d) => d.trackId).filter(Boolean), ...(this.skipped || [])];
     const idleDeck = s.decks[idle?.name] || {};
     const list = this.ctx.library.suggest({ from: ld.trackId, exclude, limit: 1, targetBpm: effBpm(ld) || undefined, refCamelot: deckEffectiveCamelot(ld), keylock: !!idleDeck.keylock, memory: this.ctx.memory });
@@ -261,7 +306,7 @@ export class Sequencer {
       // stage 1 (≤ lead+25 s): make sure the next track is on the idle deck
       if (!A.prepared || A.prepared.live !== ld.trackId) {
         const pick = this.pickNext(s, live, idle);
-        if (!pick?.t) { if (!A.warnedEmpty) { A.warnedEmpty = true; this.ctx.addLog('system', '🤖 Auto-DJ: nothing left to play (queue empty, no suggestions)'); } return; }
+        if (!pick?.t) { if (!A.warnedEmpty) { A.warnedEmpty = true; if (!this.set?.done) this.ctx.addLog('system', '🤖 Auto-DJ: nothing left to play (queue empty, no suggestions)'); } return; }
         A.warnedEmpty = false;
         if (pick.t.id !== idle.track) {
           if (pick.fromQueue) this.queue.shift();
@@ -307,6 +352,7 @@ export class Sequencer {
       autoDJ: { enabled: this.auto.enabled, leadSec: this.auto.leadSec, prepared: this.auto.prepared, last: this.auto.last },
       plan: { pending: p.length, next: next ? { ...next, eta: +next.eta.toFixed(1) } : null },
       queue: this.queue.map((q) => q.id),
+      activeSet: this.setView(),
     };
   }
 }

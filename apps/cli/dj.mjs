@@ -60,7 +60,7 @@ function fmtState(s) {
   if (s.transition) lines.push(`TRANSITION ${s.transition.from}→${s.transition.to} ${s.transition.style}, ends in ${mmss((s.transition.endAt - Date.now()) / 1000)}`);
   if (s.inbox) lines.push(`📨 ${s.inbox} crowd request(s) waiting — run: dj inbox --clear`);
   if (s.history?.length) lines.push(`Recently played: ${s.history.slice(-5).map((h) => h.title).join(' · ')}`);
-  if (s.autoDJ || s.plan || s.queue?.length) lines.push(`AUTO    auto-DJ ${s.autoDJ?.enabled ? 'on' : 'off'}${s.autoDJ?.prepared ? ` (next ready on ${s.autoDJ.prepared.deck})` : ''}  plan ${s.plan?.pending || 0} pending${s.plan?.next ? ` (next ${s.plan.next.id} ${s.plan.next.cmd} in ${mmss(Math.max(0, s.plan.next.eta))})` : ''}  queue ${s.queue?.length || 0}`);
+  if (s.autoDJ || s.plan || s.queue?.length) lines.push(`AUTO    auto-DJ ${s.autoDJ?.enabled ? 'on' : 'off'}${s.autoDJ?.prepared ? ` (next ready on ${s.autoDJ.prepared.deck})` : ''}${s.activeSet ? `  set "${s.activeSet.name}" ${s.activeSet.played.length}/${s.activeSet.total}${s.activeSet.done ? ' finished' : ''}` : ''}  plan ${s.plan?.pending || 0} pending${s.plan?.next ? ` (next ${s.plan.next.id} ${s.plan.next.cmd} in ${mmss(Math.max(0, s.plan.next.eta))})` : ''}  queue ${s.queue?.length || 0}`);
   if (s.monitor?.phase?.offsetMs != null) lines.push(`EARS    phase ${s.monitor.phase.decks.join('/')} ${s.monitor.phase.offsetMs} ms`);
   for (const w of s.monitor?.warnings || []) lines.push(`⚠ ${w.msg}`);
   return lines.join('\n');
@@ -256,6 +256,7 @@ FX        fx <rollup|roll|chop|scratchcut|wobble|kills|throw|sweep> [deck] [--at
           perform '<json steps>'   beat-scheduled knob choreography (see dj-mix skill)
 SET       plan add '<json>'|show|clear   queue add <id…>|show|clear   autodj on|off   monitor   rate good|bad [note]   memory
           suggest --mashup   export [session] [--format mp3|m4a]
+          sets [show|new|add|rm|move|pick|then|use|off|delete]   saved sets Auto-DJ plays from (dj sets help)
 TRACK     sections <id>   grid <id> [--shift beats --nudge ms --bpm x --reset]   stems [id|all|status|setup [--gpu]]   vocals <id>
           hotcue <deck> [set <n> [bar:N]] | <n>     savedloop <deck> [set <name> <beats>] | <name>
 KEYS      keys [grab <deck> | note <semis> | loop rec|play|stop|clear | set]   the chop keyboard (see apps/cli/cli-ext/keys.mjs)

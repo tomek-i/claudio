@@ -2,6 +2,7 @@
 //   plan add '<json>' | plan show | plan clear [--all] | plan rm <id>     timeline sequencer
 //   queue add <id|search>… | queue show | queue clear | queue rm <n>      track queue
 //   autodj [on|off] [--lead 45]                                          auto-DJ safety net
+//   sets [show|new|add|rm|move|pick|then|use|off|delete] …               saved sets Auto-DJ plays from (dj sets help)
 //   monitor [--watch N]                                                   mix monitor ("ears")
 //   rate good|bad [note]    memory [--n 10]                              set memory
 //   suggest … [--mashup] [--keylock on|off]                              key-aware suggestions
@@ -70,6 +71,61 @@ export default ({ api, flags, rest, fail, out, fmtTrack, mmss, ROOT, JSON_OUT })
       console.log(`🤖 Auto-DJ ${r.enabled ? 'ON' : 'OFF'} — mixes the next queued/suggested track when ${r.leadSec}s of audible music are left and no mix is planned`);
       if (r.prepared) console.log(`   ready: ${r.prepared.track} on deck ${r.prepared.deck} (${r.prepared.why})`);
       if (r.last) console.log(`   last: ${new Date(r.last.ts).toLocaleTimeString()} ${r.last.from}→${r.last.to} ${r.last.style} ${r.last.bars} bars${r.last.ok ? '' : ' FAILED ' + r.last.error}`);
+    },
+
+    async sets() {
+      const SETS_HELP = `dj sets                                  list the saved sets (★ = the one Auto-DJ plays from)
+dj sets show [name]                      its tracks (default: the active set)
+dj sets new "<name>" [track…] [--use]    make a set (tracks are ids or searches); --use makes it the active one
+dj sets add "<name>" <track…> [--at n]   add tracks (at position n; default the end)
+dj sets rm "<name>" <n>                  take out track n
+dj sets move "<name>" <from> <to>        move a track
+dj sets pick "<name>" fit|order          fit: Auto-DJ takes the track that fits the live deck best; order: top to bottom
+dj sets then "<name>" library|stop       when all have played: carry on from the whole library, or stop
+dj sets use "<name>" [--restart]         Auto-DJ plays from it (after the queue); --restart forgets what has played
+dj sets off                              Auto-DJ picks from the whole library again
+dj sets delete "<name>"`;
+      const sub = rest[0] || 'list', name = rest[1];
+      const act = async (body) => { const r = await api('/api/sets', body); if (!r.ok) fail(r.error); return r; };
+      const needName = () => { if (!name) fail(`usage:
+${SETS_HELP}`); };
+      const showSet = (st) => {
+        if (JSON_OUT) return out(st);
+        const played = st.tracks.filter((t) => t.played).length;
+        console.log(`${st.active ? '★ ' : ''}${st.name}  ${st.tracks.length} track${st.tracks.length === 1 ? '' : 's'}${st.active ? `, ${played} played` : ''}  pick ${st.pick}, then ${st.then}${st.done ? '  (finished)' : ''}`);
+        st.tracks.forEach((t, i) => console.log(`${String(i + 1).padStart(3)}. ${t.missing ? '✗ missing  ' : `${String(t.bpm?.toFixed?.(1) ?? '?').padStart(6)} ${String(t.camelot || '?').padEnd(3)} `} ${t.played ? '✓ ' : '  '}${nm(t)}  ${t.id}`));
+        if (!st.tracks.length) console.log(`   (empty)  add: dj sets add "${st.name}" <id|"search">…`);
+      };
+      if (sub === 'help') return console.log(SETS_HELP);
+      if (sub === 'list' || sub === 'ls') {
+        const r = await api('/api/sets');
+        if (JSON_OUT) return out(r);
+        if (!r.sets.length) return console.log('(no sets yet)  make one: dj sets new "<name>" [track…] --use');
+        for (const st of r.sets) console.log(`${r.active?.name === st.name ? '★' : ' '} ${st.name.padEnd(28)} ${String(st.tracks).padStart(3)} tracks  pick ${st.pick}, then ${st.then}${r.active?.name === st.name ? `  (${r.active.played.length} played${r.active.done ? ', finished' : ''})` : ''}`);
+        return;
+      }
+      if (sub === 'show') {
+        const n = name || (await api('/api/sets')).active?.name;
+        if (!n) fail('no active set: name one (dj sets show "<name>")');
+        const st = await api('/api/sets?name=' + encodeURIComponent(n));
+        if (st.ok === false) fail(st.error);
+        return showSet(st);
+      }
+      if (sub === 'off') { await act({ action: 'use', name: null }); return console.log('✓ no set: Auto-DJ picks from the whole library'); }
+      needName();
+      let r;
+      if (sub === 'new' || sub === 'create') r = await act({ action: 'create', name, tracks: rest.slice(2), use: !!flags.use });
+      else if (sub === 'add') { if (rest.length < 3) fail('usage: dj sets add "<name>" <id|"search">…'); r = await act({ action: 'add', name, tracks: rest.slice(2), at: flags.at }); }
+      else if (sub === 'rm' || sub === 'remove') r = await act({ action: 'remove', name, index: rest[2] });
+      else if (sub === 'move' || sub === 'mv') r = await act({ action: 'move', name, from: rest[2], to: rest[3] });
+      else if (sub === 'pick') r = await act({ action: 'options', name, pick: rest[2] });
+      else if (sub === 'then') r = await act({ action: 'options', name, then: rest[2] });
+      else if (sub === 'use') r = await act({ action: 'use', name, restart: !!flags.restart });
+      else if (sub === 'delete') { r = await act({ action: 'delete', name }); return console.log(`✓ deleted "${r.deleted}"`); }
+      else fail(`unknown: dj sets ${sub}
+${SETS_HELP}`);
+      if (r.missing?.length) console.log(`✗ no match: ${r.missing.join(', ')}`);
+      return showSet(r.set);
     },
 
     async monitor() {

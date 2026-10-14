@@ -73,6 +73,15 @@ body[data-layout="stacked"] .lower { flex: 1 1 300px; min-height: 300px; }
 .un.auto { border-color: var(--claude); }
 .un.auto b { color: var(--claude); }
 .upnext .hint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--faint); }
+/* the set Auto-DJ plays from (ui/crate.js): a picker, how it picks, and its tracks; played ones fade */
+.upnext h3 + .setrow { margin-top: -2px; }
+.setrow, .setform { display: flex; align-items: center; gap: 6px; }
+.setform[hidden] { display: none; }
+.setrow select, .setform input { flex: 1 1 0; min-width: 0; height: 24px; padding: 0 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font: 12px var(--sans); }
+#setList { display: flex; flex-direction: column; gap: 4px; }
+.un.played { opacity: 0.45; }
+.un.played b::after { content: ' ✓'; }
+.un.missing span { color: var(--faint); text-decoration: line-through; }
 .crate.drop-over { box-shadow: inset 0 0 0 2px var(--claude); }
 /* the card that follows the pointer while a track is dragged */
 .dragchip { position: fixed; z-index: 30; pointer-events: none; display: flex; gap: 10px; align-items: center; max-width: 300px; padding: 6px 10px; background: var(--panel2); border: 1px solid var(--claude); border-radius: 8px; font: 12px var(--mono); white-space: nowrap; box-shadow: 0 6px 18px #000a; }
@@ -125,6 +134,9 @@ td.name small { color: var(--dim); margin-left: 8px; }
 .qadd { height: 20px; padding: 0 8px; background: none; border: 1px solid var(--line); border-radius: 99px; color: var(--dim); font: 10px var(--mono); cursor: pointer; }
 .qadd:hover:not(:disabled) { color: var(--text); border-color: var(--dim); }
 .qadd:disabled { color: var(--claude); border-color: transparent; cursor: default; }
+/* with a set active a row has two buttons: both a little narrower, so the track name keeps its room */
+.sadd { margin-left: 4px; }
+#lib td:has(> .sadd) .qadd { padding: 0 6px; }
 tr.match td.fit::before { content: '●'; color: var(--ok); }
 tr.near td.fit::before { content: '●'; color: var(--warn); }
 tr.played { opacity: 0.45; }

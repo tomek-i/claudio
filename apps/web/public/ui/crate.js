@@ -62,7 +62,7 @@ export function renderLibrary(force) {
   const live = mixer?.xfader ? liveDeck() : null;
   const ref = live?.track;
   const loaded = mixer ? Object.values(mixer.decks).map((d) => d.track?.id) : [];
-  const key = [q, ref?.id, loaded.join(), library.length, historyIds.size, JSON.stringify(view), queueIds.join()].join('|');
+  const key = [q, ref?.id, loaded.join(), library.length, historyIds.size, JSON.stringify(view), queueIds.join(), activeSet?.name, setIds.join()].join('|');
   if (!force && key === lastLibKey) return;
   lastLibKey = key;
   showView(!!ref);
@@ -97,12 +97,14 @@ export function renderLibrary(force) {
       <td><span class="keychip" style="background:${camelotColor(t.camelot)}">${t.camelot}</span></td>
       <td><span class="ebar"><i style="width:${t.energy * 10}%"></i></span> ${t.energy}</td>
       <td>${mmss(t.duration)}</td>
-      <td><button class="qadd" title="${queueIds.includes(t.id) ? 'In the queue' : 'Add to the queue (up next)'}"${queueIds.includes(t.id) ? ' disabled' : ''}>${queueIds.includes(t.id) ? 'queued' : '+ queue'}</button></td></tr>`;
+      <td><button class="qadd" title="${queueIds.includes(t.id) ? 'In the queue' : 'Add to the queue (up next)'}"${queueIds.includes(t.id) ? ' disabled' : ''}>${queueIds.includes(t.id) ? 'queued' : '+ queue'}</button>${activeSet ? `<button class="qadd sadd" title="${setIds.includes(t.id) ? `In the set “${esc(activeSet.name)}”` : `Add to the set “${esc(activeSet.name)}”`}"${setIds.includes(t.id) ? ' disabled' : ''}>${setIds.includes(t.id) ? 'in set' : '+ set'}</button>` : ''}</td></tr>`;
   }).join('');
 }
 $('#search').oninput = () => renderLibrary(true);
 // the row's load buttons: a playing deck takes Shift-click, or on a touch screen a confirm on the deck
 $('#lib').addEventListener('click', async (e) => {
+  const sadd = e.target.closest('.sadd');
+  if (sadd) { await post('/api/sets', { action: 'add', name: activeSet?.name, tracks: [sadd.closest('tr').dataset.id] }).catch(() => {}); return refreshSets(); }
   const add = e.target.closest('.qadd');
   if (add) { await post('/api/queue', { add: [add.closest('tr').dataset.id] }).catch(() => {}); return refreshQueue(); }
   const b = e.target.closest('.ld'); if (!b) return;
@@ -116,6 +118,7 @@ $('#addBtn').onclick = () => { const row = $('#grabRow'); row.hidden = !row.hidd
 let queueIds = [];
 async function refreshQueue() {
   if (document.body.classList.contains('lower-collapsed') || document.body.dataset.dock !== 'library') return;
+  refreshSets();
   let queue, state;
   try { [queue, state] = await Promise.all([fetch('/api/queue').then((r) => r.json()), fetch('/api/state').then((r) => r.json())]); } catch { return; }
   const prep = state.autoDJ?.enabled ? state.autoDJ.prepared : null, prepTrack = prep && library.find((t) => t.id === prep.track);
@@ -129,6 +132,57 @@ async function refreshQueue() {
 $('#upnext').addEventListener('click', async (e) => { const b = e.target.closest('button[data-i]'); if (b) { await post('/api/queue', { remove: Number(b.dataset.i) }).catch(() => {}); refreshQueue(); } });
 $('#queueClear').onclick = async () => { await post('/api/queue', { clear: true }).catch(() => {}); refreshQueue(); };
 setInterval(refreshQueue, 4000);
+
+// ---- the set Auto-DJ plays from after the queue (dj sets, lib/sets.mjs): pick one, make one, how it picks
+// (fit / order), its tracks with the played ones faded. "+ set" on a row adds to the active set.
+let activeSet = null, setIds = [];
+async function refreshSets() {
+  let r, detail = null;
+  try {
+    r = await fetch('/api/sets').then((x) => x.json());
+    if (r.active) detail = await fetch('/api/sets?name=' + encodeURIComponent(r.active.name)).then((x) => x.json());
+  } catch { return; }
+  const pick = $('#setPick');
+  const opts = '<option value="">No set</option>' + r.sets.map((st) => `<option value="${esc(st.name)}">${esc(st.name)} (${st.tracks})</option>`).join('');
+  if (pick.dataset.opts !== opts) { pick.innerHTML = opts; pick.dataset.opts = opts; }
+  if (document.activeElement !== pick) pick.value = r.active?.name || '';
+  activeSet = detail?.ok === false ? null : detail;
+  $('#setMode').hidden = !activeSet;
+  if (activeSet) $('#setMode').textContent = activeSet.pick === 'order' ? 'in order' : 'best fit';
+  const tracks = activeSet?.tracks || [];
+  $('#setList').innerHTML = !activeSet ? ''
+    : tracks.map((t, i) => `<div class="un${t.played ? ' played' : ''}${t.missing ? ' missing' : ''}"${t.missing ? ' title="Not in the library any more"' : ''}><b>${i + 1}</b><span>${esc(t.title || t.id)}<small>${esc(t.artist || '')}</small></span><button data-si="${i + 1}" title="Take it out of the set">×</button></div>`).join('')
+      + (activeSet.done ? `<p class="hint">Every track has played. Auto-DJ ${activeSet.then === 'stop' ? 'stops here' : 'carries on from the library'}.</p>` : '')
+      || '<p class="hint">The set is empty. Use “+ set” on a track.</p>';
+  const ids = tracks.map((t) => t.id);
+  if (ids.join() !== setIds.join() || (activeSet?.name || '') !== lastSetName) { setIds = ids; lastSetName = activeSet?.name || ''; renderLibrary(true); }
+}
+let lastSetName = '';
+$('#setPick').onchange = async (e) => { await post('/api/sets', { action: 'use', name: e.target.value || null }).catch(() => {}); refreshSets(); };
+$('#setMode').onclick = async () => {
+  if (!activeSet) return;
+  await post('/api/sets', { action: 'options', name: activeSet.name, pick: activeSet.pick === 'order' ? 'fit' : 'order' }).catch(() => {});
+  refreshSets();
+};
+$('#setNew').onclick = () => {
+  const f = $('#setForm'); f.hidden = !f.hidden;
+  $('#setNew').setAttribute('aria-expanded', String(!f.hidden));
+  if (!f.hidden) $('#setName').focus();
+};
+$('#setForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $('#setName').value.trim(); if (!name) return;
+  const r = await post('/api/sets', { action: 'create', name, use: true }).catch(() => ({ ok: false, error: 'the server did not answer' }));
+  if (!r.ok) { addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${r.error}` }); return; }
+  $('#setName').value = ''; $('#setForm').hidden = true; $('#setNew').setAttribute('aria-expanded', 'false');
+  refreshSets();
+};
+$('#setList').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-si]'); if (!b || !activeSet) return;
+  await post('/api/sets', { action: 'remove', name: activeSet.name, index: Number(b.dataset.si) }).catch(() => {});
+  refreshSets();
+});
+refreshSets(); // the picker is filled at once, even while the library is not on screen
 
 // ------------------------------------------------------------------ demo tracks (the button on an empty crate)
 export function renderStarter(job) {

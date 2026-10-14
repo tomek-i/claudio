@@ -8,11 +8,12 @@ import { Library, AUDIO_EXT, trackId } from './lib/library.mjs';
 import { Downloader } from './lib/downloader.mjs';
 import { StemQueue, STEMS } from './lib/stems.mjs';
 import { VisualsHub, lanAddress } from './lib/visuals.mjs';
-import { ROOT, DJ_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR } from './lib/paths.mjs';
+import { ROOT, DJ_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR, SETS_DIR } from './lib/paths.mjs';
 import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
 import { Sequencer } from './lib/sequencer.mjs';
+import { SetStore, PICKS, THENS } from './lib/sets.mjs';
 import { buildHealth, toolVersion } from './lib/health.mjs';
 import { describe as describeSettings, applyPatch as applySettings, uiSettings } from './lib/settings.mjs';
 import { banner } from './lib/banner.mjs';
@@ -506,7 +507,99 @@ sequencer = new Sequencer({
   hotcue, savedloop,
   say: (text) => addLog('claude', text),
   onAuto: (enabled) => broadcast('autodj', { enabled }), // the AUTO DJ switch in the page header follows it
+  onSet: (view) => { saveActiveSet(view); broadcast('activeset', view); },
 });
+
+// ---------------------------------------------------------------- saved sets (lib/sets.mjs)
+// The active one, and what of it has played, outlives a restart in .dj/active-set.json.
+const sets = new SetStore(SETS_DIR);
+const ACTIVE_SET_FILE = path.join(DJ_DIR, 'active-set.json');
+function saveActiveSet(view) {
+  try {
+    if (!view) fs.rmSync(ACTIVE_SET_FILE, { force: true });
+    else { fs.mkdirSync(DJ_DIR, { recursive: true }); fs.writeFileSync(ACTIVE_SET_FILE, JSON.stringify({ name: view.name, played: view.played }) + '\n'); }
+  } catch { /* the set still plays; it is only forgotten at the next start */ }
+}
+try {
+  const a = JSON.parse(fs.readFileSync(ACTIVE_SET_FILE, 'utf8'));
+  const st = a?.name && sets.get(a.name);
+  if (st) sequencer.useSet(st, { played: a.played || [] });
+} catch { /* no active set */ }
+// a set with its tracks as the library knows them (bpm, key, …), which of them have played, and which are missing
+function setDetail(st) {
+  const view = sequencer.set?.name === st.name ? sequencer.setView() : null;
+  const played = new Set(view?.played || []);
+  return { ...st, active: !!view, done: !!view?.done, tracks: st.tracks.map((t) => {
+    const lt = library.tracks.get(t.id);
+    return lt ? { ...library.summary(lt), played: played.has(t.id) } : { ...t, missing: true };
+  }) };
+}
+// tracks given as ids or searches → [{ id, title, artist }] and the ones nothing matched
+function resolveTracks(list) {
+  const found = [], missing = [];
+  for (const q of [].concat(list || [])) { const t = library.get(String(q)); if (t) found.push({ id: t.id, title: t.title, artist: t.artist }); else missing.push(q); }
+  return { found, missing };
+}
+function setAction(b) {
+  const name = b.name;
+  const followActive = (st) => { if (sequencer.set?.name === st.name) sequencer.useSet(st); return st; };
+  switch (b.action) {
+    case 'create': {
+      const { found, missing } = resolveTracks(b.tracks);
+      const st = sets.create(name, found);
+      addLog('action', `🗂 New set "${st.name}"${found.length ? ` with ${found.length} track${found.length === 1 ? '' : 's'}` : ''}`);
+      if (b.use) sequencer.useSet(st, { restart: true });
+      return { set: setDetail(st), missing };
+    }
+    case 'add': {
+      const { found, missing } = resolveTracks(b.tracks);
+      const st = followActive(sets.update(name, (x) => {
+        const at = b.at != null ? Math.max(0, Math.min(x.tracks.length, Number(b.at) - 1)) : x.tracks.length;
+        x.tracks.splice(at, 0, ...found);
+      }));
+      if (found.length) addLog('action', `🗂 Set "${st.name}" + ${found.map((t) => t.title).join(' · ')}`);
+      return { set: setDetail(st), added: found.map((t) => t.id), missing };
+    }
+    case 'remove': {
+      const st = followActive(sets.update(name, (x) => {
+        const i = b.id ? x.tracks.findIndex((t) => t.id === b.id) : Number(b.index) - 1;
+        if (!(i >= 0 && i < x.tracks.length)) throw new Error(`the set has no track ${b.id || b.index}`);
+        x.tracks.splice(i, 1);
+      }));
+      return { set: setDetail(st) };
+    }
+    case 'move': {
+      const st = followActive(sets.update(name, (x) => {
+        const from = Number(b.from) - 1, to = Math.max(0, Math.min(x.tracks.length - 1, Number(b.to) - 1));
+        if (!(from >= 0 && from < x.tracks.length)) throw new Error(`the set has no track ${b.from}`);
+        x.tracks.splice(to, 0, ...x.tracks.splice(from, 1));
+      }));
+      return { set: setDetail(st) };
+    }
+    case 'options': {
+      if (b.pick != null && !PICKS.includes(b.pick)) throw new Error(`pick is ${PICKS.join(' or ')}`);
+      if (b.then != null && !THENS.includes(b.then)) throw new Error(`then is ${THENS.join(' or ')}`);
+      const st = followActive(sets.update(name, (x) => { if (b.pick) x.pick = b.pick; if (b.then) x.then = b.then; }));
+      return { set: setDetail(st) };
+    }
+    case 'delete': {
+      const st = sets.get(name);
+      if (!st) throw new Error(`no set called "${name}"`);
+      if (sequencer.set?.name === st.name) sequencer.useSet(null);
+      sets.remove(name);
+      addLog('action', `🗂 Deleted the set "${st.name}"`);
+      return { deleted: st.name };
+    }
+    case 'use': {
+      if (!name) { sequencer.useSet(null); return { active: null }; }
+      const st = sets.get(name);
+      if (!st) throw new Error(`no set called "${name}"`);
+      sequencer.useSet(st, { restart: !!b.restart });
+      return { set: setDetail(st), active: sequencer.setView() };
+    }
+    default: throw new Error(`unknown action "${b.action}" (create, add, remove, move, options, delete, use)`);
+  }
+}
 
 // ---------------------------------------------------------------- flight recorder
 // A session = timestamped actions + engine telemetry + engine audio + screen/mic capture,
@@ -563,7 +656,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/events') {
       const id = q.client || `c${Date.now()}`;
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
-      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, set: setInfo(), recording: !!session, visuals: { viewers: visuals.viewers.size, listeners: visuals.listeners.size }, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
+      res.write(`event: hello\ndata: ${JSON.stringify({ id, engineId, ui: uiSettings(config), autoDJ: !!sequencer?.auto.enabled, activeSet: sequencer?.setView() ?? null, set: setInfo(), recording: !!session, visuals: { viewers: visuals.viewers.size, listeners: visuals.listeners.size }, log: log.slice(-80), jobs: downloader.list(), library: library.status() })}\n\n`);
       clients.set(id, res);
       const ka = setInterval(() => res.write(': ka\n\n'), 15000);
       req.on('close', () => {
@@ -717,6 +810,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: !r.missing.length, ...r, ...(r.missing.length ? { error: `no track matches: ${r.missing.join(', ')}` } : {}) });
     }
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
+    if (p === '/api/sets' && req.method === 'POST') {
+      const b = await readBody(req);
+      try { return send(res, 200, { ok: true, ...setAction(b) }); } catch (e) { return send(res, 200, { ok: false, error: e.message }); }
+    }
+    if (p === '/api/sets') {
+      if (q.name) { const st = sets.get(q.name); return st ? send(res, 200, setDetail(st)) : send(res, 404, { ok: false, error: `no set called "${q.name}"` }); }
+      return send(res, 200, { sets: sets.list().map(({ tracks, ...st }) => ({ ...st, tracks: tracks.length })), active: sequencer.setView() });
+    }
     if (p === '/api/autodj' && req.method === 'POST') {
       const b = await readBody(req);
       if (b.skip) return send(res, 200, { ok: true, skipped: sequencer.skipNext(), ...sequencer.summary(liveState()).autoDJ }); // the booth's "skip"
