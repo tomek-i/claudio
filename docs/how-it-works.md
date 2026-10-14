@@ -65,7 +65,7 @@ choreography per beat; `dj plan add` schedules any command for a future bar, mix
 
 The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. It uses no AI: it takes the
 queue first, then the active **set** if there is one, then the best match from the library. A set is a named track list
-in `sets/` (one JSON file each), made on the page (Library tab, "Set" under "Up next", "+ set" on a track) or with
+in `sets/` (one JSON file each), made on the page (Library tab, "Set" under "Up next": drag tracks from the library onto it) or with
 `dj sets`. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
 happens when all of it has played (carry on from the library, or stop). What of the set has played is kept across a
 restart in `.dj/active-set.json`. The **mix monitor** flags vocal
