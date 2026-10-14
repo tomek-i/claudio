@@ -13,7 +13,7 @@ import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
 import { Sequencer } from './lib/sequencer.mjs';
-import { SetStore, PICKS, THENS } from './lib/sets.mjs';
+import { SetStore, PICKS, THENS, snapshotOf, restoreSteps } from './lib/sets.mjs';
 import { buildHealth, toolVersion } from './lib/health.mjs';
 import { describe as describeSettings, applyPatch as applySettings, uiSettings } from './lib/settings.mjs';
 import { banner } from './lib/banner.mjs';
@@ -179,7 +179,7 @@ const visuals = new VisualsHub({
 // other devices need this machine's address on the network, not localhost
 const visualsUrl = () => `http://${lanAddress() || 'localhost'}:${PORT}/visuals`;
 
-function applyLiveSettings() {
+function applyLiveSettings(changed = []) {
   Object.assign(stemCfg, config.stems || {});
   stems.enabled = stemCfg.enabled !== false;
   stems.threads = stemCfg.threads;
@@ -190,7 +190,9 @@ function applyLiveSettings() {
   visuals.setAudio(config.visuals?.audio !== false);
   visuals.setRtc({ lowLatency: config.visuals?.lowLatency === true, maxListeners: config.visuals?.maxListeners ?? 8, audioBitrate: config.visuals?.audioBitrate ?? 160 });
   library.targetLoudnessDb = config.targetLoudnessDb;
-  if (sequencer && config.autoDJ) {
+  // only when an Auto-DJ setting itself changed: saving another one (the page saves its ui.* settings as they change)
+  // must not undo a `dj autodj off` or a set's Auto-DJ state
+  if (sequencer && config.autoDJ && changed.some((k) => k.startsWith('autoDJ.'))) {
     sequencer.auto.enabled = config.autoDJ.enabled !== false;
     if (Number(config.autoDJ.leadSec)) sequencer.auto.leadSec = Number(config.autoDJ.leadSec);
     broadcast('autodj', { enabled: sequencer.auto.enabled });
@@ -281,7 +283,9 @@ function withExtras(out) {
   return out;
 }
 
+let openingSet = 0; // until then (ms) a set is putting its decks back: a deck swapping tracks is not "on air"
 function trackHistory(state) {
+  if (Date.now() < openingSet) return;
   // only the single most-audible deck counts as "on air"
   const [name, d] = Object.entries(state.decks || {}).filter(([, x]) => x.playing && x.trackId).sort((a, b) => (b[1].audible || 0) - (a[1].audible || 0))[0] || [];
   if (!d || (d.audible || 0) < 0.5) return;
@@ -324,7 +328,7 @@ function describe(cmd, a) {
 }
 
 // ---------------------------------------------------------------- command handling
-async function handleCmd({ cmd, args = {}, why, source = 'cli' }) {
+async function handleCmd({ cmd, args = {}, why, source = 'cli', quiet = false }) { // quiet: no booth lines (the caller sums up)
   args = { ...args };
   if ((cmd === 'load' || cmd === 'mix') && (args.track === 'next' || args.track === 'queue')) {
     const q = sequencer.nextFromQueue();
@@ -338,14 +342,14 @@ async function handleCmd({ cmd, args = {}, why, source = 'cli' }) {
   }
   if (cmd === 'mix') lastMix = { ts: Date.now(), args: { ...args, track: args.track?.id }, source };
   if (why) addLog(source === 'autodj' ? 'system' : 'claude', why); // Auto-DJ is the server's own rules, not Claude
-  addLog('action', describe(cmd, args));
+  if (!quiet) addLog('action', describe(cmd, args));
   const sentAt = Date.now();
   const r = await forward(cmd, args, cmd === 'load' || cmd === 'mix' ? 60000 : 15000);
   if (session) {
     const { track, steps, ...small } = args;
     sessionLog('actions.jsonl', { ts: sentAt, ackMs: Date.now() - sentAt, cmd, args: { ...small, ...(track ? { track: track.id + ' ' + track.title } : {}), ...(steps ? { steps: steps.length } : {}) }, why, ok: r.ok, error: r.error, result: r.result });
   }
-  if (!r.ok) addLog('system', `⚠ ${cmd} failed: ${r.error}`);
+  if (!r.ok && !quiet) addLog('system', `⚠ ${cmd} failed: ${r.error}`);
   return { ...r, state: liveState() };
 }
 
@@ -540,7 +544,7 @@ function resolveTracks(list) {
   for (const q of [].concat(list || [])) { const t = library.get(String(q)); if (t) found.push({ id: t.id, title: t.title, artist: t.artist }); else missing.push(q); }
   return { found, missing };
 }
-function setAction(b) {
+async function setAction(b) {
   const name = b.name;
   const followActive = (st) => { if (sequencer.set?.name === st.name) sequencer.useSet(st); return st; };
   switch (b.action) {
@@ -597,7 +601,47 @@ function setAction(b) {
       sequencer.useSet(st, { restart: !!b.restart });
       return { set: setDetail(st), active: sequencer.setView() };
     }
-    default: throw new Error(`unknown action "${b.action}" (create, add, remove, move, options, delete, use)`);
+    case 'save': { // the decks and the mixer as they are now; a set that does not exist yet is made, with the decks' tracks
+      const s = liveState();
+      if (!s.engine?.connected) throw new Error('the audio engine is not connected: open the DJ page first');
+      const snapshot = snapshotOf(s, { autoDJ: sequencer.auto.enabled });
+      const decks = Object.entries(snapshot.decks);
+      if (!decks.length) throw new Error('no deck has a track on it: nothing to save');
+      const st = sets.get(name)
+        ? followActive(sets.update(name, (x) => { x.snapshot = snapshot; }))
+        : sets.save({ name, created: Date.now(), tracks: decks.map(([, d]) => ({ id: d.trackId, title: d.title, artist: d.artist })), snapshot });
+      addLog('action', `🗂 Saved the decks in the set "${st.name}": ${decks.map(([n, d]) => `${n} ${d.title}`).join(', ')}`);
+      return { set: setDetail(st) };
+    }
+    case 'open': { // make it the active set and put its decks and mixer back (paused)
+      const st = sets.get(name);
+      if (!st) throw new Error(`no set called "${name}"`);
+      const s = liveState();
+      const playing = Object.entries(s.decks || {}).filter(([, d]) => d.playing).map(([n]) => n);
+      if (st.snapshot && !s.engine?.connected) throw new Error('the audio engine is not connected: open the DJ page first');
+      if (st.snapshot && playing.length && !b.force) throw Object.assign(new Error(`deck ${playing.join(' and ')} ${playing.length > 1 ? 'are' : 'is'} playing: opening the set stops ${playing.length > 1 ? 'them' : 'it'}`), { playing });
+      sequencer.useSet(st, { restart: true });
+      if (!st.snapshot) return { set: setDetail(st), restored: false };
+      openingSet = Date.now() + 120000;
+      const { steps, missing } = restoreSteps(st.snapshot, (id) => library.tracks.has(id));
+      const failed = [], dead = new Set(); // decks whose load failed: the rest of their settings would land on another track
+      try {
+        for (const n of playing) await handleCmd({ cmd: 'pause', args: { deck: n }, source: 'set', quiet: true });
+        for (let i = 0; i < 20 && playing.some((n) => liveState().decks[n]?.playing); i++) await new Promise((r) => setTimeout(r, 100)); // the pause has taken
+        for (const step of steps) {
+          if (dead.has(step.args.deck)) continue;
+          const r = await handleCmd({ cmd: step.cmd, args: step.args, source: 'set', quiet: true });
+          if (r.ok === false && !step.optional) { failed.push({ ...step, error: r.error }); if (step.cmd === 'load') dead.add(step.args.deck); }
+        }
+      } finally { openingSet = Date.now() + 1000; } // the engine's next pushes still describe the swap
+      if (st.snapshot.autoDJ != null && st.snapshot.autoDJ !== sequencer.auto.enabled) sequencer.setAuto(st.snapshot.autoDJ);
+      const loaded = Object.keys(st.snapshot.decks).filter((n) => !missing.some((m) => m.deck === n) && !dead.has(n));
+      addLog('action', `🗂 Opened the set "${st.name}"${loaded.length ? `: deck${loaded.length > 1 ? 's' : ''} ${loaded.join(', ')} loaded` : ''}`);
+      for (const m of missing) addLog('system', `⚠ Set "${st.name}": deck ${m.deck}'s track ${m.artist ? m.artist + ' - ' : ''}${m.title || m.id} is not in the library any more`);
+      for (const f of failed) addLog('system', `⚠ Set "${st.name}": ${f.cmd} on deck ${f.args.deck ?? '—'} failed: ${f.error}`);
+      return { set: setDetail(st), restored: true, decks: loaded, missing, failed };
+    }
+    default: throw new Error(`unknown action "${b.action}" (create, add, remove, move, options, delete, use, save, open)`);
   }
 }
 
@@ -812,11 +856,11 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
     if (p === '/api/sets' && req.method === 'POST') {
       const b = await readBody(req);
-      try { return send(res, 200, { ok: true, ...setAction(b) }); } catch (e) { return send(res, 200, { ok: false, error: e.message }); }
+      try { return send(res, 200, { ok: true, ...(await setAction(b)) }); } catch (e) { return send(res, 200, { ok: false, error: e.message, ...(e.playing ? { playing: e.playing } : {}) }); }
     }
     if (p === '/api/sets') {
       if (q.name) { const st = sets.get(q.name); return st ? send(res, 200, setDetail(st)) : send(res, 404, { ok: false, error: `no set called "${q.name}"` }); }
-      return send(res, 200, { sets: sets.list().map(({ tracks, ...st }) => ({ ...st, tracks: tracks.length })), active: sequencer.setView() });
+      return send(res, 200, { sets: sets.list().map(({ tracks, snapshot, ...st }) => ({ ...st, tracks: tracks.length, ...(snapshot ? { saved: { at: snapshot.savedAt, decks: Object.keys(snapshot.decks) } } : {}) })), active: sequencer.setView() });
     }
     if (p === '/api/autodj' && req.method === 'POST') {
       const b = await readBody(req);
@@ -942,7 +986,7 @@ const server = http.createServer(async (req, res) => {
       if (!r.ok) return send(res, 400, { ...r, fields: describeSettings(config), restartPending });
       if (r.changed.length) {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
-        applyLiveSettings();
+        applyLiveSettings(r.changed);
         restartPending = [...new Set([...restartPending, ...r.restart])];
         // what the page saves about itself (the divider, the zoom) is not booth news
         if (r.changed.some((k) => !k.startsWith('ui.'))) addLog('system', `⚙ Settings saved (${r.changed.join(', ')})${r.restart.length ? ' — restart the server to apply ' + r.restart.join(', ') : ''}`);

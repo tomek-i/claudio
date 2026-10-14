@@ -136,7 +136,7 @@ setInterval(refreshQueue, 4000);
 // (fit / order), its tracks with the played ones faded. A library row dragged onto it is added (ui/dragdrop.js sends
 // `set:drop`): before the track it is let go on, or at the end; rows already in the set have a bar on their left edge.
 let activeSet = null, setIds = [];
-async function refreshSets() {
+export async function refreshSets() {
   let r, detail = null;
   try {
     r = await fetch('/api/sets').then((x) => x.json());
@@ -148,6 +148,11 @@ async function refreshSets() {
   if (document.activeElement !== pick) pick.value = r.active?.name || '';
   activeSet = detail?.ok === false ? null : detail;
   $('#setMode').hidden = !activeSet;
+  $('#setDecks').hidden = !activeSet;
+  const snap = activeSet?.snapshot;
+  $('#setOpen').disabled = !snap;
+  $('#setSaved').textContent = snap ? `decks ${Object.keys(snap.decks).join(' ')} saved ${new Date(snap.savedAt).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'no decks saved in this set';
+  $('#setSaved').title = snap ? `Saved ${new Date(snap.savedAt).toLocaleString()}: ${Object.entries(snap.decks).map(([n, d]) => `${n} ${d.title}`).join(', ')}` : '';
   $('#setBox').classList.toggle('on', !!activeSet);
   if (activeSet) $('#setMode').textContent = activeSet.pick === 'order' ? 'in order' : 'best fit';
   const tracks = activeSet?.tracks || [];
@@ -184,6 +189,35 @@ $('#setList').addEventListener('click', async (e) => {
   await post('/api/sets', { action: 'remove', name: activeSet.name, index: Number(b.dataset.si) }).catch(() => {});
   refreshSets();
 });
+// save decks: the decks and the mixer into the set · load decks: back as saved, paused. With music playing the set
+// asks first (in the panel; no answer in 8 s is a no), as a deck does before a track replaces a playing one.
+$('#setSave').onclick = async () => {
+  if (!activeSet) return;
+  const r = await post('/api/sets', { action: 'save', name: activeSet.name }).catch(() => ({ ok: false, error: 'the server did not answer' }));
+  if (!r.ok) addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${r.error}` });
+  refreshSets();
+};
+function confirmOpen(text) {
+  const box = $('#setConfirm');
+  $('span', box).textContent = text;
+  box.hidden = false;
+  return new Promise((resolve) => {
+    const done = (v) => { clearTimeout(timer); box.hidden = true; resolve(v); };
+    const timer = setTimeout(() => done(false), 8000);
+    $('.yes', box).onclick = () => done(true);
+    $('.no', box).onclick = () => done(false);
+  });
+}
+$('#setOpen').onclick = async () => {
+  if (!activeSet?.snapshot) return;
+  const open = (force) => post('/api/sets', { action: 'open', name: activeSet.name, force }).catch(() => ({ ok: false, error: 'the server did not answer' }));
+  $('#setOpen').disabled = true;
+  try {
+    let r = await open(false);
+    if (!r.ok && r.playing && (await confirmOpen(`Deck ${r.playing.join(' and ')} ${r.playing.length > 1 ? 'are' : 'is'} playing. Loading the set's decks stops ${r.playing.length > 1 ? 'them' : 'it'}.`))) r = await open(true);
+    if (!r.ok && !r.playing) addFeed({ ts: Date.now(), kind: 'system', text: `⚠ ${r.error}` });
+  } finally { refreshSets(); }
+};
 document.addEventListener('set:drop', async (e) => {
   if (!activeSet || setIds.includes(e.detail.id)) return;
   await post('/api/sets', { action: 'add', name: activeSet.name, tracks: [e.detail.id], at: e.detail.at }).catch(() => {});

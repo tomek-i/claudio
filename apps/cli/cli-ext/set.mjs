@@ -84,6 +84,9 @@ dj sets pick "<name>" fit|order          fit: Auto-DJ takes the track that fits 
 dj sets then "<name>" library|stop       when all have played: carry on from the whole library, or stop
 dj sets use "<name>" [--restart]         Auto-DJ plays from it (after the queue); --restart forgets what has played
 dj sets off                              Auto-DJ picks from the whole library again
+dj sets save "<name>"                    keep the decks and the mixer in the set (makes the set if it is new)
+dj sets open "<name>" [--force]          make it the active set and put its decks and mixer back, paused
+                                         (--force: even when a deck is playing; it is stopped)
 dj sets delete "<name>"`;
       const sub = rest[0] || 'list', name = rest[1];
       const act = async (body) => { const r = await api('/api/sets', body); if (!r.ok) fail(r.error); return r; };
@@ -93,6 +96,7 @@ ${SETS_HELP}`); };
         if (JSON_OUT) return out(st);
         const played = st.tracks.filter((t) => t.played).length;
         console.log(`${st.active ? '★ ' : ''}${st.name}  ${st.tracks.length} track${st.tracks.length === 1 ? '' : 's'}${st.active ? `, ${played} played` : ''}  pick ${st.pick}, then ${st.then}${st.done ? '  (finished)' : ''}`);
+        if (st.snapshot) console.log(`   decks saved ${new Date(st.snapshot.savedAt).toLocaleString()}: ${Object.entries(st.snapshot.decks).map(([n, d]) => `${n} ${nm(d)} @${mmss(d.position)}`).join(' · ')}`);
         st.tracks.forEach((t, i) => console.log(`${String(i + 1).padStart(3)}. ${t.missing ? '✗ missing  ' : `${String(t.bpm?.toFixed?.(1) ?? '?').padStart(6)} ${String(t.camelot || '?').padEnd(3)} `} ${t.played ? '✓ ' : '  '}${nm(t)}  ${t.id}`));
         if (!st.tracks.length) console.log(`   (empty)  add: dj sets add "${st.name}" <id|"search">…`);
       };
@@ -101,7 +105,7 @@ ${SETS_HELP}`); };
         const r = await api('/api/sets');
         if (JSON_OUT) return out(r);
         if (!r.sets.length) return console.log('(no sets yet)  make one: dj sets new "<name>" [track…] --use');
-        for (const st of r.sets) console.log(`${r.active?.name === st.name ? '★' : ' '} ${st.name.padEnd(28)} ${String(st.tracks).padStart(3)} tracks  pick ${st.pick}, then ${st.then}${r.active?.name === st.name ? `  (${r.active.played.length} played${r.active.done ? ', finished' : ''})` : ''}`);
+        for (const st of r.sets) console.log(`${r.active?.name === st.name ? '★' : ' '} ${st.name.padEnd(28)} ${String(st.tracks).padStart(3)} tracks  pick ${st.pick}, then ${st.then}${st.saved ? `  decks ${st.saved.decks.join('')}` : ''}${r.active?.name === st.name ? `  (${r.active.played.length} played${r.active.done ? ', finished' : ''})` : ''}`);
         return;
       }
       if (sub === 'show') {
@@ -121,6 +125,15 @@ ${SETS_HELP}`); };
       else if (sub === 'pick') r = await act({ action: 'options', name, pick: rest[2] });
       else if (sub === 'then') r = await act({ action: 'options', name, then: rest[2] });
       else if (sub === 'use') r = await act({ action: 'use', name, restart: !!flags.restart });
+      else if (sub === 'save') r = await act({ action: 'save', name });
+      else if (sub === 'open') {
+        r = await api('/api/sets', { action: 'open', name, force: !!flags.force });
+        if (!r.ok) fail(r.error + (r.playing ? ' (add --force to open it anyway)' : ''));
+        if (JSON_OUT) return out(r);
+        if (r.restored) console.log(`✓ decks ${r.decks.join(', ') || '—'} loaded, paused${r.missing.length ? `; not in the library: ${r.missing.map((m) => `${m.deck} ${nm(m)}`).join(', ')}` : ''}${r.failed.length ? `; failed: ${r.failed.map((f) => f.cmd).join(', ')}` : ''}`);
+        else console.log('✓ active (no decks saved in it: dj sets save)');
+        return showSet(r.set);
+      }
       else if (sub === 'delete') { r = await act({ action: 'delete', name }); return console.log(`✓ deleted "${r.deleted}"`); }
       else fail(`unknown: dj sets ${sub}
 ${SETS_HELP}`);

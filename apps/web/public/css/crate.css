@@ -76,7 +76,14 @@ body[data-layout="stacked"] .lower { flex: 1 1 300px; min-height: 300px; }
 /* the set Auto-DJ plays from (ui/crate.js): a picker, how it picks, and its tracks; played ones fade */
 .upnext h3 + .setrow { margin-top: -2px; }
 .setrow, .setform { display: flex; align-items: center; gap: 6px; }
-.setform[hidden] { display: none; }
+.setform[hidden], .setrow[hidden], .setconfirm[hidden] { display: none; }
+.setdecks { flex-wrap: wrap; row-gap: 4px; }
+.setdecks .qadd { flex: 1 1 0; white-space: nowrap; }
+.setdecks small { flex-basis: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--faint); font: 10px var(--mono); }
+.setdecks .qadd:disabled { color: var(--faint); border-color: var(--line); opacity: 0.5; cursor: default; }
+/* "Deck A is playing: load the set anyway?" (as .deck-confirm, but in the panel) */
+.setconfirm { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; background: #1f1714; border: 1px solid var(--warn); border-radius: 8px; font-size: 12px; }
+.setconfirm span { flex: 1 1 100%; }
 .setrow select, .setform input { flex: 1 1 0; min-width: 0; height: 24px; padding: 0 6px; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font: 12px var(--sans); }
 #setList { display: flex; flex-direction: column; gap: 4px; }
 .setbox { display: flex; flex-direction: column; gap: 8px; margin-left: -6px; padding: 0 6px 6px; border-radius: 10px; } /* the panel scrolls, so it cannot reach out on the right */

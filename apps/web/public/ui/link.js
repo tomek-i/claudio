@@ -1,7 +1,7 @@
 import { $, post } from './util.js';
 import { clientId, mixer, isEngine, setEngine, setTakeOver } from './state.js';
 import { handlers } from './commands.js';
-import { loadLibrary, refreshHistory, renderJob, renderStarter } from './crate.js';
+import { loadLibrary, refreshHistory, renderJob, renderStarter, refreshSets } from './crate.js';
 import { addFeed } from './booth.js';
 import { receiveUi } from './prefs.js';
 import { receiveSet } from './clock.js';
@@ -69,6 +69,7 @@ autoBtn.onclick = async () => {
   catch { showAuto(!enabled); }
 };
 let libTimer;
+es.addEventListener('activeset', () => refreshSets()); // a set chosen, changed or played from elsewhere (dj sets, Auto-DJ)
 es.addEventListener('library', () => { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); });
 // a track's stems are ready: its row loses the "no stems" mark
 es.addEventListener('stems', (e) => { if (JSON.parse(e.data).status === 'ready') { clearTimeout(libTimer); libTimer = setTimeout(loadLibrary, 400); } });

@@ -198,12 +198,12 @@ export class Sequencer {
   // gone live since the set was chosen; using the same set again keeps it, `restart` empties it.
   useSet(set, { played, restart = false } = {}) {
     if (!set) { const had = this.set; this.set = null; if (had) this.ctx.addLog('system', `🗂 No set: Auto-DJ picks from the whole library`); this.ctx.onSet?.(null); return null; }
-    const same = this.set?.name === set.name && !restart;
+    const already = this.set?.name === set.name, same = already && !restart;
     const keep = played ? new Set(played) : same ? this.set.played : new Set();
     const ids = set.tracks.map((t) => t.id);
     this.set = { name: set.name, pick: set.pick, then: set.then, ids, played: new Set([...keep].filter((id) => ids.includes(id))), done: false };
     this.auto.prepared = null; // choose again from the set as it is now (a cued track of the set stays: it is already loaded)
-    if (!same) this.ctx.addLog('system', `🗂 Set "${set.name}": ${ids.length} track${ids.length === 1 ? '' : 's'}, Auto-DJ plays them ${set.pick === 'order' ? 'in order' : 'by best fit'}`);
+    if (!already) this.ctx.addLog('system', `🗂 Set "${set.name}": ${ids.length} track${ids.length === 1 ? '' : 's'}, Auto-DJ plays them ${set.pick === 'order' ? 'in order' : 'by best fit'}`);
     this.ctx.onSet?.(this.setView());
     return this.setView();
   }
