@@ -184,7 +184,10 @@ cv.addEventListener('pointerdown', (e) => {
   if (!take || busy()) return;
   const { x, y } = pos(e), h = pick(x, y);
   sel = h; hover = null;
-  if (h) { drag = { h, x0: x, t0: h.t, startTake: JSON.stringify(take), moved: false }; cv.setPointerCapture(e.pointerId); }
+  if (h) {
+    drag = { h, x0: x, t0: h.t, startTake: JSON.stringify(take), moved: false };
+    try { cv.setPointerCapture(e.pointerId); } catch { /* a pointer the browser does not track (a scripted one): no capture */ }
+  }
   draw();
 });
 cv.addEventListener('pointermove', (e) => {
