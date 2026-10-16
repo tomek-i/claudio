@@ -52,10 +52,11 @@ What to reach for:
 
 ## Writing a riff
 
-The sequence is one bar of sixteen sixteenths, written as a row: a note name per step, `.` rest, `-` tie (holds the note before), `+` chord, `!` accent, `:50` a velocity in percent. `|` is ignored; use it between beats.
+The sequence is one, two or four bars of sixteen sixteenths, written as a row: a note name per step, `.` rest, `-` tie (holds the note before, across a bar line too), `+` chord, `!` accent, `:50` a velocity in percent. `|` and `||` are ignored; use them between beats and between bars. `show` and `seq` print a line per bar. The user sees it as a piano roll and edits it there too.
 
 - `seq "C2 . C3 - | Eb2 . C3! G2 | C2 . Bb2 C3 | . G2 Bb2 -"` writes the bar. A row of 1, 2, 4 or 8 tokens is repeated to fill it: `seq "C3+Eb3+G3 - - -"` is a chord on every beat.
-- `step 5 Eb2+G2`, `step 6 -`, `step 7 .` change single steps.
+- `bars 2` or `bars 4` makes it longer by repeating what is there (then change the later bars: a riff with an answer, or a chord progression of a chord a bar); `bars 1` cuts it back. A row of 32 or 64 tokens sets the length itself: `seq "C2 . C3 . | … || Ab1 . Ab2 . | …"`.
+- `step 5 Eb2+G2`, `step 6 -`, `step 7 .` change single steps; steps count on across the bars (bar 2 starts at step 17).
 - `bpm 126`, `gate 40` (how much of a step a note is held for; ties need a note to last longer), `swing 30`, `transpose -12`.
 
 C4 is middle C. Write basses around C1 to C3, leads around C4 to C6, and write for the patch: a pad wants long tied chords, a pluck wants short notes and rests.

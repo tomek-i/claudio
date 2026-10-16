@@ -13,7 +13,7 @@ import { envLevel, envEnd, tau } from '../lib/envelope.mjs';
 import { envOf } from '../lib/patch.mjs';
 import { voiceToSteal } from '../lib/voices.mjs';
 import { qOf } from '../lib/filter.mjs';
-import { notesInWindow, stepSeconds, STEPS } from '../lib/seq.mjs';
+import { notesInWindow, stepSeconds } from '../lib/seq.mjs';
 import { encodeWav } from '../lib/wav.mjs';
 
 const LOOKAHEAD = 0.1;      // seconds of notes scheduled ahead of the clock
@@ -364,7 +364,7 @@ export class Engine {
       }
       this.scheduled = until;
     }
-    if (this.position() >= this.loops * STEPS) this.stop();
+    if (this.position() >= this.loops * seq.steps.length) this.stop();
   }
 }
 
@@ -376,10 +376,10 @@ function tailSeconds(patch) {
 // The sequence played `loops` times with the patch on an offline context, as a 16-bit stereo WAV file.
 export async function renderWav(patch, seq, loops = 2, sampleRate = 44100) {
   const step = stepSeconds(seq.bpm);
-  const seconds = loops * STEPS * step + tailSeconds(patch);
+  const seconds = loops * seq.steps.length * step + tailSeconds(patch);
   const ctx = new OfflineAudioContext(2, Math.ceil(seconds * sampleRate), sampleRate);
   const synth = new Synth(ctx, patch);
-  for (const n of notesInWindow(seq, 0, loops * STEPS, { lastLoop: loops - 1 })) synth.play(n.note, n.vel, n.pos * step, n.len * step);
+  for (const n of notesInWindow(seq, 0, loops * seq.steps.length, { lastLoop: loops - 1 })) synth.play(n.note, n.vel, n.pos * step, n.len * step);
   const audio = await ctx.startRendering();
   return new Blob([encodeWav(audio.getChannelData(0), audio.getChannelData(1), sampleRate)], { type: 'audio/wav' });
 }

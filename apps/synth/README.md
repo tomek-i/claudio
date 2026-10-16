@@ -36,8 +36,11 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
   keyboard, and a MIDI keyboard where the browser has Web MIDI. The keys on the screen are the bottom row of the
   window: the panel, the sequence and the Claude box scroll in the room above them, so nothing is ever underneath.
   "Hide keys" folds them away (the browser remembers it) and the room goes to the page.
-- A sixteen-step sequence with rests, ties, chords, accents, tempo, gate and swing. Choose a step and play a note
-  to write it, or type the bar as text.
+- A sequence of one, two or four bars of sixteen steps, with rests, ties, chords, accents, tempo, gate and swing,
+  drawn as a small piano roll: click to add a note, drag its end for its length, click it again to remove it, and
+  draw on the lane under it for velocity (the wheel over it shows higher or lower notes; each press is one undo
+  step). Making it longer repeats the bars there are. Or choose a step on the ruler above the roll and play a note
+  to write it there, or type the sequence as text (a 32- or 64-step row makes it two or four bars long).
 - Twenty-seven built-in presets (bass, lead, pad, pluck, keys, fx) and four patch slots.
 - A preset browser down the left side ("Presets" in the top bar shows and hides it; on a narrow screen it lies
   over the page): every preset in one list, yours first, with a search box and a category row. A click loads one
@@ -82,6 +85,8 @@ instead of pretending.
   is in. `lib/presets.mjs`.
 - `lib/filter.mjs`: the filter's curve (the level of the voices' low-pass at each frequency) and what a drag on it
   sets.
+- `lib/roll.mjs`: the piano roll's sums: which notes it shows and the edit a click, a drag or the velocity lane
+  makes.
 - `lib/notes.mjs`: note ↔ frequency ↔ name. `lib/envelope.mjs`: the level of an ADSR at any moment.
   `lib/voices.mjs`: which voice a ninth note takes. `lib/wav.mjs`.
 - `lib/seq.mjs`: the sequence, its edits (`applySeqOp`), rows as text, and `notesInWindow`: which notes start

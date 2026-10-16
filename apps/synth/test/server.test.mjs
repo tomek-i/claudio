@@ -179,6 +179,12 @@ test('the CLI prints the patch as text, sets parameters by name, writes the sequ
   assert.match((await cli('bpm', '126')).out, /^seq {5}126 bpm/);
   assert.match((await cli('swing', '30')).out, /swing 0\.3$/m);
   assert.match((await cli('transpose', '12')).out, /C3 Eb3\+G3 C4 - \|/);
+  const two = (await cli('bars', '2')).out.split('\n');                 // a line per bar, the second the first again
+  assert.match(two[0], /2 bars$/);
+  assert.equal(two[2], two[1]);
+  assert.match((await cli('step', '21', 'G3')).out.split('\n')[2], /\| G3 /);
+  assert.match((await cli('step', '40', 'G3')).err, /a step is 1 to 32/);
+  assert.equal((await cli('bars', '1')).out.split('\n').length, 2);
   assert.match((await cli('preset')).out, /^bass {3}Acid bass$/m);
   assert.equal((await cli('preset', 'glass')).out.split('\n')[0], 'slot A  "Glass pad"');
   assert.equal((await cli('name', 'Frosted', 'glass')).out, 'slot A  "Frosted glass"');

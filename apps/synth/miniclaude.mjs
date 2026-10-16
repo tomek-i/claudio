@@ -37,10 +37,12 @@ const HELP = `${APP_NAME} synthesizer — ${URL_SHOWN}
   slot <A-D>      copy <A-D>     switch slot | copy the playing patch to a slot
   undo   redo
 
- the sequence (16 sixteenths: . rest, - tie, + chord, ! accent, :50 velocity)
+ the sequence (1, 2 or 4 bars of 16 sixteenths: . rest, - tie, + chord, ! accent, :50 velocity)
   seq "<row>"                    seq "C2 . C3 - | Eb2 . C3! G2 | C2 . Bb2 C3 | . G2 Bb2 -"
-                                 (1, 2, 4 or 8 tokens are repeated to fill the bar; no row: show it)
-  step <1-16> <token>            one step: step 5 Eb2+G2   step 6 -   step 7 .
+                                 (a shorter row that divides it is repeated; a row of 32 or 64 steps
+                                 makes it 2 or 4 bars; || between bars is ignored; no row: show it)
+  bars <1|2|4>                   the length: longer repeats what is there, shorter cuts the end
+  step <n> <token>               one step, counted from 1 across the bars: step 5 Eb2+G2   step 21 -
   bpm <40-240>   gate <5-100>   swing <0-100>
   transpose <semitones>   clearseq
 
@@ -161,6 +163,7 @@ async function main([cmd = 'help', ...args]) {
       return showSeq(await edit({ op: 'step', step: step - 1, token: need(args[1], 'a note, . or -') }));
     }
     case 'bpm': return showSeq(await edit({ op: 'seqparam', key: 'bpm', value: Number(need(args[0], 'a tempo')) }));
+    case 'bars': return showSeq(await edit({ op: 'seqparam', key: 'bars', value: Number(need(args[0], '1, 2 or 4')) }));
     case 'gate':
     case 'swing': return showSeq(await edit({ op: 'seqparam', key: cmd, value: percent(need(args[0], 'an amount, 0 to 100')) }));
     case 'transpose': return showSeq(await edit({ op: 'transpose', by: Number(need(args[0], 'semitones')) }));
