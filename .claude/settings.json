@@ -5,5 +5,8 @@
       "Bash(node dj.mjs *)",
       "PowerShell(node dj.mjs *)"
     ]
+  },
+  "enabledPlugins": {
+    "impeccable@impeccable": false
   }
 }
