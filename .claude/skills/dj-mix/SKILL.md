@@ -110,7 +110,7 @@ You cannot hear the mix, so the mix monitor listens for you. `dj status` prints 
 | `master clipping` | The master peak is at −0.3 dBFS or above. | `dj master 0.8`, or pull back one deck's volume or low EQ. |
 | `energy dip` | Everything audible has been in a breakdown or a low section for more than 16 bars. | Bring the next drop in with `dj fx rollup` or a mix with `--in drop`. |
 
-After each transition the booth gets a `🧐 Critique` line. It says what was checked, the maximum phase offset and any warnings. Read it with `dj log`. It is also recorded in `.dj/memory.json` and in `dj report`.
+After each transition the booth gets a `🧐 Critique` line. It says what was checked, the maximum phase offset and any warnings. Read it with `dj log`. It is also recorded in `data/dj/memory.json` and in `dj report`.
 
 If the user reacts to a transition, for example "that was rough" or "nice", run `dj rate bad "<note>"` or `dj rate good "<note>"`. `dj memory` shows the pairings that worked and the ones that did not, and `dj suggest` favours the ones that worked.
 

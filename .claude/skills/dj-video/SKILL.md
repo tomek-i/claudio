@@ -5,7 +5,7 @@ description: "Produce a video of a DJ Claude set: record the DJ page with Playwr
 
 # Set video
 
-A set video is the exported set audio under a reactive visualiser, with an opening title card and, if you recorded it, footage of the DJ table. Exports land in `.dj/exports/`. Page recordings and screenshots land in `.dj/produce/out/`.
+A set video is the exported set audio under a reactive visualiser, with an opening title card and, if you recorded it, footage of the DJ table. Exports land in `data/dj/exports/`. Page recordings and screenshots land in `data/dj/produce/out/`.
 
 In this skill `dj` is short for `node dj.mjs`, run from the project root. `<session>` is the session id that `dj export` prints; it is the recording's start time in UTC.
 
@@ -50,7 +50,7 @@ For a video without DJ-table footage, skip steps 1, 2 and 6.
    ```
 8. Render the video.
    ```bash
-   node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
+   node tools/produce/make-video.mjs data/dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
    ```
 
 ## Record the DJ table
@@ -59,7 +59,7 @@ The footage is optional. `node tools/produce/record-browser.mjs` opens its own m
 
 - Start it before you load any deck. The recorder window takes over as the sound system, and the decks in the old tab are dropped.
 - `dj status` must show the engine connected afterwards.
-- It writes `.dj/produce/out/screen/browser.json` and a `.webm` file next to it. The `start` field in `browser.json` is the time the video began, in epoch milliseconds.
+- It writes `data/dj/produce/out/screen/browser.json` and a `.webm` file next to it. The `start` field in `browser.json` is the time the video began, in epoch milliseconds.
 - Keep audio playing, because Chromium throttles a silent, hidden page.
 - Do not minimise the window.
 - Stop it after `dj record stop`. ffmpeg can read the growing `.webm` before it is finalised, so a partial render works before the recorder is stopped.
@@ -70,7 +70,7 @@ The footage is optional. `node tools/produce/record-browser.mjs` opens its own m
 - `node dj.mjs record start --no-screen --no-mic` starts the flight recorder, which is the session recording. Run it at the start of the set.
 - `--no-screen` leaves out the server's own desktop capture, and `--no-mic` leaves out the microphone. The microphone is recorded only if a device is set on `/settings`.
 - `node dj.mjs record stop` ends the recording.
-- `node dj.mjs export` writes `.dj/exports/<session>.mp3`, a `.txt` tracklist and a `.cue` sheet. Without an argument it exports the latest session.
+- `node dj.mjs export` writes `data/dj/exports/<session>.mp3`, a `.txt` tracklist and a `.cue` sheet. Without an argument it exports the latest session.
 
 ## Render
 
@@ -79,7 +79,7 @@ Render after the set, one render at a time. A render during a live set starves t
 Use this command for a set with DJ-table footage:
 
 ```bash
-node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
+node tools/produce/make-video.mjs data/dj/exports/<session>.mp3 --title "DJ Claude - Saturday Night Set" --screen auto
 ```
 
 - `--title "Credit - Song"` sets the opening card. The part before ` - ` is the small credit, and the rest is the big title. The text is drawn with ffmpeg drawtext, and `%`, `:` and `,` are escaped for you. Without `--title`, the audio file name is the title.
@@ -95,7 +95,7 @@ node tools/produce/make-video.mjs .dj/exports/<session>.mp3 --title "DJ Claude -
 
 ## Speakers on screen
 
-Read "Speakers on screen" in `extras.md` in this folder before making a dj-voice or dj-album video that cuts to each person as they speak, or before downloading a clip's video to `.dj/video/`.
+Read "Speakers on screen" in `extras.md` in this folder before making a dj-voice or dj-album video that cuts to each person as they speak, or before downloading a clip's video to `data/dj/video/`.
 
 ## Screenshots of the deck
 
@@ -103,7 +103,7 @@ Read "Screenshots of the deck" in `extras.md` in this folder before taking scree
 
 ## Samples for the sampler
 
-Short samples stay out of `library/`. They are too short for the library's BPM analysis, so they live in `.dj/produce/samples/`.
+Short samples stay out of `data/dj/library/`. They are too short for the library's BPM analysis, so they live in `data/dj/produce/samples/`.
 
 Read "Samples for the sampler" in `extras.md` in this folder before finding, downloading or measuring a short sample.
 

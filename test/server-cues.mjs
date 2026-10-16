@@ -40,7 +40,7 @@ test('auto hot cues from the analysis', async () => {
 test('hotcue set + jump issues the right quantised seek', async () => {
   let r = await cli(sc, ['hotcue', 'A', 'set', '3', 'bar:17']);
   assert.match(r.out, /✓/);
-  const cue = JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'cues.json'), 'utf8'))[T.id].hotcues[3];
+  const cue = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'cues.json'), 'utf8'))[T.id].hotcues[3];
   assert.ok(close(cue.sec, barT(17)), `${cue.sec} vs ${barT(17)}`);
   assert.equal(cue.bar, 17);
   // playing: a perform anchored on A's next bar with a seek step
@@ -103,9 +103,9 @@ test('grid correction via the server: shift/nudge/bpm persist and re-derive stru
   t = await api(sc.base, '/api/track/' + id);
   assert.equal(t.bpm, 150.2);
   assert.deepEqual(t.gridEdit, { shiftBeats: 1, nudgeMs: -10, bpm: 150.2 });
-  const edits = JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'grid-edits.json'), 'utf8'));
+  const edits = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'grid-edits.json'), 'utf8'));
   assert.deepEqual(edits[id].edit, { shiftBeats: 1, nudgeMs: -10, bpm: 150.2 });
-  const lib = JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'library.json'), 'utf8'));
+  const lib = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'cache', 'library.json'), 'utf8'));
   assert.equal(lib.tracks.find((x) => x.id === id).bpm, 150.2, 'saved to the (scratch) library cache');
   await cli(sc, ['grid', id, '--reset']);
   t = await api(sc.base, '/api/track/' + id);
@@ -117,7 +117,7 @@ test('grid correction via the server: shift/nudge/bpm persist and re-derive stru
 
 test('key-aware suggest recommends a key shift; mashup mode pairs vocals over beds', async () => {
   const { Library } = await import('../apps/server/lib/library.mjs');
-  const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, '.dj', 'library.json') });
+  const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, 'data', 'dj', 'cache', 'library.json') });
   // 8A at 140 BPM played at 150: +1.19 st → +1 st → 3A: clash with 8A; a −1 st key shift fixes it
   const k = lib.keyPlan('8A', { bpm: 140, camelot: '8A' }, 150, false);
   assert.equal(k.effectiveKey, '3A'); assert.equal(k.kd0, 3); assert.equal(k.shift, -1); assert.equal(k.shiftedKey, '8A');

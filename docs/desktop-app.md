@@ -29,14 +29,14 @@ asks before running it.
 
 The installed app is the same window, started from the Start menu, and it brings the whole project with it. On the
 first start it makes **Documents/DJ Claude**: a project folder like this repository, with `dj.mjs`, the skills
-(`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json`, library and `.dj/`. Open Claude Code in
+(`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json` and `data/` (the library and everything else the app makes). Open Claude Code in
 that folder and it plays the rig exactly as it does here. The start-up window shows where the folder is, and the
 Settings page has it too, with **Open folder** and **Open Claude Code here** (a terminal in that folder, running `claude`). What the
 machine needs besides the app: Node 20+ (for `node dj.mjs …`, which is how Claude Code drives it), Claude Code, and
 ffmpeg on PATH. Stem separation is one command in that folder: `node dj.mjs stems setup` (see [Stems](stems.md)).
 
-An update replaces the app's own files in that folder (`apps/`, `tools/`, `starter/`, `dj.mjs`, `CLAUDE.md` and the
-skills it ships) and leaves yours alone: `config.json`, `.claude/settings.json`, the library, `.dj/`, skills you added.
+An update replaces the app's own files in that folder (`apps/`, `tools/`, `dj.mjs`, `CLAUDE.md` and the
+skills it ships) and leaves yours alone: `config.json`, `.claude/settings.json`, `data/`, skills you added.
 
 ## Building and testing it
 - `pnpm dist` builds the installer into `dist/` (electron-builder; the configuration is `apps/desktop/electron-builder.config.cjs`).

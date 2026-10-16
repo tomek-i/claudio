@@ -53,7 +53,10 @@ function serveFile(res, root, rel) {
   return true;
 }
 
-export function createServer({ home = process.env.CL808_HOME || path.join(HERE, '.cl-808') } = {}) {
+// Saved in the project's data/drums/ (CL808_HOME to put it elsewhere).
+export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'drums');
+
+export function createServer({ home = process.env.CL808_HOME || DEFAULT_HOME } = {}) {
   const store = new Store({ file: path.join(home, 'state.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

@@ -54,7 +54,10 @@ function serveFile(res, root, rel) {
   return true;
 }
 
-export function createServer({ home = process.env.CLAUDEBASE_HOME || path.join(HERE, '.claudebase') } = {}) {
+// Saved in the project's data/daw/ (CLAUDEBASE_HOME to put it elsewhere).
+export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'daw');
+
+export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOME } = {}) {
   const store = new Store({ file: path.join(home, 'project.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

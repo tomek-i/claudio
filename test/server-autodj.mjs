@@ -61,7 +61,7 @@ test('a pending planned mix keeps the auto-DJ out; key clash → filter; big tem
   assert.ok(clash && far);
   const { Sequencer } = await import('../apps/server/lib/sequencer.mjs');
   const { Library } = await import('../apps/server/lib/library.mjs');
-  const lib = new Library({ dirs: [], cacheFile: sc.dir + '/.dj/library.json' });
+  const lib = new Library({ dirs: [], cacheFile: sc.dir + '/data/dj/cache/library.json' });
   const seq = new Sequencer({ library: lib, liveState: () => ({}), history: [], addLog() {}, sessionLog() {}, config: {} });
   const s = { decks: { A: { ...A, trackId: A.id, playing: true, rate: 1, effectiveCamelot: A.camelot }, B: { keylock: true } } };
   assert.equal(seq.chooseStyle(s, 'A', clash, 'B').style, 'filter');

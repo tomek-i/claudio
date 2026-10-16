@@ -1,10 +1,10 @@
 # Song plans (`tools/produce/album-design.mjs`)
 
-One file per track in your songs folder (default `.dj/produce/songs/track-NN.mjs`, `export default { … }`). The album
+One file per track in your songs folder (default `data/dj/produce/songs/track-NN.mjs`, `export default { … }`). The album
 designer merges each plan with the beds file, the reel builder cuts every line from the speech clips (vocal stems when
 separated), and `tools/produce/run-design.mjs` plays the beds live on the DJ table while the reel plays on deck C.
 
-## Beds file (`.dj/produce/beds.mjs`)
+## Beds file (`data/dj/produce/beds.mjs`)
 ```js
 export default { sections: [
   // two sections per track, names end in -a / -b; bars count from 1 inside a section; moves are section-relative bars
@@ -48,7 +48,7 @@ export default {
   script: [{ sec: 'a', end: 11, text: '<an exact line>' }, { sec: 'b', end: 17, q: '<exact words>', id: '<clipId>', label: '<label>' }],
   arrangement: [{ sec: 'a', from: 33, to: 41, mode: 'music' }, { sec: 'a', from: 80, to: 96, mode: 'sparse', rest: 2 }],
   drops: [{ sec: 'b', bars: [81] }],
-  samples: [{ name: 'hee-hee', id: '.dj/produce/samples/hee-hee.mp3', from: 1.25, dur: 1.14, at: [{ sec: 'a', bar: 33 }, { sec: 'b', bar: 57, under: true }] }],
+  samples: [{ name: 'hee-hee', id: 'data/dj/produce/samples/hee-hee.mp3', from: 1.25, dur: 1.14, at: [{ sec: 'a', bar: 33 }, { sec: 'b', bar: 57, under: true }] }],
   notes: 'one paragraph: the joke, the arc, why these lines',
 };
 ```

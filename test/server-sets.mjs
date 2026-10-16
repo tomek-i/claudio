@@ -29,7 +29,7 @@ test('dj sets makes, changes, lists and shows a set, kept as a file in sets/', a
   let r = await cli(sc, ['sets', 'new', 'Warm Up', far.id, 'Fixture Clash']);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /Warm Up\s+2 tracks\s+pick fit, then library/);
-  const file = path.join(sc.dir, 'sets', 'warm-up.json');
+  const file = path.join(sc.dir, 'data', 'dj', 'sets', 'warm-up.json');
   assert.ok(fs.existsSync(file), 'sets/warm-up.json');
   r = await cli(sc, ['sets', 'add', 'Warm Up', second.id, 'no such track at all']);
   assert.match(r.out, /no match: no such track at all/);
@@ -101,7 +101,7 @@ test('the active set and what has played outlive a restart; dj sets off and dele
   let c = await cli(sc, ['sets', 'off']);
   assert.match(c.out, /no set/);
   assert.equal((await api(sc.base, '/api/state')).activeSet, null);
-  assert.ok(!fs.existsSync(path.join(sc.dir, '.dj', 'active-set.json')));
+  assert.ok(!fs.existsSync(path.join(sc.dir, 'data', 'dj', 'active-set.json')));
   c = await cli(sc, ['sets', 'delete', 'Warm Up']);
   assert.match(c.out, /deleted "Warm Up"/);
   assert.equal((await api(sc.base, '/api/sets')).sets.length, 0);
@@ -119,7 +119,7 @@ test('dj sets save keeps the decks and the mixer; dj sets open puts them back, p
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /Friday\s+2 tracks/, 'a new set gets the decks\' tracks');
   assert.match(r.out, /decks saved .*A Fixtures - Fixture Main @1:20 · B Fixtures - Fixture Bed @0:30/);
-  const file = JSON.parse(fs.readFileSync(path.join(sc.dir, 'sets', 'friday.json'), 'utf8'));
+  const file = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'sets', 'friday.json'), 'utf8'));
   assert.equal(file.snapshot.decks.A.rate, 1.02);
   assert.equal(file.snapshot.autoDJ, false);
   assert.match((await cli(sc, ['sets'])).out, /Friday .*decks AB/);
@@ -161,7 +161,7 @@ test('dj sets save keeps the decks and the mixer; dj sets open puts them back, p
 });
 
 test('a saved deck whose track has left the library is reported, the rest is opened', async () => {
-  const f = path.join(sc.dir, 'sets', 'friday.json');
+  const f = path.join(sc.dir, 'data', 'dj', 'sets', 'friday.json');
   const st = JSON.parse(fs.readFileSync(f, 'utf8'));
   st.snapshot.decks.B.trackId = 'gone0000';
   fs.writeFileSync(f, JSON.stringify(st));
@@ -185,7 +185,7 @@ test('a set keeps one automation recording beside it; Auto-DJ and the plan wait 
   assert.equal(r.automation.entries, 3, 'a broken entry is dropped');
   const back = await api(sc.base, '/api/sets/automation?name=friday');
   assert.deepEqual(back.entries.map((e) => e.at), [0, 2, 3], 'kept in time order');
-  assert.ok(fs.existsSync(path.join(sc.dir, 'sets', 'friday.automation.json')));
+  assert.ok(fs.existsSync(path.join(sc.dir, 'data', 'dj', 'sets', 'friday.automation.json')));
   const list = await api(sc.base, '/api/sets');
   assert.deepEqual(list.sets.find((s) => s.name === 'Friday').automation, { duration: 12.5, lanes: 3 });
   assert.equal(list.sets.length, 1, 'the recording is not listed as a set of its own');
@@ -210,7 +210,7 @@ test('a set keeps one automation recording beside it; Auto-DJ and the plan wait 
 
   r = await api(sc.base, '/api/sets/automation', { name: 'Friday', clear: true });
   assert.equal(r.ok, true);
-  assert.ok(!fs.existsSync(path.join(sc.dir, 'sets', 'friday.automation.json')));
+  assert.ok(!fs.existsSync(path.join(sc.dir, 'data', 'dj', 'sets', 'friday.automation.json')));
   assert.equal((await api(sc.base, '/api/sets?name=Friday')).automation, undefined);
   assert.equal((await api(sc.base, '/api/sets/automation?name=Friday')).ok, false);
 });
@@ -219,7 +219,7 @@ test('rename and duplicate: the files (and the recording) move or are copied; th
   let r = await sets({ action: 'create', name: 'Late', tracks: [main.id, second.id], use: true });
   assert.equal(r.ok, true, r.error);
   await api(sc.base, '/api/sets/automation', { name: 'Late', take: { version: 1, duration: 5, entries: [{ at: 1, g: 'A.vol', k: 'set', id: 'A.vol', v: 0.5 }] } });
-  const dir = path.join(sc.dir, 'sets');
+  const dir = path.join(sc.dir, 'data', 'dj', 'sets');
   r = await sets({ action: 'rename', name: 'Late', to: 'Late night' });
   assert.equal(r.ok, true, r.error);
   assert.ok(fs.existsSync(path.join(dir, 'late-night.json')) && fs.existsSync(path.join(dir, 'late-night.automation.json')));

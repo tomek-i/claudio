@@ -20,12 +20,12 @@ Claude never touches audio. It runs `node dj.mjs …` commands; the server relay
 | `apps/web/public/app.js`, `apps/web/public/ui/`, `apps/web/public/css/` | The DJ-table UI and the booth feed: plain ES modules and per-component stylesheets, no build step. |
 | `apps/server/lib/analyze.mjs` | BPM and beat grid, downbeat, key (Camelot), loudness, energy 1–10, intro/breakdowns/drops/outro, section labels, auto hot cues. |
 | `apps/server/lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |
-| `apps/server/lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `.dj/youtube-cookies.txt` if you provide one. |
-| `apps/server/lib/sets.mjs` | Saved sets: named track lists in `sets/` that the auto-DJ plays from. |
+| `apps/server/lib/downloader.mjs` | yt-dlp wrapper: search, download, playlist caps; uses `data/dj/youtube-cookies.txt` if you provide one. |
+| `apps/server/lib/sets.mjs` | Saved sets: named track lists in `data/dj/sets/` that the auto-DJ plays from. |
 | `apps/server/lib/sequencer.mjs`, `apps/server/lib/monitor.mjs`, `apps/server/lib/memory.mjs` | Scheduled plan steps and track queue, auto-DJ safety net, mix monitor with transition critiques, set memory + ratings. |
 | `apps/server/lib/settings.mjs`, `apps/server/lib/health.mjs` | The `/settings` page (edits `config.json`, says which settings apply live and which need a restart) and the `/health` page with `GET /api/health` (one ok/warn/fail/off entry per system, checked only on request). |
 | `apps/server/lib/set-clock.mjs`, `apps/web/public/ui/clock.js` | The header's clock: the time of day (12 or 24 hours, as the browser's locale has it) and how long the set has been running. A set starts with the first track on air and ends after 30 minutes without music; the server keeps the start, so a reload of the page does not reset the timer (a restart of the server does). |
-| `apps/server/lib/starter.mjs`, `starter/` | The Creative Commons starter crate behind `dj starter` and the **Download demo tracks** button. |
+| `apps/server/lib/starter.mjs`, `apps/server/demo-tracks/` | The Creative Commons starter crate behind `dj demo` and the **Download demo tracks** button. |
 | `apps/server/lib/banner.mjs` | The server's startup banner: one of fifteen animations at random, then an equaliser that follows the live deck's beat. |
 | `apps/server/lib/stems.mjs` + `apps/server/lib/separate.py` | Optional stem separation (demucs) so vocals/drums/bass can be muted or swapped live. |
 | `apps/desktop/` | The Electron app: the same server and page in a window of their own, a start-up window, and the installer. See [The desktop app](desktop-app.md). |
@@ -65,12 +65,12 @@ choreography per beat; `dj plan add` schedules any command for a future bar, mix
 
 The **auto-DJ** steps in only if the live track is 45 s from its end with nothing planned. It uses no AI: it takes the
 queue first, then the active **set** if there is one, then the best match from the library. A set is a named track list
-in `sets/` (one JSON file each), made in the **Sets** tab or with `dj sets`. The Sets tab has the library on the left
+in `data/dj/sets/` (one JSON file each), made in the **Sets** tab or with `dj sets`. The Sets tab has the library on the left
 (drag a track across to add it) and your sets on the right: ★ marks the one Auto-DJ plays from (pick another, or "No
 set"), and the open set can be renamed, copied or deleted, its tracks reordered by dragging or taken out with ×, and its
 decks saved and loaded. The Library tab says under "Up next" which set Auto-DJ plays from. Each set says whether Auto-DJ plays it in order or takes the track that fits the live deck best, and what
 happens when all of it has played (carry on from the library, or stop). What of the set has played is kept across a
-restart in `.dj/active-set.json`.
+restart in `data/dj/active-set.json`.
 
 A set can also keep **the decks and the mixer**: "save decks" (`dj sets save "<name>"`) stores what is on each deck
 (track, position, cue, tempo, key lock, key shift, EQ, filter, trim, volume, echo, stem levels, crossfader side, deck
@@ -87,7 +87,7 @@ tempo, key lock and key shift, loops, hot cues, EQ, filter, echo, trim, stems, d
 transition, scratching by hand or by pattern, the sampler. Playing puts the set's decks back and replays it from 0:00;
 transport, loops and transitions land on the same audio frames as when they were recorded. Pressing ● rec while it
 plays records over it: a control is replaced from the moment it is touched, the rest plays on as it was. While a
-recording plays, Auto-DJ and Claude's planned steps wait. The recording is `sets/<name>.automation.json`.
+recording plays, Auto-DJ and Claude's planned steps wait. The recording is `data/dj/sets/<name>.automation.json`.
 
 The **Automation** tab (bottom panel) shows the active set's recording as lanes along its time: a curve for each control
 that moved (volume, EQ, filter, echo, trim, stems, the crossfader, the master), and a row of marks for each deck's
@@ -98,7 +98,7 @@ when you press **save** (Ctrl+S); **undo** (Ctrl+Z) and **revert** go back. Ctrl
 
 **⤓ export** (or `dj automation export [--format m4a]`) makes the set a mix file: the recording plays from 0:00 in real
 time while the flight recorder records the master, then exactly 0:00 to its end is saved as
-`.dj/exports/<set>.mp3` with a tracklist (`.txt`) and a cue sheet (`.cue`); "exports ↗" opens that folder. It takes
+`data/dj/exports/<set>.mp3` with a tracklist (`.txt`) and a cue sheet (`.cue`); "exports ↗" opens that folder. It takes
 as long as the set: the decks are the export's while it runs, and stopping it before the end makes no file. It asks
 whether to export **silently**: the speakers are off until it is done (`dj automation export` does that unless given
 `--listen`), while the recording, the meters and the visuals still get the master as it is. The **mix monitor** flags vocal

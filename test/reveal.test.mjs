@@ -14,10 +14,6 @@ test('revealCommand: the folder in the file manager of each platform', () => {
   assert.deepEqual(revealCommand('folder', NIX, 'linux'), ['xdg-open', [NIX]]);
 });
 
-test('revealCommand: the exports (mixes and sets exported) are .dj/exports in the folder', () => {
-  assert.deepEqual(revealCommand('exports', NIX, 'linux'), ['xdg-open', [path.join(NIX, '.dj', 'exports')]]);
-});
-
 test('revealCommand: Claude Code in a terminal that starts in the folder; the path is one argument, never spliced into a shell line', () => {
   assert.deepEqual(revealCommand('claude', WIN, 'win32'), ['cmd.exe', ['/c', 'start', 'DJ Claude', '/D', WIN, 'cmd.exe', '/k', 'claude']]);
   const [cmd, args] = revealCommand('claude', NIX, 'linux');

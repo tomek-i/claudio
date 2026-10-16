@@ -5,7 +5,7 @@ description: "Build and search the DJ Claude library: download tracks, albums or
 
 # The crate
 
-The crate is the music library. Every audio file in the library folders is scanned and analysed automatically. The only folder is `library/` by default, set by `libraryDirs` in `config.json`. Analysis covers BPM and beat grid, key as a Camelot code, loudness, energy from 1 to 10, intro, breakdowns, drops and outro. Downloads land in `library/downloads/` and are analysed as soon as they finish.
+The crate is the music library. Every audio file in the library folders is scanned and analysed automatically. The only folder is `data/dj/library/` by default, set by `libraryDirs` in `config.json`. Analysis covers BPM and beat grid, key as a Camelot code, loudness, energy from 1 to 10, intro, breakdowns, drops and outro. Downloads land in `data/dj/library/downloads/` and are analysed as soon as they finish.
 
 In this skill `dj` is short for `node dj.mjs`, run from the project root. `<id>` and `<trackId>` are a track's library id, shown by `dj library`.
 
@@ -16,7 +16,7 @@ node dj.mjs find "<artist> <title>"                  # list candidates, no downl
 node dj.mjs get "<artist> - <title>"                 # download the first search hit and analyse it
 node dj.mjs get https://www.youtube.com/watch?v=…    # exact URL
 node dj.mjs get "<playlist url>" --playlist --max 20 # a playlist, capped
-node dj.mjs starter                                  # the Creative Commons starter crate, into library/starter/
+node dj.mjs demo                                  # the Creative Commons starter crate, into data/dj/library/demo/
 ```
 
 - `dj get "Artist - Title"` downloads the first search hit, which is usually right for well-known tracks. When the version matters, as for a club set, run `dj find` first, pick the upload, and pass its URL to `dj get`.
@@ -26,7 +26,7 @@ node dj.mjs starter                                  # the Creative Commons star
 - A download takes about 10 to 40 s.
 - A download can fail because of a region lock or a removed video. If it does, run `dj find` and pick another upload.
 - yt-dlp installs itself into `bin/` on first use. `node dj.mjs doctor --fix` installs it up front.
-- `dj starter` downloads a small Creative Commons crate, so a fresh checkout has music to mix. `dj starter --list` prints the tracks without downloading. `dj starter --force` downloads them again. The credits and licences are in `starter/README.md`.
+- `dj demo` downloads a small Creative Commons crate, so a fresh checkout has music to mix. `dj starter --list` prints the tracks without downloading. `dj starter --force` downloads them again. The credits and licences are in `apps/server/demo-tracks/README.md`.
 
 To build a crate for a brief such as "2008 hardstyle classics" or "deep house warm-up":
 
@@ -59,7 +59,7 @@ If the analysed BPM is half or double the real tempo, or the key is wrong, use t
 
 ## Housekeeping
 
-- To add local files, copy them into `library/`, then run `node dj.mjs scan`.
+- To add local files, copy them into `data/dj/library/`, then run `node dj.mjs scan`.
 - Audio files can also be dropped onto the page or picked with its FILES button. They are copied into the `uploads` folder of the first library folder and analysed.
 - To use other folders, add them under "Music folders" on the `/settings` page (or edit `libraryDirs` in `config.json`) and restart the server.
 - Changed files are re-analysed automatically. To force a full redo, run `node dj.mjs scan --force`.
@@ -86,6 +86,6 @@ Section labels are derived again when the stems finish. Before stems exist, vers
 | `--reset` | none | Goes back to the detected grid. |
 
 - `--shift` and `--nudge` add to any earlier correction on the same track.
-- Corrections are saved in `.dj/grid-edits.json` and survive re-analysis.
+- Corrections are saved in `data/dj/grid-edits.json` and survive re-analysis.
 - The intro, outro, breakdowns and sections are derived again on the corrected grid.
 - A deck that already holds the track plays with the old grid until the track is loaded again.

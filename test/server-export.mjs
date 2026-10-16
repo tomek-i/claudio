@@ -8,11 +8,11 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { scratch, cli, REAL } from './server-harness.mjs';
 
-const sessions = path.join(REAL, '.dj', 'sessions');
+const sessions = path.join(REAL, 'data', 'dj', 'sessions');
 const SRC = fs.existsSync(sessions) ? fs.readdirSync(sessions).filter((d) => fs.existsSync(path.join(sessions, d, 'engine-audio.webm')) && fs.existsSync(path.join(sessions, d, 'audio-chunks.jsonl')))
   .sort((a, b) => fs.statSync(path.join(sessions, a, 'engine-audio.webm')).size - fs.statSync(path.join(sessions, b, 'engine-audio.webm')).size)[0] : null;
 const sc = scratch('export', { port: 4855 });
-const dst = path.join(sc.dir, '.dj', 'sessions');
+const dst = path.join(sc.dir, 'data', 'dj', 'sessions');
 const copy = (id, as = id) => {
   fs.mkdirSync(path.join(dst, as), { recursive: true });
   for (const f of ['session.json', 'actions.jsonl', 'audio-chunks.jsonl', 'telemetry.jsonl', 'engine-audio.webm']) {
@@ -30,7 +30,7 @@ test('export a real session → mp3 + .txt tracklist + .cue', { skip: !SRC && 'n
   copy(SRC);
   const r = await cli(sc, ['export', SRC]);
   assert.equal(r.code, 0, r.out);
-  const out = path.join(sc.dir, '.dj', 'exports');
+  const out = path.join(sc.dir, 'data', 'dj', 'exports');
   const mp3 = path.join(out, SRC + '.mp3');
   assert.ok(fs.existsSync(mp3), r.out);
   const chunks = readJsonl(path.join(dst, SRC, 'audio-chunks.jsonl'));
@@ -61,9 +61,9 @@ test('export handles a recorder gap (lost chunks) and a restarted recorder', { s
   const r = await cli(sc, ['export', gapId]);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /1 recorder gap/);
-  const full = dur(path.join(sc.dir, '.dj', 'exports', SRC + '.mp3')), gapped = dur(path.join(sc.dir, '.dj', 'exports', gapId + '.mp3'));
+  const full = dur(path.join(sc.dir, 'data', 'dj', 'exports', SRC + '.mp3')), gapped = dur(path.join(sc.dir, 'data', 'dj', 'exports', gapId + '.mp3'));
   assert.ok(full - gapped > 3 && full - gapped < 9, `gap removed ${full - gapped} s`);
-  assert.match(fs.readFileSync(path.join(sc.dir, '.dj', 'exports', gapId + '.txt'), 'utf8'), /Recorder gaps/);
+  assert.match(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'exports', gapId + '.txt'), 'utf8'), /Recorder gaps/);
 
   // restarted recorder: two WebM files back to back
   const twoId = 'two-' + SRC;

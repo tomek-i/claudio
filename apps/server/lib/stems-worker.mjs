@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 // Standalone stem separation for the whole library, without the server:
 //   node apps/server/lib/stems-worker.mjs
-// Reads .dj/library.json READ-ONLY (never writes it) and fills .dj/stems/<id>/.
+// Reads data/dj/cache/library.json READ-ONLY (never writes it) and fills data/dj/cache/stems/<id>/.
 // Vocal maps are computed by the server when it next starts (cheap, from the vocals stem).
 // Exits by itself when a server with stem support is up (it takes over the queue).
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { StemQueue } from './stems.mjs';
-import { ROOT } from './paths.mjs';
+import { ROOT, CONFIG_FILE, CACHE_DIR } from './paths.mjs';
 
-const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'config.json'), 'utf8'));
+const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const cfg = { threads: 2, concurrency: 2, model: 'htdemucs', minFreeGB: 3, ...(config.stems || {}) };
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
 try { os.setPriority(process.pid, 19); } catch { /* best effort */ }
 
-const saved = JSON.parse(fs.readFileSync(path.join(ROOT, '.dj', 'library.json'), 'utf8'));
+const saved = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, 'library.json'), 'utf8'));
 const library = { tracks: new Map(saved.tracks.map((t) => [t.id, t])), save() {} };
 const logLine = (s) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${s}`);
 const q = new StemQueue({
-  root: ROOT, library, stemsDir: path.join(ROOT, '.dj', 'stems'),
+  root: ROOT, library, stemsDir: path.join(CACHE_DIR, 'stems'),
   python: cfg.python ? path.resolve(ROOT, cfg.python) : undefined,
   threads: cfg.threads, concurrency: cfg.concurrency, model: cfg.model, minFreeGB: cfg.minFreeGB, device: cfg.device,
   log: logLine,

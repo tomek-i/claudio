@@ -63,7 +63,7 @@ export function wireTransport(root, box) {
   if (ex) ex.onclick = guard(async () => {
     const A = automationOf(); if (!A || !current?.automation) return;
     const live = playingDecks();
-    const how = await ask(box, `Export "${current.name}": the recording plays from 0:00 in real time (${mmss(current.automation.duration)}) while it is recorded, then it is saved as an MP3 with a tracklist in .dj/exports. The decks are not yours meanwhile. Silently: the speakers are off until it is done (the file gets everything).${live.length ? ` Deck ${live.join(' and ')} ${live.length > 1 ? 'are' : 'is'} playing and stops: the set's decks are put back first.` : ''}`, [['Export silently', 'silent'], ['Export and listen', 'listen']]);
+    const how = await ask(box, `Export "${current.name}": the recording plays from 0:00 in real time (${mmss(current.automation.duration)}) while it is recorded, then it is saved as an MP3 with a tracklist in data/dj/exports. The decks are not yours meanwhile. Silently: the speakers are off until it is done (the file gets everything).${live.length ? ` Deck ${live.join(' and ')} ${live.length > 1 ? 'are' : 'is'} playing and stops: the set's decks are put back first.` : ''}`, [['Export silently', 'silent'], ['Export and listen', 'listen']]);
     if (how) await A.exportSet(current.name, { listen: how === 'listen' });
   });
   render();

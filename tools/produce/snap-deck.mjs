@@ -1,5 +1,5 @@
 // Drive the deck through a short demo and take high-resolution screenshots of it (for thumbnails and posts).
-//   node tools/produce/snap-deck.mjs <trackA> <trackB> [trackC] [trackD] [--scale 2] [--out .dj/produce/out/shots]
+//   node tools/produce/snap-deck.mjs <trackA> <trackB> [trackC] [trackD] [--scale 2] [--out data/dj/produce/out/shots]
 // Opens the page in its own Playwright Chromium (which becomes the sound system, so this PLAYS AUDIO), then loads the
 // tracks, plays, mutes stems, rolls a loop, blends A→B, brings up four decks, and snaps a PNG at each step.
 // Track arguments are library ids or search text (anything `dj load` accepts).
@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 const args = process.argv.slice(2); const flag = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const tracks = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
 if (tracks.length < 2) { console.log('usage: snap-deck.mjs <trackA> <trackB> [trackC] [trackD] [--scale 2]'); process.exit(1); }
-const OUT = flag('--out', '.dj/produce/out/shots'); fs.mkdirSync(OUT, { recursive: true });
+const OUT = flag('--out', 'data/dj/produce/out/shots'); fs.mkdirSync(OUT, { recursive: true });
 const SCALE = Number(flag('--scale', 2));
 async function loadPlaywright() { try { return await import('playwright'); } catch { /* */ } const root = execSync('npm root -g', { encoding: 'utf8' }).trim(); for (const n of ['playwright', 'playwright-core']) { const p = path.join(root, n, 'index.mjs'); if (fs.existsSync(p)) return import(pathToFileURL(p).href); } throw new Error('Playwright not found'); }
 const { chromium } = await loadPlaywright();

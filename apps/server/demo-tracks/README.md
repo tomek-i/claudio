@@ -1,8 +1,8 @@
 # Starter crate
 
-Twelve openly licensed tracks so a fresh checkout has something to mix. `node dj.mjs starter` downloads them from
-[Free Music Archive](https://freemusicarchive.org) into `library/starter/` (each file is checked against the hash in
-`tracks.json`); `node dj.mjs starter --list` shows them without downloading.
+Twelve openly licensed tracks so a fresh checkout has something to mix. `node dj.mjs demo` downloads them from
+[Free Music Archive](https://freemusicarchive.org) into `data/dj/library/demo/` (each file is checked against the hash in
+`tracks.json`); `node dj.mjs demo --list` shows them without downloading.
 
 The audio is not part of this repository. Every track was published by its artist under a Creative Commons licence
 that allows sharing, remixing and commercial use. BPM values are approximate; the analyser measures the real ones.

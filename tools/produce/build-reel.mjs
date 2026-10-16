@@ -1,7 +1,7 @@
 // Render a voice reel from a design module (exports WINDOWS; see .claude/skills/dj-voice): every line cut from its clip (vocal stem when separated), high-passed,
 // compressed, levelled to the same speech loudness, and placed so it ENDS on its bar. Windows are laid end to end in one WAV;
-// .dj/voices/<name>-reel.json records each window's offset so the runner can seek the reel deck to it on the anchor bar.
-//   node tools/produce/build-reel.mjs <design.mjs>      → library/voice-reels/Voice Reel - <name>.wav + .dj/voices/<name>-reel.json
+// data/dj/voices/<name>-reel.json records each window's offset so the runner can seek the reel deck to it on the anchor bar.
+//   node tools/produce/build-reel.mjs <design.mjs>      → data/dj/library/voice-reels/Voice Reel - <name>.wav + data/dj/voices/<name>-reel.json
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -11,13 +11,13 @@ if (!process.argv[2]) { console.log('usage: build-reel.mjs <design.mjs>'); proce
 const designPath = path.resolve(process.argv[2]);
 const name = path.basename(designPath, '.mjs');
 const { WINDOWS } = await import(pathToFileURL(designPath).href);
-const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const tr = (id) => LIB[id] || Object.values(LIB).find((t) => t.id === id) || (fs.existsSync(String(id)) ? { id: String(id), file: String(id), title: path.basename(String(id)) } : undefined); // a plain file path works as a sample source
 const SR = 48000, TARGET_DB = -18, PEAK_CAP_DB = -6, GAP = 2.0, TAIL = 1.0;
 const db = (x) => 20 * Math.log10(x + 1e-12);
 
 // prefer the separated vocal stem (no bed music under the speech) when it exists
-const srcOf = (t) => (fs.existsSync(`.dj/stems/${t.id}/vocals.wav`) ? `.dj/stems/${t.id}/vocals.wav` : t.file);
+const srcOf = (t) => (fs.existsSync(`data/dj/cache/stems/${t.id}/vocals.wav`) ? `data/dj/cache/stems/${t.id}/vocals.wav` : t.file);
 function cut(file, from, dur) {
   const af = ['highpass=f=90', 'acompressor=threshold=-26dB:ratio=3:attack=5:release=90:makeup=1', 'afade=t=in:d=0.004', `afade=t=out:st=${Math.max(0, dur - Math.min(0.04, dur / 4)).toFixed(3)}:d=${Math.min(0.04, dur / 4).toFixed(3)}`].join(',');
   const buf = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(from), '-t', String(dur), '-i', file, '-ac', '2', '-ar', String(SR), '-af', af, '-f', 'f32le', 'pipe:1'], { windowsHide: true, maxBuffer: 1 << 28 });
@@ -89,10 +89,10 @@ wr(0, 'RIFF'); out.writeUInt32LE(36 + total * 4, 4); wr(8, 'WAVE'); wr(12, 'fmt 
 out.writeUInt32LE(SR, 24); out.writeUInt32LE(SR * 4, 28); out.writeUInt16LE(4, 32); out.writeUInt16LE(16, 34); wr(36, 'data'); out.writeUInt32LE(total * 4, 40);
 let clip = 0;
 for (const p of parts) { const s0 = Math.round(p.offset * SR); for (let i = 0; i < p.L.length; i++) { for (const [ch, v] of [[0, p.L[i]], [1, p.R[i]]]) { let x = Math.round(v * 32767); if (x > 32767 || x < -32768) { clip++; x = Math.max(-32768, Math.min(32767, x)); } out.writeInt16LE(x, 44 + (s0 + i) * 4 + ch * 2); } } }
-fs.mkdirSync('library/voice-reels', { recursive: true });
-const wav = path.resolve(`library/voice-reels/Voice Reel - ${name}.wav`); // scanned into the crate as artist "Voice Reel"
+fs.mkdirSync('data/dj/library/voice-reels', { recursive: true });
+const wav = path.resolve(`data/dj/library/voice-reels/Voice Reel - ${name}.wav`); // scanned into the crate as artist "Voice Reel"
 fs.writeFileSync(wav, out);
 meta.file = wav; meta.duration = +(total / SR).toFixed(2);
-fs.mkdirSync('.dj/voices', { recursive: true });
-fs.writeFileSync(`.dj/voices/${name}-reel.json`, JSON.stringify(meta, null, 1));
+fs.mkdirSync('data/dj/voices', { recursive: true });
+fs.writeFileSync(`data/dj/voices/${name}-reel.json`, JSON.stringify(meta, null, 1));
 console.log(`→ ${wav}  ${meta.duration} s, ${meta.windows.length} windows, ${warn} warnings, ${clip} clipped samples`);

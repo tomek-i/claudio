@@ -46,8 +46,8 @@ test('downloadStarter: verified downloads, page fallback, skip existing, report 
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('starter/tracks.json: every track has what the downloader and the credits need', () => {
-  const list = starterTracks(path.resolve(import.meta.dirname, '..'));
+test('demo-tracks/tracks.json: every track has what the downloader and the credits need', () => {
+  const list = starterTracks();
   assert.ok(list.length > 0);
   for (const t of list) {
     assert.match(t.file, /^[^/\\]+\.mp3$/, 'a plain file name');

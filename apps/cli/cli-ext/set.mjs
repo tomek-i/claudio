@@ -10,6 +10,7 @@
 //   export [sessionId] [--format mp3|m4a]                                mix file + tracklist
 import fs from 'node:fs';
 import path from 'node:path';
+import { DJ_DIR, CACHE_DIR, EXPORTS_DIR } from '../../server/lib/paths.mjs';
 
 export default ({ api, flags, rest, fail, out, fmtTrack, mmss, ROOT, JSON_OUT }) => {
   const nm = (t) => `${t?.artist ? t.artist + ' - ' : ''}${t?.title ?? '?'}`;
@@ -152,7 +153,7 @@ dj automation over                play it from 0:00 and record over it (a contro
 dj automation stop                stop recording or playing (the music carries on); a recording is saved in the set
 dj automation export [--format mp3|m4a] [--listen]
                                   the set as a mix file: the recording plays from 0:00 in real time while it is
-                                  recorded, then .dj/exports/<set>.mp3 (+ .txt tracklist, .cue) is written; the
+                                  recorded, then data/dj/exports/<set>.mp3 (+ .txt tracklist, .cue) is written; the
                                   speakers are off meanwhile (--listen: on)
 dj automation clear               delete the set's recording`;
       const sub = rest[0] || 'status';
@@ -175,7 +176,7 @@ dj automation clear               delete the set's recording`;
       const word = a.exporting ? `⤓ exporting (${a.exporting}${a.silent ? ', speakers off' : ''})` : { idle: 'stopped', rec: '⏺ recording', play: '▶ playing', overdub: '⏺ recording over' }[a.mode] || a.mode;
       console.log(`🎚 automation ${word}${a.mode !== 'idle' ? ` at ${mmss(a.t)}${a.duration ? ' / ' + mmss(a.duration) : ''}` : ''}${st ? `  set "${st.name}"` : '  (no active set)'}`);
       if (op === 'export' && a.exporting) console.log(`   it plays in real time: the file is ready in about ${mmss((a.duration || 0) + 5)} (dj automation shows where it is)`);
-      if (a.lastExport) console.log(a.lastExport.ok ? `   last export: .dj/exports/${a.lastExport.file} (${mmss(a.lastExport.duration)}, ${a.lastExport.tracks} tracks)` : `   last export failed: ${a.lastExport.error}`);
+      if (a.lastExport) console.log(a.lastExport.ok ? `   last export: data/dj/exports/${a.lastExport.file} (${mmss(a.lastExport.duration)}, ${a.lastExport.tracks} tracks)` : `   last export failed: ${a.lastExport.error}`);
       if (a.stopped?.entries != null) console.log(`   saved: ${mmss(a.stopped.duration)}, ${a.stopped.entries} moves`);
       if (take) console.log(`   recording: ${mmss(take.duration)}, ${take.entries} moves on ${take.lanes.length} lane${take.lanes.length === 1 ? '' : 's'} (${take.lanes.join(' ')})`);
       else if (st) console.log('   no recording yet: dj automation record');
@@ -248,14 +249,14 @@ dj automation clear               delete the set's recording`;
 
     async export() {
       const { exportSession } = await import('../../server/lib/export.mjs');
-      const root = path.join(ROOT, '.dj', 'sessions');
+      const root = path.join(DJ_DIR, 'sessions');
       if (!fs.existsSync(root)) fail('no sessions recorded yet (dj record start)');
       const id = rest[0] || fs.readdirSync(root).filter((d) => fs.existsSync(path.join(root, d, 'session.json'))).sort().pop();
       if (!id || !fs.existsSync(path.join(root, id))) fail(`no session "${id}"`);
       const format = flags.format === 'm4a' ? 'm4a' : 'mp3';
       console.log(`⏳ exporting ${id} → ${format} …`);
       let r;
-      try { r = await exportSession(path.join(root, id), { format, outDir: path.join(ROOT, '.dj', 'exports'), libraryFile: path.join(ROOT, '.dj', 'library.json'), log: (s) => console.log('  ' + s) }); }
+      try { r = await exportSession(path.join(root, id), { format, outDir: EXPORTS_DIR, libraryFile: path.join(CACHE_DIR, 'library.json'), log: (s) => console.log('  ' + s) }); }
       catch (e) { fail(e.message); }
       if (JSON_OUT) return out(r);
       console.log(`✓ ${r.audio}  (${mmss(r.duration)}, ${r.tracks.length} tracks from ${r.source}${r.gaps.length ? `, ${r.gaps.length} recorder gap(s)` : ''})`);

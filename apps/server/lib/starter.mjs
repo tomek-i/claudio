@@ -1,10 +1,12 @@
-// Starter crate: openly licensed tracks (CC0 / CC BY / CC BY-SA, listed in starter/tracks.json) so a fresh checkout
-// has music to mix. Used by `dj starter` and by the "Download demo tracks" button on an empty crate (/api/starter).
+// Demo tracks: openly licensed tracks (CC0 / CC BY / CC BY-SA, listed in apps/server/demo-tracks/tracks.json) so a
+// fresh checkout has music to mix. Used by `dj demo` and by the "Download demo tracks" button on an empty crate
+// (/api/starter).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { DEMO_DIR } from './paths.mjs';
 
-export const starterTracks = (root) => JSON.parse(fs.readFileSync(path.join(root, 'starter', 'tracks.json'), 'utf8'));
+export const starterTracks = (dir = DEMO_DIR) => JSON.parse(fs.readFileSync(path.join(dir, 'tracks.json'), 'utf8'));
 
 const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 const httpGet = (url) => fetch(url, { headers: { 'user-agent': 'dj-claude' } });

@@ -15,7 +15,7 @@ node --test apps/daw/test/*.test.mjs
 ```
 
 Needs Node 20 or later. No dependencies, no build step. `CLAUDEBASE_PORT` changes the port and `CLAUDEBASE_HOME` the folder the
-song is saved in (default `apps/daw/.claudebase/`).
+song is saved in (default `data/daw/` in the project folder).
 
 ## What it does
 

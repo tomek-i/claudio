@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { FX, FX_DEFAULT_AT } from '../server/lib/fx.mjs';
-import { ROOT, DJ_DIR, CONFIG_FILE, SERVER_FILE, CLI_EXT_DIR } from '../server/lib/paths.mjs';
+import { ROOT, DJ_DIR, CACHE_DIR, CONFIG_FILE, SERVER_FILE, CLI_EXT_DIR } from '../server/lib/paths.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
@@ -81,7 +81,7 @@ const commands = {
   async start() {
     try { await fetch(BASE + '/api/state'); console.log(`✓ Already running at ${BASE}`); }
     catch {
-      const logFile = path.join(DJ_DIR, 'server.log');
+      const logFile = path.join(CACHE_DIR, 'server.log');
       fs.mkdirSync(path.dirname(logFile), { recursive: true });
       const fd = fs.openSync(logFile, 'a');
       const child = spawn(process.execPath, [SERVER_FILE], { detached: true, stdio: ['ignore', fd, fd], cwd: ROOT, windowsHide: true });
@@ -90,7 +90,7 @@ const commands = {
         await new Promise((r) => setTimeout(r, 250));
         try { await fetch(BASE + '/api/state'); break; } catch { /* waiting */ }
       }
-      console.log(`✓ DJ server started at ${BASE}  (log: .dj/server.log)`);
+      console.log(`✓ DJ server started at ${BASE}  (log: data/dj/cache/server.log)`);
     }
     if (!flags['no-open']) await commands.open();
     const s = await api('/api/state');
@@ -240,7 +240,7 @@ CRATE     library [search] [--bpm 140-150] [--key 8A,9A] [--energy 6-9] [--compa
           find "<query>"                   search YouTube without downloading
           get <url | "artist - title"> [--playlist --max N]   download + analyse
           scan [--force]                   rescan library folders
-          starter [--list] [--force]       download the Creative Commons starter crate into library/starter
+          demo [--list] [--force]          download the Creative Commons demo tracks into <library>/demo
 DECKS     load <deck> <id|search>   play <deck> [--at bar]   pause <deck>   cue <deck> [sec]   seek <deck> <sec|bar:N>
           sync <deck>   tempo <deck> <bpm|+2%>   loop <deck> <beats|off|half|double>   loop <deck> move <n>   (n loop lengths, -1 = back)
 MIXER     vol <deck> <0-1.54>  (1 = normal)   eq <deck> <low|mid|high> <-1..1>   filter <deck> <-1..1>   echo <deck> <0-1>

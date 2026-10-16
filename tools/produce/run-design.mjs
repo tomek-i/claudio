@@ -1,4 +1,4 @@
-// Live design runner: plays a design (SECTIONS from a design module, reel windows from .dj/voices/<name>-reel.json) on the
+// Live design runner: plays a design (SECTIONS from a design module, reel windows from data/dj/voices/<name>-reel.json) on the
 // DJ table — beds on A/B with their vocals muted, the voice reel on C, layers/carries on D, hand-offs between sections.
 // Each section ends with a voice cut: outgoing bass out, highs away, slip roll, incoming lands on the
 // downbeat at its first bar. Gentle ducks (0.8) under the voice. Records and exports.   node tools/produce/run-design.mjs --design <design.mjs> [--dry]
@@ -18,22 +18,22 @@ const BASE = `http://localhost:${process.env.DJ_PORT || JSON.parse(fs.readFileSy
 const post = async (cmd, args, why) => (await (await fetch(`${BASE}/api/cmd`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cmd, args, why }) })).json());
 const get = async () => (await fetch(`${BASE}/api/state`)).json();
 const sleep = (ms) => new Promise((x) => setTimeout(x, ms));
-fs.mkdirSync('.dj/produce/out', { recursive: true });
-const TIMES = { design: null, recordStart: null, windows: [], screen: null }; const saveTimes = () => fs.writeFileSync('.dj/produce/out/run-design-times.json', JSON.stringify(TIMES, null, 1));
+fs.mkdirSync('data/dj/produce/out', { recursive: true });
+const TIMES = { design: null, recordStart: null, windows: [], screen: null }; const saveTimes = () => fs.writeFileSync('data/dj/produce/out/run-design-times.json', JSON.stringify(TIMES, null, 1));
 function startScreen() {
   // B-roll comes from the Playwright recorder (tools/produce/record-browser.mjs), which must already be running and be the sound system.
   try {
-    const info = JSON.parse(fs.readFileSync('.dj/produce/out/screen/browser.json', 'utf8'));
+    const info = JSON.parse(fs.readFileSync('data/dj/produce/out/screen/browser.json', 'utf8'));
     if (!info.ready || info.done) throw new Error('recorder not ready');
     TIMES.screen = { file: info.file, start: info.start }; saveTimes(); log(`🎥 browser recording → ${info.file}`);
   } catch (e) { log('✗ no browser recording (' + e.message + ') — start node tools/produce/record-browser.mjs first'); }
 }
-function stopScreen() { try { fs.writeFileSync('.dj/produce/out/screen/stop', ''); } catch { /* */ } }
-const log = (...a) => { const s = `${new Date().toTimeString().slice(0, 8)} ${a.join(' ')}`; console.log(s); fs.appendFileSync('.dj/produce/out/run-design.log', s + '\n'); };
+function stopScreen() { try { fs.writeFileSync('data/dj/produce/out/screen/stop', ''); } catch { /* */ } }
+const log = (...a) => { const s = `${new Date().toTimeString().slice(0, 8)} ${a.join(' ')}`; console.log(s); fs.appendFileSync('data/dj/produce/out/run-design.log', s + '\n'); };
 const dj = (...a) => { try { return execFileSync(process.execPath, ['dj.mjs', ...a.map(String)], { windowsHide: true, encoding: 'utf8', timeout: 90000 }); } catch { return ''; } };
-const L = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const L = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const tr = (id) => Object.values(L).find((t) => t.id === id);
-const REEL = JSON.parse(fs.readFileSync(`.dj/voices/${DESIGN}-reel.json`, 'utf8'));
+const REEL = JSON.parse(fs.readFileSync(`data/dj/voices/${DESIGN}-reel.json`, 'utf8'));
 const REEL_ID = Object.values(L).find((t) => t.file === REEL.file)?.id; if (!REEL_ID) throw new Error(`${DESIGN} reel not scanned yet`);
 const W = Object.fromEntries(REEL.windows.map((w) => [w.name, w]));
 const barOf = (s, D, id) => (s.decks[D]?.trackId === id ? beatOfTime(tr(id), s.decks[D].position) / 4 + 1 : -1);
@@ -115,7 +115,7 @@ async function cutInto(FROM, fromSec, TO, toSec, T) {
   log(`⚡ ${fromSec.name} → ${toSec.name}`);
 }
 
-if (RESUME < 0) fs.writeFileSync('.dj/produce/out/run-design.log', '');
+if (RESUME < 0) fs.writeFileSync('data/dj/produce/out/run-design.log', '');
 dj('autodj', 'off'); dj('plan', 'clear');
 const decks = SECTIONS.map((_, i) => (i % 2 ? 'B' : 'A'));
 if (RESUME >= 0) { dj('record', 'start', '--no-screen', '--no-mic'); TIMES.recordStart = Date.now(); TIMES.design = DESIGN; saveTimes(); }

@@ -15,7 +15,7 @@ node --test apps/synth/test/*.test.mjs
 ```
 
 Needs Node 20 or later. No dependencies, no build step. `MINICLAUDE_PORT` changes the port and `MINICLAUDE_HOME` the folder
-the patches are saved in (default `apps/synth/.miniclaude/`).
+the patches are saved in (default `data/synth/` in the project folder).
 
 ## What it does
 

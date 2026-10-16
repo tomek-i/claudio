@@ -8,8 +8,9 @@ const IS_WIN = process.platform === 'win32';
 const RELEASE = `https://github.com/yt-dlp/yt-dlp/releases/latest/download/${IS_WIN ? 'yt-dlp.exe' : process.platform === 'darwin' ? 'yt-dlp_macos' : 'yt-dlp'}`;
 
 export class Downloader {
-  constructor({ root, downloadDir, onEvent = () => {} }) {
+  constructor({ root, downloadDir, cookies = null, onEvent = () => {} }) {
     this.root = root;
+    this.cookies = cookies;
     this.downloadDir = downloadDir;
     this.localBin = path.join(root, 'bin', IS_WIN ? 'yt-dlp.exe' : 'yt-dlp');
     this.onEvent = onEvent;
@@ -43,9 +44,9 @@ export class Downloader {
   }
 
   baseArgs() {
-    // optional YouTube login cookies (Netscape format) at .dj/youtube-cookies.txt get past the "confirm you're not a bot" wall
-    const cookies = path.join(this.root, '.dj', 'youtube-cookies.txt');
-    return ['--no-warnings', '--no-colors', '--encoding', 'utf-8', '--js-runtimes', 'node', ...(fs.existsSync(cookies) ? ['--cookies', cookies] : [])];
+    // optional YouTube login cookies (Netscape format) at data/dj/youtube-cookies.txt get past the "confirm you're not a bot" wall
+    const cookies = this.cookies;
+    return ['--no-warnings', '--no-colors', '--encoding', 'utf-8', '--js-runtimes', 'node', ...(cookies && fs.existsSync(cookies) ? ['--cookies', cookies] : [])];
   }
 
   async search(query, n = 8) {

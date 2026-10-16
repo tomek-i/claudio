@@ -82,4 +82,4 @@ The page has a box for notes to you. When the user wants to direct from the page
 
 ## Files
 
-WAV export is the button on the page (two bars of the sequence with the playing patch). The patches and the sequence are saved in `apps/synth/.miniclaude/state.json`.
+WAV export is the button on the page (two bars of the sequence with the playing patch). The patches and the sequence are saved in `data/synth/state.json`.

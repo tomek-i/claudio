@@ -4,12 +4,10 @@
 //   revealCommand()  what to run, as data: [command, arguments]
 //   reveal()         runs it, detached. Resolves { ok } or { ok: false, error } when the program is not there.
 import { spawn } from 'node:child_process';
-import path from 'node:path';
 
-export const REVEALS = ['folder', 'claude', 'exports'];
+export const REVEALS = ['folder', 'claude', 'exports']; // exports: the server opens its exports folder as a 'folder'
 
 export function revealCommand(what, root, platform = process.platform) {
-  if (what === 'exports') return revealCommand('folder', path.join(root, '.dj', 'exports'), platform); // exported mixes and sets
   if (what === 'folder') return platform === 'win32' ? ['explorer.exe', [root]] : platform === 'darwin' ? ['open', [root]] : ['xdg-open', [root]];
   if (what === 'claude') {
     // a new terminal window, in the folder, running `claude`; it stays open if claude is not installed, to say so

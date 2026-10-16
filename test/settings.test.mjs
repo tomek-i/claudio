@@ -137,6 +137,6 @@ test('paths: the project root is the first folder upwards with a config.json, or
   fsP.rmSync(tmp, { recursive: true, force: true });
   // this checkout
   assert.equal(CONFIG_FILE, pathP.join(ROOT, 'config.json'));
-  assert.equal(DJ_DIR, pathP.join(ROOT, '.dj'));
+  assert.equal(DJ_DIR, pathP.join(ROOT, 'data', 'dj'));
   for (const f of [CONFIG_FILE, SERVER_FILE, CLI_FILE, pathP.join(LIB_DIR, 'separate.py'), pathP.join(LIB_DIR, 'key-presets'), pathP.join(PUBLIC_DIR, 'index.html'), pathP.join(PUBLIC_DIR, 'engine.js'), pathP.join(CLI_EXT_DIR, 'stems.mjs')]) assert.ok(fsP.existsSync(f), `${f} exists`);
 });

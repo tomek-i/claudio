@@ -4,8 +4,8 @@
 //   node tools/produce/make-video.mjs <audio.mp3|wav> --title "DJ Claude - Saturday Night Set" [--out <file.mp4>]
 //                               [--screen auto|<capture.webm>] [--screen-offset <sec>] [--logo <png>] [--sections <tracklist.txt>]
 //
-// --screen auto   uses the latest recording in .dj/produce/out/screen and lines it up from browser.json `start` and the
-//                 session id in the audio file name (.dj/exports/<ISO time>.mp3 → the recording start in UTC).
+// --screen auto   uses the latest recording in data/dj/produce/out/screen and lines it up from browser.json `start` and the
+//                 session id in the audio file name (data/dj/exports/<ISO time>.mp3 → the recording start in UTC).
 // --sections      a `dj export` tracklist (.txt next to the mp3: "m:ss  Artist - Title" lines) → one tinted section per track.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +17,7 @@ const TITLE = flag('--title') || path.basename(AUDIO).replace(/\.[^.]+$/, '');
 const OUT = flag('--out') || path.join(path.dirname(AUDIO), `${path.basename(AUDIO).replace(/\.[^.]+$/, '')}.mp4`);
 const LOGO = flag('--logo'); let SCREEN = flag('--screen'); let SCREEN_OFF = Number(flag('--screen-offset') || 0);
 const SECTIONS = flag('--sections') || (fs.existsSync(AUDIO.replace(/\.[^.]+$/, '.txt')) ? AUDIO.replace(/\.[^.]+$/, '.txt') : null);
-const TMP = path.join('.dj/produce/out/vtmp', path.basename(OUT).replace(/\.mp4$/, '')); fs.mkdirSync(TMP, { recursive: true });
+const TMP = path.join('data/dj/produce/out/vtmp', path.basename(OUT).replace(/\.mp4$/, '')); fs.mkdirSync(TMP, { recursive: true });
 const ff = (a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { windowsHide: true, stdio: ['ignore', 'inherit', 'inherit'] });
 const probe = (f) => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' }).trim();
 const dur = probe(AUDIO);
@@ -34,9 +34,9 @@ fs.writeFileSync(path.join(TMP, 'meta.json'), JSON.stringify(meta, null, 1));
 
 // screen capture alignment
 if (SCREEN === 'auto') {
-  const info = JSON.parse(fs.readFileSync('.dj/produce/out/screen/browser.json', 'utf8'));
+  const info = JSON.parse(fs.readFileSync('data/dj/produce/out/screen/browser.json', 'utf8'));
   SCREEN = info.file;
-  const m = path.basename(AUDIO).match(/(\d{4}-\d\d-\d\d)T(\d\d)-(\d\d)-(\d\d)/); // .dj/exports/<session id>.mp3, UTC
+  const m = path.basename(AUDIO).match(/(\d{4}-\d\d-\d\d)T(\d\d)-(\d\d)-(\d\d)/); // data/dj/exports/<session id>.mp3, UTC
   if (m && !flag('--screen-offset')) { const recStart = Date.parse(`${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`); SCREEN_OFF = (recStart - info.start) / 1000; }
   console.log(`screen: ${path.basename(SCREEN)} offset ${SCREEN_OFF.toFixed(1)} s`);
 }

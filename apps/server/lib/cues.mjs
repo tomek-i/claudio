@@ -1,4 +1,4 @@
-// Hot cues 1–8 and named saved loops per track, persisted in .dj/cues.json (outside the analysis
+// Hot cues 1–8 and named saved loops per track, persisted in data/dj/cues.json (outside the analysis
 // cache, so re-analysis never loses them). Empty slots are auto-filled from the analysis:
 // 1 start (mix-in) · 2 first vocal-in · 3 first chorus · 4 first drop · 5 first breakdown · 6 mix-out.
 import fs from 'node:fs';

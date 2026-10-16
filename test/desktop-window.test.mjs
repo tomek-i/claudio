@@ -39,7 +39,7 @@ test('a damaged file is ignored', () => {
 });
 
 test('saveWindow / loadWindow: round trip, a missing folder is made, a missing or broken file is null', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-window-')), file = path.join(dir, '.dj', 'desktop-window.json');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-window-')), file = path.join(dir, 'data', 'desktop', 'desktop-window.json');
   try {
     assert.equal(loadWindow(file), null);
     const state = { bounds: { x: 10, y: 20, width: 1200, height: 800 }, maximized: false };

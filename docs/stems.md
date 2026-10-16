@@ -2,7 +2,7 @@
 
 [← Back to the README](../README.md)
 
-Optional, project-local. Every track can be split into `.dj/stems/<trackId>/{vocals,drums,bass,other}.wav`
+Optional, project-local. Every track can be split into `data/dj/cache/stems/<trackId>/{vocals,drums,bass,other}.wav`
 by demucs (`htdemucs`) in the background at idle priority; the vocal stem also gives each track a vocal map that the
 mixer uses to avoid vocal clashes. One command installs it into `.venv` (no system changes; it needs
 [uv](https://docs.astral.sh/uv/), which brings its own Python 3.12):
@@ -30,7 +30,7 @@ In the library on the DJ page a track that has no stems yet carries a small "no 
 nothing, and the tag goes when its separation is done.
 
 `apps/server/lib/separate.py` decodes with ffmpeg and writes WAVs itself, so it also works where torchaudio has no wheel (Windows on
-ARM). Model weights download to `.dj/models/` on first run. Control: `config.json → stems` (`enabled`, `auto`,
+ARM). Model weights download to `data/dj/cache/models/` on first run. Control: `config.json → stems` (`enabled`, `auto`,
 `device`, `concurrency`, `threads`), `dj stems <id|all>`, `dj stems status`, `dj vocals <id>`.
 
 On a 12-core laptop CPU a track takes roughly two to three times its own length to separate, two tracks at a time,

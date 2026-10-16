@@ -16,7 +16,7 @@ CRATE   library [search] [--bpm 140-150] [--key 8A,9A] [--energy 6-9] [--compati
         find "<query>"                     search YouTube, no download
         get <url|"artist - title"> [--playlist --max N]
         scan [--force]                     rescan the library folders
-        starter [--list] [--force]         download the Creative Commons starter crate into library/starter
+        starter [--list] [--force]         download the Creative Commons starter crate into data/dj/library/demo
 DECKS   load <deck> <id|search>   play <deck> [--at bar]   pause <deck>   cue <deck> [sec|bar:N]
         seek <deck> <sec|bar:N>   sync <deck>   tempo <deck> <bpm|±N%>
         loop <deck> <beats|off|half|double>   start a loop, release it (off or 0), halve or double the running loop

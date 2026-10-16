@@ -1,9 +1,9 @@
-// Music video with the speakers' footage cut in at the exact moments their lines play (from .dj/video/<videoId>.mp4),
+// Music video with the speakers' footage cut in at the exact moments their lines play (from data/dj/video/<videoId>.mp4),
 // a reactive background between lines (tools/produce/viz.mjs output or its own), DJ-table B-roll in the gaps, burnt-in captions.
 //   node tools/produce/video-cuts.mjs <meta.json> <audio> <out.mp4> [--bg <viz.mp4>] [--screen <capture.webm> --screen-offset <sec>]
 // meta.json (what tools/produce/cut-track.mjs and align.mjs write): { title, duration, sections: [{ name, start, bpm, bars,
 //   lines: [[endBar, clipId, from, dur, text]…], voices: [[startBar, clipId, from, dur, refFrom, refDur]…] }] }
-// Footage: download the clip's video to .dj/video/<videoId>.mp4; the clipId → videoId mapping comes from the crate file
+// Footage: download the clip's video to data/dj/video/<videoId>.mp4; the clipId → videoId mapping comes from the crate file
 // name "[videoId].mp3" (how `dj get` names downloads). Lines without footage keep the background.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,13 +13,13 @@ const [META, AUDIO, OUT] = args.filter((a, i) => !a.startsWith('--') && !(i > 0 
 if (!META || !AUDIO || !OUT) { console.log('usage: video-cuts.mjs <meta.json> <audio> <out.mp4> [--bg viz.mp4] [--screen file --screen-offset sec]'); process.exit(1); }
 const BG = flag('--bg'), SCREEN = flag('--screen'), SCREEN_OFF = Number(flag('--screen-offset') || 0);
 const meta = JSON.parse(fs.readFileSync(META, 'utf8'));
-const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const vidOf = {}; for (const t of Object.values(LIB)) { const m = String(t.file || '').match(/\[([A-Za-z0-9_-]{11})\]\.[a-z0-9]+$/); if (m) vidOf[t.id] = m[1]; }
 const W = 1280, H = 720, FPS = 30;
 const font = (names) => { for (const n of names) { const p = `C:/Windows/Fonts/${n}`; if (fs.existsSync(p)) return p.replace(/:/g, '\\:'); } return null; };
 const FONT = (process.env.VIZ_FONT || process.env.VIZ_FONT_BOLD)?.replace(/:/g, '\\:') || font(['bahnschrift.ttf', 'segoeui.ttf', 'arial.ttf']);
 const ffont = FONT ? `fontfile='${FONT}':` : '';
-const TMP = process.env.VTMP || path.join('.dj/produce/out/vtmp', path.basename(OUT).replace(/\.mp4$/, '')); fs.mkdirSync(TMP, { recursive: true });
+const TMP = process.env.VTMP || path.join('data/dj/produce/out/vtmp', path.basename(OUT).replace(/\.mp4$/, '')); fs.mkdirSync(TMP, { recursive: true });
 const ff = (a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { windowsHide: true, maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
 const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, '\u2019').replace(/:/g, '\\:').replace(/%/g, '％').replace(/,/g, '\\,');
 const dur = meta.duration;
@@ -58,7 +58,7 @@ if (cur !== BG) {
 // 3) footage clips with captions (stab groups re-trigger the footage at every hit)
 const clips = [];
 segs.forEach((g, i) => {
-  const vid = vidOf[g.id]; const src = vid ? `.dj/video/${vid}.mp4` : null;
+  const vid = vidOf[g.id]; const src = vid ? `data/dj/video/${vid}.mp4` : null;
   if (!src || !fs.existsSync(src)) return;
   const out = path.join(TMP, `seg${String(i).padStart(3, '0')}.mp4`);
   const capText = String(g.text || '').replace(/^♪\s*/, '').replace(/^[A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+)?\s*:\s*/, '');

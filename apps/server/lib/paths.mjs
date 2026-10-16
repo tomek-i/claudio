@@ -6,11 +6,18 @@
 //   dj.mjs at the root is a shim for apps/cli/dj.mjs, so `node dj.mjs …` works from the project folder.
 //
 // Two kinds of place:
-//  - the project root, ROOT: where config.json lives, and with it everything the rig keeps or downloads (.dj/,
-//    library/, bin/, .venv/, starter/). It is found by walking up from this file to the first folder holding a
-//    config.json (the tests run copies of the code in scratch folders with their own config.json, and get that
-//    folder), or it is DJ_ROOT when that is set.
-//  - the code: the server's libraries, the page, the CLI. These are found from where this file itself is.
+//  - the project root, ROOT: the project itself, config.json, and the tools it installs (bin/, .venv/). It is found
+//    by walking up from this file to the first folder holding a config.json (the tests run copies of the code in
+//    scratch folders with their own config.json, and get that folder), or it is DJ_ROOT when that is set.
+//    Everything the apps make while they run is in ROOT/data/, one folder per app:
+//      data/dj/          what DJ Claude keeps: library/ (the music), sets/, cues, grid edits, memory, sessions,
+//                        exports, voice and produce work
+//      data/dj/cache/    what it can make again: the analysis cache, decoded audio, stems, models, the server log
+//      data/desktop/     the desktop app's: where its window was, which build wrote the folder
+//      data/drums/, data/synth/, data/daw/   the other apps' (each finds its own; nothing here reads them)
+//    A folder in the layout before data/ (.dj/, library/, sets/ at the top) is moved here by tools/move-to-data.mjs.
+//  - the code: the server's libraries, the page, the CLI, the demo track list. These are found from where this file
+//    itself is.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,9 +40,16 @@ export const SERVER_FILE = path.join(HERE, '..', 'server.mjs');
 export const PUBLIC_DIR = path.join(HERE, '..', '..', 'web', 'public');   // the page, the audio engine, the worklets
 export const CLI_FILE = path.join(HERE, '..', '..', 'cli', 'dj.mjs');
 export const CLI_EXT_DIR = path.join(HERE, '..', '..', 'cli', 'cli-ext');
+export const DEMO_DIR = path.join(HERE, '..', 'demo-tracks');  // the demo track list and its credits (lib/starter.mjs)
 
-// ---- what the rig keeps
+// ---- the project
 export const CONFIG_FILE = path.join(ROOT, 'config.json');
-export const DJ_DIR = path.join(ROOT, '.dj');                  // analysis cache, stems, sessions, logs
-export const STARTER_DIR = path.join(ROOT, 'starter');
-export const SETS_DIR = path.join(ROOT, 'sets');               // saved sets (lib/sets.mjs): the user's, beside library/
+
+// ---- what the apps make (data/)
+export const DATA_DIR = path.join(ROOT, 'data');
+export const DJ_DIR = path.join(DATA_DIR, 'dj');               // DJ Claude's: cues, memory, grid edits, sessions, exports
+export const CACHE_DIR = path.join(DJ_DIR, 'cache');           // made again when deleted: analysis, pcm, stems, models, log
+export const LIBRARY_DIR = path.join(DJ_DIR, 'library');       // the music (config.json libraryDirs says where to look)
+export const SETS_DIR = path.join(DJ_DIR, 'sets');             // saved sets (lib/sets.mjs)
+export const EXPORTS_DIR = path.join(DJ_DIR, 'exports');       // exported mixes and sets
+export const DESKTOP_DIR = path.join(DATA_DIR, 'desktop');     // the desktop app's window place and build stamp

@@ -1,9 +1,9 @@
 {
   "port": 4747,
   "libraryDirs": [
-    "./library"
+    "./data/dj/library"
   ],
-  "downloadDir": "./library/downloads",
+  "downloadDir": "./data/dj/library/downloads",
   "targetLoudnessDb": -10,
   "stems": {
     "enabled": true,
