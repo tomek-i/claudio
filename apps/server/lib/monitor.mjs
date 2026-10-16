@@ -1,12 +1,13 @@
 // Mix monitor: machine "ears" for a DJ that can't hear. Every 250 ms, from engine state + analysis:
 //   vocal clash · key clash (effective keys) · beat-phase offset (flamming) · tempo mismatch ·
-//   clipping (master.peakDb) · energy dip (everything audible in a breakdown / low phrase for > 16 bars)
+//   clipping (master.peakDb) · a hot master (master.limiting: dB the limiter takes off, engine.js) · energy dip (everything audible in a breakdown / low phrase for > 16 bars)
 // and a short critique after every transition.
 import { keyDistance } from './library.mjs';
 import { deckEffectiveCamelot, beatOfTime, beatLenAt, vocalsUp, harmonicUp, effBpm } from './music.mjs';
 
 const AUDIBLE = 0.3;
 const FLAM_MS = 20;
+const LIMIT_DB = 3; // the master limiter taking this much off (or more) is a mix that is too hot
 
 export class Monitor {
   constructor({ library, onCritique = () => {}, onWarning = () => {} }) {
@@ -89,6 +90,10 @@ export class Monitor {
     // clipping
     const pk = s.master?.peakDb;
     if (typeof pk === 'number') { checks.peakDb = pk; if (pk >= -0.3) warn('clipping', `master clipping (peak ${pk.toFixed(1)} dBFS) — lower gain: dj master 0.8`); }
+    // the master limiter working hard: the mix is louder than the output can go, so it is squashed (nothing clips:
+    // the limiter's ceiling is -1 dBFS); a few dB now and then on peaks is what it is there for
+    const lim = s.master?.limiting;
+    if (typeof lim === 'number') { checks.limiting = lim; if (lim >= LIMIT_DB) warn('limiting', `master too hot: the limiter is taking ${lim.toFixed(1)} dB off — lower the master (dj master 0.8) or a channel fader`); }
     // energy dip
     if (aud.length && aud.every((i) => i.lowEnergy)) {
       this.dipSince ??= now;
@@ -132,7 +137,7 @@ export class Monitor {
     if (ch.phase?.offsetMs != null) { c.phase.push(Math.abs(ch.phase.offsetMs)); c.checked.add('phase'); }
     if (ch.key?.distance != null) { c.keys.add(`${ch.key.a}/${ch.key.b}`); c.checked.add('key'); }
     if (ch.vocals?.known?.length >= 2) c.checked.add('vocals');
-    if (ch.peakDb != null) c.checked.add('clipping');
+    if (ch.peakDb != null || ch.limiting != null) c.checked.add('clipping');
     c.checked.add('energy');
     for (const w of this.last.warnings) { c.warn[w.type] = (c.warn[w.type] || 0) + 0.25; c.msgs.add(w.type); }
   }

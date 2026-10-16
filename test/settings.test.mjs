@@ -35,7 +35,7 @@ test('coerce: types and ranges', () => {
   assert.deepEqual(coerce(field('ui.jogHint'), 'spot'), { value: 'spot' });
   assert.match(coerce(field('ui.jogHint'), 'loud').error, /one of: A line of light on its edge/);
   assert.match(coerce(field('ui.hotcues'), 'emoji').error, /one of: Numbers \(pads\)/);
-  assert.match(coerce(field('ui.meterStyle'), 'vu').error, /one of: Smooth bar, LED ladder/);
+  assert.match(coerce(field('ui.meterStyle'), 'vu').error, /one of: Solid bar, Faded bar, LED ladder/);
   assert.match(coerce(field('ui.waveGuard'), 'yes').error, /on or off/);
   assert.deepEqual(coerce(field('ui.lowerCollapsed'), true), { value: true });
   assert.deepEqual(coerce(field('ui.dockTab'), 'sampler'), { value: 'sampler' });

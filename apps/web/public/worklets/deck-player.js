@@ -495,6 +495,59 @@ export class CrusherCore {
   }
 }
 
+// ------------------------------------------------------------------ master limiter core
+// A look-ahead peak limiter, stereo linked: the output never goes over `ceiling` (linear), and below it the signal
+// passes untouched (gain 1, no make-up gain). The audio is delayed by `look` samples; the gain needed by every sample
+// is known that far ahead, so the gain comes down smoothly (a moving average over the look-ahead) and is already low
+// enough when the loud sample comes out. It goes back up with the `release` time constant.
+//   the gain needed:   need[n] = min(1, ceiling / max(|L[n]|, |R[n]|))
+//   held:              hold[n] = min(need[n-W+1 .. n])          (W = look + 1)
+//   smoothed:          avg[n]  = mean(hold[n-W+1 .. n])         (every term ≤ need[n-look] → avg ≤ need of the sample out)
+//   gain:              g[n]    = avg[n] when lower, else it rises towards avg[n] with the release
+//   out:               y[n]    = x[n - look] · g[n]
+export class LimiterCore {
+  constructor(sr, { ceilingDb = -1, lookMs = 1.5, releaseMs = 120 } = {}) {
+    this.ceiling = Math.pow(10, ceilingDb / 20);
+    this.look = Math.max(1, Math.round((lookMs / 1000) * sr));
+    const W = (this.W = this.look + 1);
+    this.dl = [new Float32Array(this.look), new Float32Array(this.look)]; this.dp = 0; // the delay line
+    this.hold = new Float32Array(W).fill(1); this.hp = 0; this.sum = W;              // the window the average runs over
+    this.qv = new Float32Array(W); this.qi = new Int32Array(W); this.qh = 0; this.qt = 0; this.n = 0; // min-deque of need
+    this.rel = Math.exp(-1 / ((releaseMs / 1000) * sr));
+    this.g = 1;
+    this.minGain = 1; // the lowest gain since it was last read (gainReduction())
+  }
+  // inp / out: arrays of channels (one or two); the same length
+  process(inp, out) {
+    const n = out[0].length, L = inp[0], R = inp[1] || inp[0], W = this.W, look = this.look, c = this.ceiling;
+    const oL = out[0], oR = out[1];
+    for (let i = 0; i < n; i++) {
+      const xl = L ? L[i] : 0, xr = R ? R[i] : 0;
+      const pk = Math.max(Math.abs(xl), Math.abs(xr));
+      const need = pk > c ? c / pk : 1;
+      // the minimum of `need` over the last W samples: a deque of falling values
+      const k = this.n++;
+      while (this.qt > this.qh && this.qi[this.qh % W] <= k - W) this.qh++; // out of the window first: it holds W at most
+      while (this.qt > this.qh && this.qv[(this.qt - 1) % W] >= need) this.qt--;
+      this.qv[this.qt % W] = need; this.qi[this.qt % W] = k; this.qt++;
+      const held = this.qv[this.qh % W];
+      // its average over the last W samples
+      this.sum += held - this.hold[this.hp]; this.hold[this.hp] = held; this.hp = (this.hp + 1) % W;
+      const avg = this.sum / W;
+      this.g = avg < this.g ? avg : avg + (this.g - avg) * this.rel;
+      if (this.g < this.minGain) this.minGain = this.g;
+      // out: what came in `look` samples ago, at this gain
+      const dl = this.dl, p = this.dp;
+      const yl = dl[0][p], yr = dl[1][p];
+      dl[0][p] = xl; dl[1][p] = xr; this.dp = (p + 1) % look;
+      oL[i] = yl * this.g;
+      if (oR) oR[i] = yr * this.g;
+    }
+  }
+  // how far the gain went down since the last call, in dB (0 = untouched), and start again
+  gainReduction() { const db = this.minGain < 1 ? -20 * Math.log10(this.minGain) : 0; this.minGain = this.g; return db; }
+}
+
 // ------------------------------------------------------------------ worklet registration
 if (typeof AudioWorkletProcessor !== 'undefined' && typeof registerProcessor === 'function') {
   class DeckPlayer extends AudioWorkletProcessor {
@@ -536,4 +589,16 @@ if (typeof AudioWorkletProcessor !== 'undefined' && typeof registerProcessor ===
     }
   }
   registerProcessor('crusher', Crusher);
+
+  // the master limiter: tells the page how much it took off, about 20 times a second (only while it plays)
+  class MasterLimiter extends AudioWorkletProcessor {
+    constructor() { super(); this.c = new LimiterCore(sampleRate); this.t = 0; this.every = Math.round(sampleRate / 20); }
+    process(inputs, outputs) {
+      const inp = inputs[0], out = outputs[0];
+      this.c.process(inp && inp.length ? inp : [null, null], out);
+      if ((this.t += out[0].length) >= this.every) { this.t = 0; this.port.postMessage({ gr: +this.c.gainReduction().toFixed(2) }); }
+      return true;
+    }
+  }
+  registerProcessor('master-limiter', MasterLimiter);
 }

@@ -63,4 +63,5 @@ jobs:
           node-version: 22
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - run: node --test test/*.test.mjs test/server-*.mjs apps/*/test/*.test.mjs
+      # test/ci-reporter.mjs: one line per file and only the failures in full (also as annotations on the checks page)
+      - run: node --test --test-reporter=./test/ci-reporter.mjs --test-reporter-destination=stdout test/*.test.mjs test/server-*.mjs apps/*/test/*.test.mjs

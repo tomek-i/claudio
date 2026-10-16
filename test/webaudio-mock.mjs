@@ -66,6 +66,7 @@ export class MockWorkletNode extends MockNode {
       this.voice = new DeckVoice(SR);
       this.fromProc = [];
       this.voice.post = (m, tr) => this.fromProc.push(structuredClone(m, { transfer: tr || [] }));
+    } else if (name === 'master-limiter') { /* the limiter's DSP is tested on its own: test/limiter.test.mjs */
     } else if (name === 'crusher') {
       this.parameters.set('bits', new MockParam(16)); this.parameters.set('down', new MockParam(1));
     } else throw new Error(`unknown processor ${name}`);

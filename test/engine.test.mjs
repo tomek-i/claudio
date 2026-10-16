@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SR, render, flush, wav, server, ctxLog, MockParam } from './webaudio-mock.mjs';
-const { Mixer, Ctl, STEMS } = await import('../apps/web/public/engine.js');
+const { Mixer, Ctl, STEMS, HEADROOM_DB, MASTER_UNITY, MASTER_MAX } = await import('../apps/web/public/engine.js');
 
 const BPM = 128, BEAT = 60 / BPM;
 function addTrack(id, { seconds = 60, bpm = BPM, stems = false, camelot = '8A', freq = 220 } = {}) {
@@ -415,4 +415,21 @@ test('loop move: back and forward by its own length, playhead offset kept, clamp
   assert.throws(() => B.moveLoop(0.5), /whole number/);
   const r = m.perform({ steps: [{ b: 0, d: 'B', loop: 'move', n: 1 }], at: 'now', ref: 'B' });
   assert.deepEqual(r.loopBeats, { B: 4 });
+});
+
+test('the master: headroom first, then the master level, then the limiter (#68), so +6 dB on the master is real level', async () => {
+  const m = await rig();
+  const [lim] = [...m.masterGain.outs];
+  assert.ok(m.bus.outs.has(m.headroom) && m.headroom.outs.has(m.masterGain), 'decks → headroom → master level');
+  assert.equal(lim.name, 'master-limiter', '→ the limiter (after the level: the level is not undone by it)');
+  assert.ok(lim.outs.has(m.out) && m.out.outs.has(m.speakers), '→ out → speakers');
+  assert.equal(m.out.gain.value, 1, 'nothing after the limiter takes level away');
+  near(20 * Math.log10(m.headroom.gain.value), HEADROOM_DB, 1e-9, 'headroom');
+  near(20 * Math.log10(MASTER_MAX / MASTER_UNITY), 6, 0.01, 'the master goes 6 dB over its normal level');
+  // a track peaking at full scale, master at 0 dB: below the limiter's ceiling (-1 dBFS), so untouched;
+  // at +6 dB: still only up to the ceiling's edge, so +6 dB really is louder
+  const at0 = 20 * Math.log10(m.headroom.gain.value * MASTER_UNITY), at6 = 20 * Math.log10(m.headroom.gain.value * MASTER_MAX);
+  assert.ok(at0 < -1 - 3, `0 dB: a full-scale track comes out at ${at0.toFixed(1)} dBFS`);
+  near(at6 - at0, 6, 0.01, '+6 dB on the master is 6 dB more out of it');
+  assert.equal(m.state().master.limiting, 0, 'the state says how much the limiter takes off');
 });

@@ -385,14 +385,18 @@ export function wireJog(canvas, d) {
 }
 
 // ---- level meter. The height is the fader's own dB mapping (volOfDb), so a level reads off the scale printed beside
-// the fader: 0 dB two thirds up, +6 dB at the top. Green, amber for the last 6 dB below 0 dB, red above it (a channel
-// pushed past unity, or a clipping master). The level jumps up and falls back at 30 dB a second.
-// ui.meterStyle: 'bar' is a smooth bar, 'led' a ladder of segments whose highest one stays lit for a second.
+// the fader: 0 dB two thirds up, +6 dB at the top. Solid colour zones, not a blend: on a channel green, amber for the
+// last 6 dB below 0 dB, red above it (pushed past unity); the master never passes the limiter's -1 dBFS, so its zones
+// sit lower: amber from -6 dB, red from -3 dB (at the ceiling, the limiter at work). The level jumps up and falls back
+// at 30 dB a second.
+// ui.meterStyle: 'bar' is a smooth bar in those solid zones, 'fade' the same bar with the colours blending into each
+// other (amber reached at the red zone's edge), 'led' a ladder of segments whose highest one stays lit for a second.
 const M_FLOOR = -60, M_FALL = 30, M_HOLD = 1000, M_SEGS = 24;
-const M_POS = (db) => Math.min(1, volOfDb(db) / VOL_MAX), M_AMBER = M_POS(-6), M_RED = M_POS(0);
+const M_POS = (db) => Math.min(1, volOfDb(db) / VOL_MAX);
+export const M_ZONES = { channel: { amber: M_POS(-6), red: M_POS(0) }, master: { amber: M_POS(-6), red: M_POS(-3) } };
 const M_LIT = { g: '#3fd27a', a: '#f2cc60', r: '#ff4d5e' }, M_DARK = { g: '#12301f', a: '#33290f', r: '#3a1217' };
 const meterBuf = new Float32Array(2048);
-export function drawMeter(canvas, analyser) {
+export function drawMeter(canvas, analyser, zones = M_ZONES.channel) {
   const m = canvas.meter || (canvas.meter = { lvl: M_FLOOR, peak: M_FLOOR, peakAt: 0, at: 0, sized: 0 });
   const now = performance.now(), dt = Math.min(0.25, (now - m.at) / 1000); m.at = now;
   if (now - m.sized > 500) { // match the backing store to the size on screen, so the edges stay crisp
@@ -409,18 +413,22 @@ export function drawMeter(canvas, analyser) {
   const led = ui.meterStyle === 'led', w = canvas.width, h = canvas.height;
   const lvl = m.lvl <= M_FLOOR ? 0 : M_POS(m.lvl), held = m.peak <= M_FLOOR ? 0 : M_POS(m.peak);
   const lit = led ? Math.round(lvl * M_SEGS) : Math.round(lvl * h), top = led ? Math.round(held * M_SEGS) : 0;
-  const key = `${led}${lit}/${top}/${h}`; if (m.key === key) return; m.key = key;
+  const key = `${ui.meterStyle}${lit}/${top}/${h}`; if (m.key === key) return; m.key = key;
   const g = canvas.getContext('2d');
   g.clearRect(0, 0, w, h);
   if (!led) {
     const grd = g.createLinearGradient(0, h, 0, 0);
-    grd.addColorStop(0, '#3fb66b'); grd.addColorStop(M_AMBER, '#3fb66b'); grd.addColorStop(M_RED, '#f2cc60'); grd.addColorStop(Math.min(1, M_RED + 0.08), '#ff5050'); grd.addColorStop(1, '#ff5050');
+    const { amber, red } = zones;
+    grd.addColorStop(0, M_LIT.g); grd.addColorStop(amber, M_LIT.g);
+    if (ui.meterStyle === 'fade') { grd.addColorStop(red, M_LIT.a); grd.addColorStop(Math.min(1, red + 0.08), M_LIT.r); }
+    else { grd.addColorStop(amber, M_LIT.a); grd.addColorStop(red, M_LIT.a); grd.addColorStop(red, M_LIT.r); }
+    grd.addColorStop(1, M_LIT.r);
     g.fillStyle = grd; g.fillRect(0, h - lit, w, lit);
     return;
   }
   const gap = Math.max(1, Math.round(h / 160)), seg = (h + gap) / M_SEGS;
   for (let i = 0; i < M_SEGS; i++) {
-    const at = (i + 0.5) / M_SEGS, c = at > M_RED ? 'r' : at > M_AMBER ? 'a' : 'g'; // where the middle of this segment sits on the scale
+    const at = (i + 0.5) / M_SEGS, c = at > zones.red ? 'r' : at > zones.amber ? 'a' : 'g'; // where the middle of this segment sits on the scale
     const y0 = Math.round(h - (i + 1) * seg + gap), y1 = Math.round(h - i * seg);
     g.fillStyle = i < lit || (i === top - 1 && top > lit) ? M_LIT[c] : M_DARK[c];
     g.fillRect(1, y0, w - 2, Math.max(1, y1 - y0));

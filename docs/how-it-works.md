@@ -102,4 +102,15 @@ time while the flight recorder records the master, then exactly 0:00 to its end 
 as long as the set: the decks are the export's while it runs, and stopping it before the end makes no file. It asks
 whether to export **silently**: the speakers are off until it is done (`dj automation export` does that unless given
 `--listen`), while the recording, the meters and the visuals still get the master as it is. The **mix monitor** flags vocal
-clashes, key clashes, beat-phase offsets, tempo mismatch and clipping, and critiques every transition in the booth.
+clashes, key clashes, beat-phase offsets, tempo mismatch and a master that is too hot, and critiques every transition in the booth.
+
+**Levels.** The decks' sum first gets 6 dB of headroom, then the master level, then a look-ahead peak limiter with its
+ceiling at -1 dBFS. At the master's 0 dB a track at its normal level plays below full scale and the limiter does
+nothing, so the master's +6 dB and a channel fader's +6 dB are real level. When the mix goes over the ceiling (two decks
+at full level, the master pushed up), the limiter turns only those peaks down: nothing clips, in the speakers, the
+recording or an export. The **LIMIT** light under the master level is amber when it catches peaks and red when it takes
+3 dB or more off; at that point the mix is being squashed, and the mix monitor says so too ("master too hot"): turn
+the master or a channel down. The meters are green, amber and red in solid zones: on a channel amber is the last 6 dB
+below 0 and red is above it (the fader pushed past the track's normal level); the master's bars never pass -1 dBFS, so
+they turn amber from -6 dB and red from -3 dB, where they reach the limiter. The setting "Level meters" (Mixer)
+draws them as that solid bar, as a bar whose colours blend into each other, or as a ladder of LED segments.

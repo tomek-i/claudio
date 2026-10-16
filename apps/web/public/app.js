@@ -7,7 +7,7 @@ import { clientId, mixer, takeOver, setMixer, setEngine, setTakeOver, liveDeck }
 import { pushState, setStatus } from './ui/link.js';
 import { wireControls } from './ui/controls.js';
 import { renderKeyChip } from './ui/deck.js';
-import { drawOverview, drawScroll, drawJog, drawMeter } from './ui/canvas.js';
+import { drawOverview, drawScroll, drawJog, drawMeter, M_ZONES } from './ui/canvas.js';
 import { loadLibrary, refreshHistory, renderLibrary } from './ui/crate.js';
 import { mixerEls } from './ui/layout.js';
 import './ui/lower.js';
@@ -60,7 +60,7 @@ let lastLive = null, lastSlow = 0;
 // reset, a `dj` command or an automation moves a slider that was just used)
 const held = (el) => el.matches(':active');
 const setText = (el, txt) => { if (el.textContent !== txt) el.textContent = txt; };
-let clipUntil = 0; // the master CLIP light is on until then
+let limitUntil = 0, limitDb = 0; // the master LIMIT light: on until then, for the most the limiter took off meanwhile
 function frame() {
   if (!mixer) return;
   const now = performance.now();
@@ -137,12 +137,16 @@ function frame() {
   for (const b of $$('.xfsw button')) { const on = String(mixer.decks[b.parentElement.dataset.deck].xfSide === b.dataset.side); if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on); }
   const mv = $('#masterVol'); if (!held(mv)) mv.value = faderOfMaster(mixer.master.value());
   if (document.body.dataset.layout === 'stacked') {
-    let peak = -Infinity;
-    for (const m of $$('.master .meter')) { drawMeter(m, mixer.meters[m.dataset.side]); peak = Math.max(peak, m.meter.lvl); }
+    for (const m of $$('.master .meter')) drawMeter(m, mixer.meters[m.dataset.side], M_ZONES.master);
     $('#masterKnob').render?.();
-    // CLIP: the output reached full scale (within 0.3 dB of it); it stays lit for a second so a single peak is seen
-    const now = performance.now(); if (peak >= -0.3) clipUntil = now + 1000;
-    $('#masterClip').classList.toggle('on', now < clipUntil);
+    // LIMIT: the master limiter took level off (it keeps the output under -1 dBFS, so nothing clips). Amber for the odd
+    // peak, red from 3 dB (the mix is squashed); it stays lit for a second so a single peak is seen
+    const now = performance.now(), gr = mixer.limiterGr || 0;
+    if (gr >= 0.5) { limitDb = now < limitUntil ? Math.max(limitDb, gr) : gr; limitUntil = now + 1000; }
+    const lit = now < limitUntil, el = $('#masterLimit');
+    el.classList.toggle('warn', lit && limitDb < 3); el.classList.toggle('on', lit && limitDb >= 3);
+    const tip = lit ? `The master limiter took ${limitDb.toFixed(1)} dB off` : 'The master limiter: idle';
+    if (el.dataset.tip !== tip) { el.dataset.tip = tip; el.title = `${tip}. Amber when it takes level off the loudest peaks, red when it takes 3 dB or more (the mix is too hot: turn the master or a channel down).`; }
   }
   renderDeckStrip();
   const tr = mixer.transition;
