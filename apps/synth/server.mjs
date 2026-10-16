@@ -56,15 +56,10 @@ function serveFile(res, root, rel) {
   return true;
 }
 
-// Saved in the project's data/synth/ (in this repository; MINICLAUDE_HOME to put it elsewhere). It was apps/synth/.miniclaude/,
-// which is moved over the first time.
+// Saved in the project's data/synth/ (MINICLAUDE_HOME to put it elsewhere).
 export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'synth');
-const OLD_HOME = path.join(HERE, '.miniclaude');
 
 export function createServer({ home = process.env.MINICLAUDE_HOME || DEFAULT_HOME } = {}) {
-  if (home === DEFAULT_HOME && fs.existsSync(OLD_HOME) && !fs.existsSync(home)) {
-    try { fs.mkdirSync(path.dirname(home), { recursive: true }); fs.renameSync(OLD_HOME, home); } catch { /* left where it was */ }
-  }
   const store = new Store({ file: path.join(home, 'state.json'), presetsFile: path.join(home, 'presets.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

@@ -9,7 +9,6 @@ import { Downloader } from './lib/downloader.mjs';
 import { StemQueue, STEMS } from './lib/stems.mjs';
 import { VisualsHub, lanAddress } from './lib/visuals.mjs';
 import { ROOT, DJ_DIR, CACHE_DIR, LIBRARY_DIR, EXPORTS_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR, SETS_DIR } from './lib/paths.mjs';
-import { migrateLayout, layoutReport } from './lib/layout.mjs';
 import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
@@ -27,10 +26,6 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 
 try { os.setPriority(process.pid, 10); } catch { /* keep the audio tab ahead of us for CPU */ }
-
-// before config.json is read: a folder in the layout before data/ is moved into it (lib/layout.mjs)
-const layoutMoved = layoutReport(migrateLayout(ROOT));
-for (const l of layoutMoved) console.log(l);
 
 // ---- PCM cache: tracks pre-converted to the engine's sample rate so browser decoding is trivial
 const PCM_DIR = path.join(CACHE_DIR, 'pcm');
@@ -89,7 +84,6 @@ function addLog(kind, text, extra = {}) {
   broadcast('log', entry);
   return entry;
 }
-for (const l of layoutMoved) addLog('system', l);
 const inbox = [];          // crowd requests waiting for Claude
 const history = [];        // tracks that have gone live
 let set = null;            // the current set: { start, last } (lib/set-clock.mjs), for the set timer on the page

@@ -1,6 +1,9 @@
-// Moves a project folder from the layout before data/ (.dj/, library/ and sets/ at the top) to the one paths.mjs
-// describes, once. The server, the CLI and the desktop app call it at start-up, before they read config.json; when
-// there is nothing of the old layout left it does nothing.
+// Moves a project folder from the layout before data/ (.dj/, library/ and sets/ at the top, and the other apps'
+// apps/drums/.cl-808, apps/synth/.miniclaude, apps/daw/.claudebase) into data/. Run it once, by hand, with nothing
+// of the rig running:
+//   node tools/move-to-data.mjs                 this project folder
+//   node tools/move-to-data.mjs <folder>        another one (the installed app's Documents/DJ Claude, say)
+// It does nothing on a folder that has nothing of the old layout left.
 //
 // A track's id is a hash of its file's full path (trackId in library.mjs), so moving the music gives every track a
 // new id, and the stems, cues, grid edits, memory, sets and sessions all know tracks by id. So the move:
@@ -8,18 +11,20 @@
 //  2. writes down the plan: which paths became which, and which ids became which (data/dj/.layout-plan.json);
 //  3. rewrites the JSON (and .mjs, for produce designs) under data/dj with the new paths and ids, renames the stem
 //     folders and decoded audio, and changes config.json's library folders;
-//  4. deletes the plan. A start that finds a plan does 3 again, so a move cut short is finished.
+//  4. deletes the plan. A run that finds a plan does 3 again, so a move cut short is finished by running it again.
 // What cannot be moved (a file another program holds open, say a server.log of a server still running) stays where
 // it was and is reported.
 import fs from 'node:fs';
 import path from 'node:path';
-import { trackId } from './library.mjs';
+import { fileURLToPath } from 'node:url';
+import { trackId } from '../apps/server/lib/library.mjs';
 
 const WIN = process.platform === 'win32';
 const TO_CACHE = ['library.json', 'pcm', 'stems', 'models', 'server.log'];   // of .dj/: what can be made again
 const TO_DESKTOP = ['desktop-window.json', 'app-build'];                     // of .dj/: the desktop app's
 const ID = /\b[0-9a-f]{8}\b/g;
 const PLAN = '.layout-plan.json';
+const APPS = [['drums', '.cl-808'], ['synth', '.miniclaude'], ['daw', '.claudebase']]; // the other apps' old folders
 
 // from → to, merging into a folder that is already there; what cannot be moved is added to problems
 function moveInto(from, to, problems) {
@@ -89,7 +94,8 @@ export function migrateLayout(root) {
   const moved = [], problems = [];
   let plan = null;
   try { plan = JSON.parse(fs.readFileSync(planFile, 'utf8')); } catch { /* none: a move cut short leaves one */ }
-  if (!plan && !Object.values(old).some((p) => fs.existsSync(p))) return null;
+  const appsOld = APPS.map(([app, name]) => [path.join(root, 'apps', app, name), path.join(data, app)]);
+  if (!plan && ![...Object.values(old), ...appsOld.map(([from]) => from)].some((p) => fs.existsSync(p))) return null;
 
   if (!plan) {
     // 1. the folders. Older paths first in the plan: the more particular place wins.
@@ -111,6 +117,7 @@ export function migrateLayout(root) {
       pairs.push([old.library, lib]);
     }
     if (moveInto(old.sets, path.join(dj, 'sets'), problems)) { moved.push('sets'); pairs.push([old.sets, path.join(dj, 'sets')]); }
+    for (const [from, to] of appsOld) if (moveInto(from, to, problems)) moved.push(path.relative(root, from).replace(/\\/g, '/'));
 
     // 2. the plan: the paths, and the ids of the tracks whose files moved
     const mapPath = pathMapper(pairs), ids = {};
@@ -161,6 +168,15 @@ export function migrateLayout(root) {
 export function layoutReport(r) {
   if (!r) return [];
   const out = [`Moved ${r.moved.length ? r.moved.join(', ') : 'the rest'} into data/ (${r.tracks} track id${r.tracks === 1 ? '' : 's'} and ${r.files} file${r.files === 1 ? '' : 's'} updated)`];
-  for (const p of r.problems) out.push(`  could not move ${p}: stop anything still using it and start again`);
+  for (const p of r.problems) out.push(`  could not move ${p}: stop anything still using it and run this again`);
   return out;
+}
+
+// run as a script: the folder given, or the project this file is in
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const root = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..'));
+  if (!fs.existsSync(path.join(root, 'config.json'))) { console.error(`${root} is not a project folder (no config.json in it)`); process.exit(1); }
+  const r = migrateLayout(root);
+  console.log(r ? layoutReport(r).join('\n') : `Nothing to move in ${root}: it is already laid out with data/.`);
+  process.exit(r?.problems.length ? 1 : 0);
 }

@@ -9,9 +9,6 @@ import path from 'node:path';
 import os from 'node:os';
 import { StemQueue } from './stems.mjs';
 import { ROOT, CONFIG_FILE, CACHE_DIR } from './paths.mjs';
-import { migrateLayout, layoutReport } from './layout.mjs';
-
-for (const l of layoutReport(migrateLayout(ROOT))) console.log(l);
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const cfg = { threads: 2, concurrency: 2, model: 'htdemucs', minFreeGB: 3, ...(config.stems || {}) };

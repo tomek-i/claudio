@@ -1,11 +1,12 @@
-// layout.mjs: a project folder from before data/ is moved into it, and the tracks' new ids reach everything that
+// tools/move-to-data.mjs: a project folder from before data/ is moved into it, and the tracks' new ids reach everything that
 // knows them by id. Runs on scratch folders only.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { migrateLayout, pathMapper } from '../apps/server/lib/layout.mjs';
+import { execFileSync } from 'node:child_process';
+import { migrateLayout, pathMapper } from '../tools/move-to-data.mjs';
 import { trackId } from '../apps/server/lib/library.mjs';
 
 const put = (root, files) => { for (const [f, body] of Object.entries(files)) { const p = path.join(root, f); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, typeof body === 'string' ? body : JSON.stringify(body, null, 1)); } };
@@ -78,7 +79,7 @@ test('migrateLayout: every track gets the id of its new path, everywhere it was 
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
-test('migrateLayout: a move cut short after its plan is finished on the next start', () => {
+test('migrateLayout: a move cut short after its plan is finished by running it again', () => {
   const { root, A } = oldFolder();
   try {
     migrateLayout(root);
@@ -121,4 +122,29 @@ test('pathMapper: the most particular place wins, and only whole folder names ma
   assert.equal(map(path.join(r, 'library', 'x.mp3')), path.join(r, 'data', 'dj', 'library', 'x.mp3'));
   assert.equal(map(path.join(r, 'library2', 'x.mp3')), path.join(r, 'library2', 'x.mp3'));
   assert.equal(map('library/x.mp3'), 'library/x.mp3', 'a relative path is not one of ours');
+});
+
+test('migrateLayout: the other apps\' folders inside apps/ move to data/<app>', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-layout-'));
+  try {
+    put(root, { 'config.json': { port: 4747 }, 'apps/drums/.cl-808/state.json': { beat: 1 }, 'apps/synth/.miniclaude/state.json': { patch: 1 }, 'apps/daw/.claudebase/project.json': { song: 1 } });
+    const r = migrateLayout(root);
+    assert.deepEqual(r.moved, ['apps/drums/.cl-808', 'apps/synth/.miniclaude', 'apps/daw/.claudebase']);
+    assert.deepEqual(read(root, 'data/drums/state.json'), { beat: 1 });
+    assert.deepEqual(read(root, 'data/synth/state.json'), { patch: 1 });
+    assert.deepEqual(read(root, 'data/daw/project.json'), { song: 1 });
+    assert.ok(!has(root, 'apps/drums/.cl-808'));
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('node tools/move-to-data.mjs <folder>: moves it and says what it did; a second run says there is nothing to move', () => {
+  const { root } = oldFolder();
+  const script = path.join(import.meta.dirname, '..', 'tools', 'move-to-data.mjs');
+  try {
+    const first = execFileSync(process.execPath, [script, root], { encoding: 'utf8' });
+    assert.match(first, /^Moved \.dj, library, sets into data\/ \(2 track ids and \d+ files updated\)/);
+    assert.ok(has(root, 'data/dj/cache/library.json'));
+    assert.match(execFileSync(process.execPath, [script, root], { encoding: 'utf8' }), /Nothing to move/);
+    assert.throws(() => execFileSync(process.execPath, [script, path.join(root, 'data')], { stdio: 'pipe' }), /not a project folder/);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

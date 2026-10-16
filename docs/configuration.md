@@ -34,9 +34,15 @@ for the stem separator). Everything the apps make while they run is in `data/` (
 | `data/drums/`, `data/synth/`, `data/daw/` | Claude-808's beat, MiniClaude's patches and sequence, Claudebase's song |
 
 A folder from before `data/` (`.dj/`, `library/` and `sets/` at the top, and the other apps' `apps/*/.cl-808` and the
-like) is moved in on the first start. A track's id comes from its file's path, so the move also gives the cues, grid
-edits, memory, sets and stems the tracks' new ids. Stop a server that is still running from the old folder first: a
-file it holds open stays where it is, and the start says so.
+like) is moved in once, by hand, with nothing of the rig running:
+
+```bash
+node tools/move-to-data.mjs                          # this project folder
+node tools/move-to-data.mjs "~/Documents/DJ Claude"  # another one, such as the installed app's
+```
+
+A track's id comes from its file's path, so the move also gives the cues, grid edits, memory, sets and stems the
+tracks' new ids. A file something still holds open stays where it is and is listed; run it again once that is closed.
 
 ## YouTube logins
 YouTube sometimes asks for a login. Export your cookies to `data/dj/youtube-cookies.txt` (Netscape format) and both

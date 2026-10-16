@@ -4,7 +4,7 @@ bin/
 .venv/
 apps/web/public/samples/src/
 *.log
-# the layout before data/, until a start moves it (apps/server/lib/layout.mjs)
+# the layout before data/, until node tools/move-to-data.mjs moves it
 .dj/
 library/
 sets/

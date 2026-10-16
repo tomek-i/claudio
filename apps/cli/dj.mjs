@@ -6,10 +6,7 @@ import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { FX, FX_DEFAULT_AT } from '../server/lib/fx.mjs';
 import { ROOT, DJ_DIR, CACHE_DIR, CONFIG_FILE, SERVER_FILE, CLI_EXT_DIR } from '../server/lib/paths.mjs';
-import { migrateLayout, layoutReport } from '../server/lib/layout.mjs';
 
-// before config.json is read: a folder in the layout before data/ is moved into it (on stderr: --json stays clean)
-for (const l of layoutReport(migrateLayout(ROOT))) console.error(l);
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
 const BASE = `http://localhost:${PORT}`;

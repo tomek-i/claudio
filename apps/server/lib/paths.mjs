@@ -15,7 +15,7 @@
 //      data/dj/cache/    what it can make again: the analysis cache, decoded audio, stems, models, the server log
 //      data/desktop/     the desktop app's: where its window was, which build wrote the folder
 //      data/drums/, data/synth/, data/daw/   the other apps' (each finds its own; nothing here reads them)
-//    The layout before data/ (.dj/, library/, sets/ at the top) is moved here once by layout.mjs.
+//    A folder in the layout before data/ (.dj/, library/, sets/ at the top) is moved here by tools/move-to-data.mjs.
 //  - the code: the server's libraries, the page, the CLI, the demo track list. These are found from where this file
 //    itself is.
 import fs from 'node:fs';
