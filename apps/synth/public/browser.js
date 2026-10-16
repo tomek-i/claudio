@@ -1,5 +1,6 @@
 // The preset browser: every preset in one list down the side of the page, the player's own first, narrowed by a
-// search and a category. A click loads one into the playing slot; the arrow keys walk the list, loading as they
+// search and a category. A click loads one into the playing slot; ▶ on a row hears it without loading it (a short
+// phrase on a synth of its own, through POST /api/play); the arrow keys walk the list, loading as they
 // go, and the ◀ ▶ by the patch's name step through it from anywhere. The list is built again only when the
 // presets, the search or the category change; the row of the sound that is playing is marked on every render.
 import { KINDS } from '../lib/presets.mjs';
@@ -18,8 +19,9 @@ const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 const remember = (key, value) => { try { localStorage.setItem(key, value); } catch { /* a browser that keeps nothing */ } };
 const recall = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
 
-// state(): what the server last said. current(): the playing patch. send(op): one edit.
-export function createBrowser({ state, current, send }) {
+// state(): what the server last said. current(): the playing patch. send(op): one edit. hear(name): play a preset
+// without loading it.
+export function createBrowser({ state, current, send, hear }) {
   let kind = recall(KIND) || 'all';
   let query = '';
   let built = '';
@@ -49,6 +51,7 @@ export function createBrowser({ state, current, send }) {
 
   function buildList(list) {
     $('presetList').replaceChildren(...list.map((p) => el('li', { title: p.name },
+      el('button', { type: 'button', className: 'hear', textContent: '▶', title: `Hear "${p.name}" without loading it`, ariaLabel: `Hear ${p.name}`, onclick: () => hear(p.name) }),
       el('button', { type: 'button', className: 'pick', onclick: () => load(p.name) },
         el('span', { textContent: p.name }), kind === 'all' || kind === 'saved' ? el('small', { textContent: p.saved ? 'saved' : p.kind }) : ''),
       p.saved ? el('button', {
@@ -71,7 +74,7 @@ export function createBrowser({ state, current, send }) {
     let mark = null;
     for (const li of $('presetList').children) {
       const on = same(li.title, name);
-      li.firstChild.toggleAttribute('aria-current', on);
+      li.querySelector('.pick').toggleAttribute('aria-current', on);
       if (on) mark = li;
     }
     if (mark && mark !== render.marked && !$('presetList').contains(document.activeElement)) mark.scrollIntoView({ block: 'nearest' });

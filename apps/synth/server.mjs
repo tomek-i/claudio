@@ -5,7 +5,8 @@
 //   GET  /api/state            the whole state           GET  /api/events        the same, as server-sent events
 //   POST /api/op               one edit (see Store.apply and applySeqOp)         → the new state
 //                              (savepreset / deletepreset: the player's presets, kept in <home>/presets.json)
-//   POST /api/play             ask the open pages to sound now: the sequence, some notes, or stop
+//   POST /api/play             ask the open pages to sound now: the sequence, some notes, a preset heard
+//                              without loading it, or stop
 //                              (sent to the pages as a "play" event; the state does not change)
 //   POST /api/ask | /api/say   a note from the page to Claude | from Claude to the page
 //   GET  /api/wait?ms=         the notes from the page not handed out yet (long poll)

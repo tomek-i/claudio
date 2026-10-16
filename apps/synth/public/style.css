@@ -102,6 +102,9 @@ kbd { font: 600 11px var(--mono); background: var(--panel2); border: 1px solid v
 .plist .pick:hover { color: var(--text); border-color: transparent; }
 .plist .pick[aria-current] { background: #2a1d17; border-color: #5a3524; color: var(--text); }
 .plist .pick[aria-current] small { color: var(--low); }
+.plist .hear { width: 26px; height: 26px; padding: 0; margin-right: 2px; background: transparent; border-color: transparent; font-size: 9px; color: var(--faint); flex: none; }
+.plist li:hover .hear, .plist .hear:focus-visible { color: var(--dim); }
+.plist .hear:hover { color: var(--low); border-color: var(--line); }
 .plist .del { width: 26px; height: 26px; padding: 0; margin-left: 2px; background: transparent; border-color: transparent; font-size: 15px; opacity: 0; }
 .plist li:hover .del, .plist .del:focus-visible { opacity: 1; }
 .plist .del:hover { color: var(--bad); border-color: transparent; }

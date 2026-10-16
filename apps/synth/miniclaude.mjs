@@ -27,6 +27,8 @@ const HELP = `${APP_NAME} synthesizer — ${URL_SHOWN}
   set <param> <value> …          one or more: set filter.cutoff 800 resonance 60%
                                  (the last part of a name is enough when only one parameter has it)
   preset [name]                  load a preset, yours or a built-in one (no name: list them, yours first)
+  preset list [--mine]           list the presets (--mine: only the ones you saved)
+  preset hear <name>             hear a preset without loading it: a short phrase on a synth of its own
   preset save [name]             save the playing patch as a preset (no name: under its own name;
                                  the same name again replaces it)
   preset delete <name>           delete a saved preset
@@ -125,7 +127,16 @@ async function main([cmd = 'help', ...args]) {
       return show(await edit({ op: 'set', values }), [...new Set(Object.keys(values).map(groupOf))]);
     }
     case 'preset': {
-      if (!args.length) return console.log((await call('GET', '/api/state')).presets.map((p) => `${p.kind.padEnd(7)}${p.name}`).join('\n'));
+      if (!args.length || args[0] === 'list') {
+        const mine = args.includes('--mine');
+        const list = (await call('GET', '/api/state')).presets.filter((p) => !mine || p.saved);
+        return console.log(list.length ? list.map((p) => `${p.kind.padEnd(7)}${p.name}`).join('\n') : 'no saved presets yet (preset save <name> keeps the playing patch)');
+      }
+      if (args[0] === 'hear') {
+        const name = need(args[1], 'the name of a preset') && args.slice(1).join(' ');
+        const r = await call('POST', '/api/play', { action: 'preset', name });
+        return heard(r, `playing a phrase of "${r.name ?? name}" on its own; the playing patch is unchanged`);
+      }
       if (args[0] === 'save') return console.log(`${title(await edit({ op: 'savepreset', name: args.length > 1 ? args.slice(1).join(' ') : undefined }))}  saved as a preset`);
       if (args[0] === 'delete') {
         const name = need(args[1], 'the name of a saved preset') && args.slice(1).join(' ');

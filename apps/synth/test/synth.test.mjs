@@ -219,3 +219,17 @@ test('the panel has a place for every section, once, in the order the sound goes
   assert.deepEqual(PANEL.flow.map((c) => c.name), ['Sources', 'Filter', 'Amp', 'Out']);
   assert.ok(PANEL.flow.at(-1).groups.includes('master'), 'the master is in the out column');
 });
+
+test('a preset is heard as a phrase that suits its kind; a saved one is given the kind it is most like', async () => {
+  const { phraseOf, kindOf, KINDS } = await import('../lib/presets.mjs');
+  for (const kind of KINDS) {
+    const phrase = phraseOf(kind);
+    assert.ok(phrase.length > 0 && phrase.every((n) => Number.isInteger(n.note) && n.at >= 0 && n.seconds > 0), kind);
+    assert.ok(Math.max(...phrase.map((n) => n.at + n.seconds)) <= 3, `${kind}: short`);
+  }
+  assert.ok(phraseOf('bass').every((n) => n.note < 60), 'a bass line is low');
+  assert.equal(kindOf(initPatch()), 'lead');
+  assert.equal(kindOf(setParams(initPatch(), { 'osc1.octave': -1 })), 'bass');
+  assert.equal(kindOf(setParams(initPatch(), { 'aenv.attack': 0.8 })), 'pad');
+  assert.equal(kindOf(setParams(initPatch(), { 'aenv.sustain': 0 })), 'pluck');
+});

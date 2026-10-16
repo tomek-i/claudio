@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SLOTS, clonePatch, initPatch, normalizePatch, setParams } from './patch.mjs';
-import { PRESET_LIST, findPreset, isBuiltIn, preset } from './presets.mjs';
+import { PRESETS, PRESET_LIST, findPreset, isBuiltIn, preset, kindOf, phraseOf } from './presets.mjs';
 import { applySeqOp, normalizeSeq, parseRow } from './seq.mjs';
 import { NOTE_MAX, NOTE_MIN } from './notes.mjs';
 
@@ -185,19 +185,25 @@ export class Store {
   }
 
   // Ask the open pages to make a sound now: the sequence ({ action: 'seq', loops }), some notes held for a while
-  // ({ action: 'notes', notes, seconds }), or silence ({ action: 'stop' }). Nothing in the state changes.
+  // ({ action: 'notes', notes, seconds }), a preset heard without loading it ({ action: 'preset', name }: a phrase
+  // that suits its kind, on a synth of its own), or silence ({ action: 'stop' }). Nothing in the state changes.
   play(request) {
     const action = request?.action;
     let event;
     if (action === 'seq') event = { action, loops: Math.min(64, Math.max(0, Math.round(Number(request.loops) || 0))) };   // 0: until stopped
     else if (action === 'stop') event = { action };
+    else if (action === 'preset') {
+      const patch = findPreset(request.name, this.saved);
+      const kind = PRESETS.find((p) => p.patch.name === patch.name)?.kind ?? kindOf(patch);
+      event = { action, name: patch.name, kind, patch, phrase: phraseOf(kind) };
+    }
     else if (action === 'notes') {
       const notes = Array.isArray(request.notes) ? request.notes.map(Number) : [];
       if (!notes.length || notes.length > 8 || notes.some((n) => !Number.isInteger(n) || n < NOTE_MIN || n > NOTE_MAX)) throw new Error('play one to eight notes');
       event = { action, notes, seconds: Math.min(10, Math.max(0.05, Number(request.seconds) || 1)), vel: Math.min(1, Math.max(0.05, Number(request.vel) || 0.8)) };
-    } else throw new Error('play what? (seq, notes or stop)');
+    } else throw new Error('play what? (seq, notes, preset or stop)');
     for (const fn of this.listeners) fn(event, 'play');
-    return { pages: this.listeners.size, awake: this.transport.awake };
+    return { pages: this.listeners.size, awake: this.transport.awake, ...(event.name ? { name: event.name } : {}) };
   }
 
   // ---- notes: what is typed into the page for Claude, and what Claude answers

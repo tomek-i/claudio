@@ -178,3 +178,28 @@ export function findPreset(name, saved = []) {
 }
 
 export const preset = (name) => findPreset(name);
+
+// ---- hearing a preset without loading it: a short phrase that suits its kind, played by a synth of its own
+// (the page's Engine.audition), so the patch being worked on is not touched
+
+// what a patch of the player's own is most like, from how it is set (a built-in preset says its kind)
+export function kindOf(patch) {
+  if (patch['osc1.octave'] <= -1 || patch['mix.sub'] >= 0.4) return 'bass';
+  if (patch['aenv.attack'] >= 0.15) return 'pad';
+  if (patch['aenv.sustain'] <= 0.1) return 'pluck';
+  return 'lead';
+}
+
+// notes: [{ note, at, seconds }], `at` from the start, in seconds
+const C = (name) => ({ C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11, Eb: 3, Bb: 10 }[name.slice(0, -1)] + 12 * (Number(name.at(-1)) + 1));
+const line = (names, every, hold) => names.map((n, i) => ({ note: C(n), at: i * every, seconds: hold }));
+const chord = (names, seconds, at = 0) => names.map((n) => ({ note: C(n), at, seconds }));
+const PHRASES = {
+  bass: line(['C2', 'C3', 'Eb2', 'C2', 'G2', 'Bb2'], 0.24, 0.2),
+  lead: line(['C4', 'Eb4', 'G4', 'C5', 'Bb4', 'G4'], 0.22, 0.2),
+  pluck: line(['C4', 'G4', 'C5', 'Eb5', 'C5', 'G4'], 0.18, 0.12),
+  pad: chord(['C3', 'G3', 'Eb4', 'Bb4'], 2.4),
+  keys: [...chord(['C3', 'G3', 'Eb4'], 0.7), ...chord(['Bb2', 'F3', 'D4'], 0.7, 0.8)],
+  fx: [{ note: C('C4'), at: 0, seconds: 1.6 }],
+};
+export const phraseOf = (kind) => PHRASES[kind] || PHRASES.lead;
