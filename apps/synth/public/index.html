@@ -51,6 +51,11 @@
         <span class="spacer"></span>
         <button id="midi" title="Play from a MIDI keyboard">Connect MIDI</button>
       </div>
+      <!-- the sound coming out: its waveform, steadied on the note being played, and its spectrum (app.js) -->
+      <div class="scope" aria-label="The sound coming out">
+        <figure><figcaption>Output</figcaption><canvas id="wave" aria-label="Waveform"></canvas></figure>
+        <figure><figcaption>Spectrum</figcaption><canvas id="spectrum" aria-label="Spectrum"></canvas></figure>
+      </div>
       <div class="panelbox"><div id="panel" class="panel"></div></div>
     </section>
 

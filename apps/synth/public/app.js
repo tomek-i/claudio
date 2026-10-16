@@ -4,7 +4,8 @@
 import { APP_NAME } from '../lib/app.mjs';
 import { GROUPS, PANEL, SLOTS, paramsOf, format, toSlider, fromSlider, envOf } from '../lib/patch.mjs';
 import { envLevel } from '../lib/envelope.mjs';
-import { NOTE_MAX, isBlack, noteName } from '../lib/notes.mjs';
+import { lowpassDb, qOf, dragTo, xOfFreq, yOfDb, freqOfX, CURVE } from '../lib/filter.mjs';
+import { NOTE_MAX, isBlack, noteName, noteFreq } from '../lib/notes.mjs';
 import { STEPS, tokens, rowText } from '../lib/seq.mjs';
 import { Engine, renderWav } from './engine.js';
 import { createBrowser } from './browser.js';
@@ -144,6 +145,7 @@ function buildCard(id) {
   card.dataset.family = group.family;
   card.append(el('h2', {}, group.name));
   if (id === 'fenv' || id === 'aenv') card.append(envelopeShape(id));   // the shape first: what the sliders under it make
+  if (id === 'filter') card.append(filterCurve());
   card.append(...paramsOf(id).map((def) => buildControl(def, group.name)));
   if (id === 'master') card.append(el('canvas', { id: 'meter', className: 'meter', width: 240, height: 10, ariaHidden: 'true', title: 'The level coming out' }));
   return card;
@@ -159,6 +161,131 @@ function buildPanel() {
   const arrow = () => el('span', { className: 'arrow', ariaHidden: 'true' }, '→');
   const flow = PANEL.flow.flatMap((c, i) => (i ? [arrow(), buildColumn(c)] : [buildColumn(c)]));
   $('panel').replaceChildren(...flow, ...PANEL.under.map(buildColumn));
+}
+
+// a canvas drawn at the size it is shown, in device pixels, so its lines stay sharp; false when it is not shown
+function fit(canvas) {
+  const dpr = devicePixelRatio || 1, w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+  if (!w || !h) return false;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; canvas.drawn = null; }
+  return true;
+}
+
+// ---- the filter curve: what the low-pass lets through at each frequency (lib/filter.mjs), drawn for a note at
+// middle C (key tracking moves it with the note). Dragging it sets the cutoff (across) and the resonance (up), as
+// one undo step like a slider.
+function filterCurve() {
+  const canvas = el('canvas', { id: 'curve', className: 'curve', title: 'The filter: drag across for the cutoff, up for the resonance', ariaLabel: 'Filter curve: drag to set the cutoff and the resonance' });
+  const at = (e) => { const r = canvas.getBoundingClientRect(); return dragTo((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
+  const move = (e) => {
+    const { cutoff, resonance } = at(e);
+    curveDrag = { cutoff, resonance };
+    drawCurve();
+    slide(canvas, { op: 'set', values: { 'filter.cutoff': cutoff, 'filter.resonance': resonance } });
+  };
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    canvas.setPointerCapture(e.pointerId);
+    canvas.held = true;
+    move(e);
+  });
+  canvas.addEventListener('pointermove', (e) => { if (canvas.held) move(e); });
+  for (const type of ['pointerup', 'pointercancel']) canvas.addEventListener(type, () => { canvas.held = false; curveDrag = null; letGo(canvas); drawCurve(); });
+  return canvas;
+}
+let curveDrag = null;          // where a drag has put the cutoff and the resonance, ahead of the server's answer
+
+function drawCurve() {
+  const canvas = $('curve');
+  if (!canvas || !state || !fit(canvas)) return;
+  const p = current(), cutoff = curveDrag?.cutoff ?? p['filter.cutoff'], resonance = curveDrag?.resonance ?? p['filter.resonance'];
+  const key = `${cutoff}/${resonance}/${canvas.width}`;
+  if (canvas.drawn === key) return;
+  canvas.drawn = key;
+  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height, dpr = devicePixelRatio || 1;
+  g.clearRect(0, 0, w, h);
+  g.lineWidth = dpr;
+  g.strokeStyle = '#262631';                            // 0 dB, and the octaves 100 Hz, 1 kHz, 10 kHz
+  g.beginPath();
+  g.moveTo(0, yOfDb(0) * h); g.lineTo(w, yOfDb(0) * h);
+  for (const f of [100, 1000, 10000]) { g.moveTo(xOfFreq(f) * w, 0); g.lineTo(xOfFreq(f) * w, h); }
+  g.stroke();
+  const colour = getComputedStyle(canvas).color;
+  g.beginPath();
+  for (let i = 0; i <= w; i += 2) {
+    const y = yOfDb(lowpassDb(freqOfX(i / w), cutoff, qOf(resonance))) * h;
+    if (i) g.lineTo(i, y); else g.moveTo(i, y);
+  }
+  g.lineTo(w, h); g.lineTo(0, h); g.closePath();
+  g.globalAlpha = 0.12; g.fillStyle = colour; g.fill();
+  g.globalAlpha = 1; g.lineWidth = 1.5 * dpr; g.strokeStyle = colour; g.stroke();
+  // the handle, at the cutoff and as high as the peak
+  g.beginPath();
+  g.arc(xOfFreq(cutoff) * w, yOfDb(Math.max(0, qOf(resonance))) * h, 4.5 * dpr, 0, Math.PI * 2);
+  g.fillStyle = colour; g.fill();
+}
+
+// ---- the sound coming out: the waveform, steadied on a rising zero crossing and about three periods of the
+// lowest note sounding wide (at oscillator 1's pitch), so a held note stands still; and the spectrum, 20 Hz to 20 kHz across
+let scopeBuf = null, specBuf = null;
+function drawScope(note) {
+  const analyser = engine.analyser, wave = $('wave'), spec = $('spectrum');
+  const waveOn = fit(wave), specOn = fit(spec);
+  if (!waveOn && !specOn) return;
+  const quiet = !analyser || !engine.awake;
+  if (waveOn) {
+    const g = wave.getContext('2d'), w = wave.width, h = wave.height, dpr = devicePixelRatio || 1;
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = '#262631'; g.lineWidth = dpr;
+    g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+    if (!quiet) {
+      if (scopeBuf?.length !== analyser.fftSize) scopeBuf = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(scopeBuf);
+      const sr = engine.ctx.sampleRate;
+      const p = current(), pitch = (note ?? 48) + 12 * p['osc1.octave'] + p['osc1.semi'];   // what oscillator 1 sounds
+      const span = Math.round(Math.min(scopeBuf.length / 2, Math.max(256, (3 * sr) / noteFreq(pitch))));
+      // the latest stretch with sound in it, and the rising zero crossing that starts it: a short note followed by
+      // silence is shown, not the silence
+      let all = 0;
+      for (const v of scopeBuf) all = Math.max(all, Math.abs(v));
+      let from = 0;
+      for (let i = scopeBuf.length - span - 1; i > 0; i--) {
+        if (!(scopeBuf[i - 1] < 0 && scopeBuf[i] >= 0)) continue;
+        let p = 0;
+        for (let j = i; j < i + span; j += 4) p = Math.max(p, Math.abs(scopeBuf[j]));
+        if (p >= all * 0.5) { from = i; break; }
+      }
+      let peak = 0;
+      for (let i = from; i < from + span; i++) peak = Math.max(peak, Math.abs(scopeBuf[i]));
+      const scale = (h / 2 - 3 * dpr) / Math.max(0.25, peak);   // a quiet sound is drawn bigger, up to four times
+      g.strokeStyle = getComputedStyle(wave).color; g.lineWidth = 1.5 * dpr;
+      g.beginPath();
+      for (let i = 0; i < span; i++) {
+        const x = (i / (span - 1)) * w, y = h / 2 - scopeBuf[from + i] * scale;
+        if (i) g.lineTo(x, y); else g.moveTo(x, y);
+      }
+      g.stroke();
+    }
+  }
+  if (specOn) {
+    const g = spec.getContext('2d'), w = spec.width, h = spec.height;
+    g.clearRect(0, 0, w, h);
+    if (quiet) return;
+    if (specBuf?.length !== analyser.frequencyBinCount) specBuf = new Float32Array(analyser.frequencyBinCount);
+    analyser.getFloatFrequencyData(specBuf);
+    const bars = Math.max(16, Math.min(64, Math.floor(w / (6 * (devicePixelRatio || 1))))), binHz = engine.ctx.sampleRate / analyser.fftSize;
+    const gap = Math.max(1, Math.round(w / bars / 5)), bw = w / bars;
+    g.fillStyle = getComputedStyle(spec).color;
+    for (let b = 0; b < bars; b++) {
+      const lo = Math.floor(freqOfX(b / bars) / binHz), hi = Math.max(lo + 1, Math.floor(freqOfX((b + 1) / bars) / binHz));
+      let sum = 0, n = 0;
+      for (let i = lo; i < hi && i < specBuf.length; i++) { sum += 10 ** (specBuf[i] / 10); n++; }
+      const db = n ? 10 * Math.log10(sum / n + 1e-30) : -Infinity;
+      const level = Math.min(1, Math.max(0, (db + 110) / 100));       // -110 dB to -10 dB, bottom to top
+      const bh = Math.round(level * h);
+      if (bh > 0) g.fillRect(Math.round(b * bw), h - bh, Math.max(1, Math.round(bw) - gap), bh);
+    }
+  }
 }
 
 // the level coming out, as a bar: solid green, amber from -12 dB, red from -3 dB (the limiter is working)
@@ -214,6 +341,7 @@ function render() {
   }
   drawEnvelope('fenv', p);
   drawEnvelope('aenv', p);
+  drawCurve();
 
   setValue($('name'), p.name);
   setValue($('bpm'), state.seq.bpm);
@@ -501,6 +629,8 @@ function frame() {
     lit = sounding;
   }
   drawMeter();
+  drawScope(sounding.size ? Math.min(...sounding) : engine.miniclaude?.lastNote);
+  if (!curveDrag) drawCurve();                         // a resized window redraws it
   requestAnimationFrame(frame);
 }
 

@@ -12,6 +12,7 @@ import { noteFreq } from '../lib/notes.mjs';
 import { envLevel, envEnd, tau } from '../lib/envelope.mjs';
 import { envOf } from '../lib/patch.mjs';
 import { voiceToSteal } from '../lib/voices.mjs';
+import { qOf } from '../lib/filter.mjs';
 import { notesInWindow, stepSeconds, STEPS } from '../lib/seq.mjs';
 import { encodeWav } from '../lib/wav.mjs';
 
@@ -133,7 +134,7 @@ export class Synth {
     const now = this.ctx.currentTime;
     const put = (param, value) => { if (first) param.value = value; else param.setTargetAtTime(value, now, SMOOTH); };
     put(v.filter.frequency, Math.min(18000, p['filter.cutoff'] * 2 ** (((v.note - 60) / 12) * p['filter.keytrack'])));
-    put(v.filter.Q, p['filter.resonance'] * 22);       // for a low-pass this is the height of the peak, in dB
+    put(v.filter.Q, qOf(p['filter.resonance']));       // for a low-pass this is the height of the peak, in dB
     for (const [id, node] of Object.entries(v.levels)) {
       put(node.gain, id === 'sub' ? p['mix.sub'] : id === 'noise' ? p['mix.noise'] * 0.6 : p[`${id}.level`] / Math.sqrt(v.copies));
     }
@@ -267,7 +268,8 @@ export class Engine {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       this.miniclaude = new Synth(this.ctx, this.source().patch);
       this.analyser = this.ctx.createAnalyser();       // the page's meter reads the sound from here
-      this.analyser.fftSize = 2048;
+      this.analyser.fftSize = 4096;                     // the scope looks for a whole period of a low note in it
+      this.analyser.smoothingTimeConstant = 0.7;
       this.miniclaude.out.connect(this.analyser);
       this.ctx.onstatechange = () => this.onChange?.();
     }
