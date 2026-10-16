@@ -110,4 +110,6 @@ nothing, so the master's +6 dB and a channel fader's +6 dB are real level. When 
 at full level, the master pushed up), the limiter turns only those peaks down: nothing clips, in the speakers, the
 recording or an export. The **LIMIT** light under the master level is amber when it catches peaks and red when it takes
 3 dB or more off; at that point the mix is being squashed, and the mix monitor says so too ("master too hot"): turn
-the master or a channel down.
+the master or a channel down. The meters are green, amber and red in solid zones: on a channel amber is the last 6 dB
+below 0 and red is above it (the fader pushed past the track's normal level); the master's bars never pass -1 dBFS, so
+they turn amber from -6 dB and red from -3 dB, where they reach the limiter.

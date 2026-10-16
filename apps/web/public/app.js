@@ -7,7 +7,7 @@ import { clientId, mixer, takeOver, setMixer, setEngine, setTakeOver, liveDeck }
 import { pushState, setStatus } from './ui/link.js';
 import { wireControls } from './ui/controls.js';
 import { renderKeyChip } from './ui/deck.js';
-import { drawOverview, drawScroll, drawJog, drawMeter } from './ui/canvas.js';
+import { drawOverview, drawScroll, drawJog, drawMeter, M_ZONES } from './ui/canvas.js';
 import { loadLibrary, refreshHistory, renderLibrary } from './ui/crate.js';
 import { mixerEls } from './ui/layout.js';
 import './ui/lower.js';
@@ -137,7 +137,7 @@ function frame() {
   for (const b of $$('.xfsw button')) { const on = String(mixer.decks[b.parentElement.dataset.deck].xfSide === b.dataset.side); if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on); }
   const mv = $('#masterVol'); if (!held(mv)) mv.value = faderOfMaster(mixer.master.value());
   if (document.body.dataset.layout === 'stacked') {
-    for (const m of $$('.master .meter')) drawMeter(m, mixer.meters[m.dataset.side]);
+    for (const m of $$('.master .meter')) drawMeter(m, mixer.meters[m.dataset.side], M_ZONES.master);
     $('#masterKnob').render?.();
     // LIMIT: the master limiter took level off (it keeps the output under -1 dBFS, so nothing clips). Amber for the odd
     // peak, red from 3 dB (the mix is squashed); it stays lit for a second so a single peak is seen
