@@ -38,7 +38,7 @@ like) is moved in once, by hand, with nothing of the rig running:
 
 ```bash
 node tools/move-to-data.mjs                          # this project folder
-node tools/move-to-data.mjs "~/Documents/DJ Claude"  # another one, such as the installed app's
+node tools/move-to-data.mjs "$HOME/Documents/DJ Claude"  # another one, such as the installed app's
 ```
 
 A track's id comes from its file's path, so the move also gives the cues, grid edits, memory, sets and stems the
