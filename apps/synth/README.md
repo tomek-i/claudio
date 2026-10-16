@@ -41,10 +41,13 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
 - Twenty-seven built-in presets (bass, lead, pad, pluck, keys, fx) and four patch slots.
 - A preset browser down the left side ("Presets" in the top bar shows and hides it; on a narrow screen it lies
   over the page): every preset in one list, yours first, with a search box and a category row. A click loads one
-  into the playing slot, ↑ ↓ walk the list, and ◀ ▶ by the patch's name step through it as it is narrowed.
+  into the playing slot, ↑ ↓ walk the list, and ◀ ▶ by the patch's name step through it as it is narrowed. The ▶
+  at the start of a row hears a preset without loading it: a short phrase that suits its kind (a bass line, a pad
+  chord, a lead run) on a synth of its own, so the sound you are working on is not touched
+  (`miniclaude preset hear <name>` does the same from the CLI).
 - Presets of your own: "Save" in the browser or Ctrl+S (or `miniclaude preset save <name>`) keeps the playing
   patch under a name; saving under the same name again replaces it, and the × on its row (or
-  `preset delete <name>`) takes it off the list. They are kept in `presets.json` beside the state, so undo never
+  `preset delete <name>`) takes it off the list; `preset list --mine` lists only yours. They are kept in `presets.json` beside the state, so undo never
   takes one away.
 - Undo for everything, shared by the page and the CLI. Saved as you go.
 - Export: the sequence as a WAV, rendered in the browser by the same code that plays it.

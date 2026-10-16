@@ -148,6 +148,18 @@ test('the live scheduler plays each note of the sequence once, on time, and stop
   assert.equal(engine.miniclaude.voices.filter((v) => v.end > ctx.currentTime + 1).length, 3);
   engine.panic();
   assert.ok(engine.miniclaude.voices.every((v) => v.end <= ctx.currentTime + 0.03));
+  // a preset heard without loading it: its own synth plays the phrase, the playing one is left alone
+  engine.analyser = ctx.createGain();                                  // where a page's analyser would be
+  const playing = engine.miniclaude.voices.length;
+  engine.audition(preset('warm'), [{ note: 48, at: 0, seconds: 1 }, { note: 55, at: 0, seconds: 1 }]);
+  assert.equal(engine.preview.voices.length, 2);
+  assert.equal(engine.preview.patch.name, 'Warm pad');
+  assert.equal(engine.miniclaude.voices.length, playing);
+  assert.equal(engine.miniclaude.patch.name, 'Pluck');
+  engine.audition(preset('pluck'), [{ note: 60, at: 0, seconds: 0.2 }]);   // the next one cuts the last short
+  assert.ok(engine.preview.voices.slice(0, 2).every((v) => v.end <= ctx.currentTime + 0.03));
+  engine.panic();
+  assert.ok(engine.preview.voices.every((v) => v.end <= ctx.currentTime + 0.03));
 });
 
 test('the offline render lays the same notes out on its own context and returns a WAV of the right length', async (t) => {

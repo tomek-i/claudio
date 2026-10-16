@@ -203,6 +203,17 @@ test('the CLI tells a page to sound, hears a note from it and answers', async ()
   assert.equal((await cli('play')).out, 'playing the sequence until: stop');
   assert.deepEqual((await page.next()).data, { action: 'seq', loops: 0 });
   assert.equal((await cli('stop')).out, 'stopped');
+  // a preset heard, not loaded: the page gets its patch and a phrase for its kind, and the playing patch stays
+  assert.deepEqual((await page.next()).data, { action: 'stop' });
+  const before = patch(await get('/api/state'));
+  assert.equal((await cli('preset', 'hear', 'warm')).out, 'playing a phrase of "Warm pad" on its own; the playing patch is unchanged');
+  const heard = (await page.next()).data;
+  assert.equal(heard.action, 'preset');
+  assert.equal(heard.kind, 'pad');
+  assert.equal(heard.patch.name, 'Warm pad');
+  assert.ok(heard.phrase.length >= 3 && heard.phrase.every((n) => n.at === 0), 'a pad is heard as a chord');
+  assert.deepEqual(patch(await get('/api/state')), before);
+  assert.match((await cli('preset', 'hear', 'trombone')).err, /no preset "trombone"/);
   await page.close();
   for (let i = 0; i < 50 && server.store.listeners.size; i++) await new Promise((r) => setTimeout(r, 20));
   assert.equal(server.store.transport.awake, false);                   // the page is gone, and its click with it
@@ -240,9 +251,12 @@ test('a sound saved as a preset is listed first, loads by name, survives a resta
 
   assert.equal((await cli('preset', 'save', 'Tape', 'pluck')).out, 'slot A  "Tape pluck"  saved as a preset');
   assert.match((await cli('preset')).out, /^saved  night HOOVER\nsaved  Tape pluck\nbass {3}Acid bass$/m);
+  assert.equal((await cli('preset', 'list', '--mine')).out, 'saved  night HOOVER\nsaved  Tape pluck');
+  assert.match((await cli('preset', 'list')).out, /^bass {3}Acid bass$/m);
   assert.equal((await cli('preset', 'delete', 'tape', 'pluck')).out, 'deleted the preset "tape pluck"');
   const after = await edit({ op: 'deletepreset', name: 'Night hoover' });
   assert.equal(after.presets.some((p) => p.saved), false);
+  assert.equal((await cli('preset', 'list', '--mine')).out, 'no saved presets yet (preset save <name> keeps the playing patch)');
   assert.equal(patch(after).name, 'Tape pluck');                      // deleting the preset leaves the sound playing
 });
 

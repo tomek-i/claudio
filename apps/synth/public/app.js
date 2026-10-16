@@ -24,7 +24,7 @@ const current = () => state.slots[state.slot];
 const newGesture = () => `g${Date.now()}-${++gestureCount}`;
 
 const engine = new Engine(() => ({ patch: current(), seq: state.seq }));
-const browser = createBrowser({ state: () => state, current, send: (op) => send(op) });
+const browser = createBrowser({ state: () => state, current, send: (op) => send(op), hear: (name) => post('/api/play', { action: 'preset', name }).catch((err) => complain(err.message)) });
 
 // ---- the link to the server
 
@@ -80,6 +80,7 @@ function connect() {
     if (!state) return;
     if (ask.action === 'seq') engine.start(ask.loops || Infinity);
     else if (ask.action === 'notes') { engine.sound(ask.notes, ask.seconds, ask.vel); flash(ask.notes, ask.seconds); }
+    else if (ask.action === 'preset') engine.audition(ask.patch, ask.phrase);   // heard, not loaded
     else engine.panic();
   });
 }

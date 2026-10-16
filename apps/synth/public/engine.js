@@ -280,6 +280,20 @@ export class Engine {
 
   setPatch(patch) { this.miniclaude?.setPatch(patch); }
 
+  // A preset heard without loading it: its phrase ([{ note, at, seconds }]) on a second synth, so the playing
+  // patch is not touched. A new one cuts the last one short.
+  audition(patch, phrase) {
+    this.wake();
+    if (!this.preview) {
+      this.preview = new Synth(this.ctx, patch);
+      this.preview.out.connect(this.analyser);         // the scope and the meter show it too
+    }
+    this.preview.silence();
+    this.preview.setPatch(patch);
+    const start = this.ctx.currentTime + 0.05;
+    for (const { note, at, seconds } of phrase) this.preview.play(note, 0.8, start + at, seconds);
+  }
+
   noteOn(note, vel = 0.8) {
     this.wake();
     if (this.held.has(note)) return;
@@ -326,6 +340,7 @@ export class Engine {
     this.stop();
     this.held.clear();
     this.miniclaude?.silence();
+    this.preview?.silence();
   }
 
   // where the playhead is, in steps since play was pressed
