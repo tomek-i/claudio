@@ -42,19 +42,20 @@ one to import and load them), drag the big waveform to scratch, hold Alt to move
 mouse wheel on it to zoom. A playing deck is locked against waveform drags unless you hold Shift or open the lock.
 
 ### As a desktop app
-The same server and page in a window of their own, with no **Start engine** click:
+**Claudio**, the desktop suite: DJ Claude and the drum machine, synth and DAW, each in a window of its own, opened from
+one home window, with no **Start engine** click:
 ```bash
 pnpm install     # once: Electron, for the desktop app only
 pnpm desktop
 ```
 Or install it: each [release](https://github.com/tomek-i/dj-claude/releases) has a Windows installer. The installed
-app makes its own project folder (Documents/DJ Claude) with the CLI and the skills in it; open Claude Code there.
+app makes its own project folder (Documents/Claudio) with the CLIs and the skills in it; open Claude Code there.
 More in [The desktop app](docs/desktop-app.md).
 
 ## Documentation
 | | |
 |---|---|
-| [The desktop app](docs/desktop-app.md) | What it adds over a browser tab, the installer, and the project folder the installed app makes. |
+| [The desktop app](docs/desktop-app.md) | Claudio, the suite: the home window, what it adds over browser tabs, the installer, and the project folder the installed app makes. |
 | [How it works](docs/how-it-works.md) | The pieces, the skills that make Claude a DJ, the one sound system, transitions and timing. |
 | [Stems](docs/stems.md) | Splitting tracks into vocals, drums, bass and other: `node dj.mjs stems setup`, GPU or CPU. |
 | [Visuals](docs/visuals.md) | The full-screen visualiser at `/visuals` for a second screen or a projector. |

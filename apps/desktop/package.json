@@ -1,7 +1,7 @@
 {
   "name": "dj-claude-desktop",
   "version": "0.6.0",
-  "description": "DJ Claude as a desktop app: an Electron window on the same server and page as browser mode.",
+  "description": "Claudio, the desktop suite: DJ Claude, Claude-808, MiniClaude and Claudebase, each in a window on the same server and page as in a browser.",
   "private": true,
   "type": "module",
   "main": "main.mjs",
