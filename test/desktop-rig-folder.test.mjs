@@ -15,7 +15,7 @@ const read = (...p) => fs.readFileSync(path.join(...p), 'utf8');
 const scratch = () => fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-rig-'));
 const ship = (dir, version, extra = {}) => put(dir, {
   'package.json': JSON.stringify({ version }), 'config.json': '{"port":4747}', '.claude/settings.json': '{"shipped":true}',
-  'dj.mjs': `// ${version}`, 'CLAUDE.md': `# ${version}`, 'starter/tracks.json': '["one"]',
+  'dj.mjs': `// ${version}`, 'CLAUDE.md': `# ${version}`, 'apps/server/demo-tracks/tracks.json': '["one"]',
   'apps/server/server.mjs': `// ${version}`, 'apps/cli/dj.mjs': '//', 'apps/web/public/index.html': '<html>', 'tools/produce/viz.mjs': '//',
   '.claude/skills/dj/SKILL.md': `dj ${version}`, ...extra,
 });
@@ -24,13 +24,15 @@ test('prepareRigFolder: the first start makes a whole project; an update replace
   const tmp = scratch(), shipped = path.join(tmp, 'app'), root = path.join(tmp, 'Documents', 'DJ Claude');
   try {
     ship(shipped, '1.0.0', { 'apps/server/lib/old.mjs': '// dropped in 1.1.0', '.claude/skills/dj-old/SKILL.md': 'old' });
+    put(root, { 'starter/tracks.json': '["from an older build"]' }); // where the demo track list was before apps/server/demo-tracks
     assert.equal(prepareRigFolder(root, shipped), root);
-    for (const f of ['config.json', '.claude/settings.json', 'dj.mjs', 'CLAUDE.md', 'starter/tracks.json', 'apps/server/server.mjs', 'apps/cli/dj.mjs', 'apps/web/public/index.html', 'tools/produce/viz.mjs', '.claude/skills/dj/SKILL.md']) assert.ok(fs.existsSync(path.join(root, f)), f);
+    assert.ok(!fs.existsSync(path.join(root, 'starter')), 'what an older build put there and this one does not is gone');
+    for (const f of ['config.json', '.claude/settings.json', 'dj.mjs', 'CLAUDE.md', 'apps/server/demo-tracks/tracks.json', 'apps/server/server.mjs', 'apps/cli/dj.mjs', 'apps/web/public/index.html', 'tools/produce/viz.mjs', '.claude/skills/dj/SKILL.md']) assert.ok(fs.existsSync(path.join(root, f)), f);
     // it is a project folder as the server and the CLI understand one
     assert.equal(findRoot(path.join(root, 'apps', 'server'), {}), root);
 
     // the user changes settings, adds a skill and music, and edits one of the app's files
-    put(root, { 'config.json': '{"port":5000}', '.claude/settings.json': '{"mine":true}', '.claude/skills/my-own/SKILL.md': 'mine', 'library/track.mp3': 'music', '.dj/library.json': '{}', 'apps/server/server.mjs': '// edited' });
+    put(root, { 'config.json': '{"port":5000}', '.claude/settings.json': '{"mine":true}', '.claude/skills/my-own/SKILL.md': 'mine', 'data/dj/library/track.mp3': 'music', 'data/dj/cache/library.json': '{}', 'apps/server/server.mjs': '// edited' });
 
     // the same build again: nothing is copied (the edit is still there)
     prepareRigFolder(root, shipped);
@@ -38,19 +40,19 @@ test('prepareRigFolder: the first start makes a whole project; an update replace
 
     // an update: new code, a file dropped, other default settings
     fs.rmSync(shipped, { recursive: true });
-    ship(shipped, '1.1.0', { 'config.json': '{"port":4747,"new":true}', 'starter/tracks.json': '["one","two"]' });
+    ship(shipped, '1.1.0', { 'config.json': '{"port":4747,"new":true}', 'apps/server/demo-tracks/tracks.json': '["one","two"]' });
     prepareRigFolder(root, shipped);
     assert.equal(read(root, 'apps/server/server.mjs'), '// 1.1.0');
     assert.equal(read(root, '.claude/skills/dj/SKILL.md'), 'dj 1.1.0');
-    assert.equal(read(root, 'starter/tracks.json'), '["one","two"]');
+    assert.equal(read(root, 'apps/server/demo-tracks/tracks.json'), '["one","two"]');
     assert.ok(!fs.existsSync(path.join(root, 'apps/server/lib/old.mjs')), 'a file the update dropped is gone');
-    assert.equal(read(root, '.dj/app-build'), buildStamp(shipped));
+    assert.equal(read(root, 'data/desktop/app-build'), buildStamp(shipped));
     // the user's things are as they left them
     assert.equal(read(root, 'config.json'), '{"port":5000}');
     assert.equal(read(root, '.claude/settings.json'), '{"mine":true}');
     assert.equal(read(root, '.claude/skills/my-own/SKILL.md'), 'mine');
-    assert.equal(read(root, 'library/track.mp3'), 'music');
-    assert.equal(read(root, '.dj/library.json'), '{}');
+    assert.equal(read(root, 'data/dj/library/track.mp3'), 'music');
+    assert.equal(read(root, 'data/dj/cache/library.json'), '{}');
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 
@@ -63,7 +65,7 @@ test('prepareRigFolder: a git checkout keeps its own code; only missing settings
     assert.equal(read(root, 'apps/server/server.mjs'), '// my work');
     assert.equal(read(root, 'CLAUDE.md'), '# mine');
     assert.equal(read(root, 'config.json'), '{"port":4747}');
-    assert.ok(!fs.existsSync(path.join(root, 'tools')) && !fs.existsSync(path.join(root, '.dj')) && !fs.existsSync(path.join(root, '.claude')));
+    assert.ok(!fs.existsSync(path.join(root, 'tools')) && !fs.existsSync(path.join(root, 'data')) && !fs.existsSync(path.join(root, '.claude')));
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 
@@ -84,7 +86,7 @@ test('a folder made from this repository runs the CLI with Node alone, as its ow
     assert.match(guide, /^## This folder$/m);
     assert.doesNotMatch(guide, /^## Layout|tools\/bench|node --test|release-please/m);
     // every command and folder it points at is in the folder
-    for (const f of ['apps/server/server.mjs', 'apps/server/lib', 'apps/web/public', 'apps/cli', 'tools/produce', 'starter', 'config.json', 'dj.mjs']) { assert.ok(guide.includes(f.split('/').at(-1)), f); assert.ok(fs.existsSync(path.join(root, f)), f); }
+    for (const f of ['apps/server/server.mjs', 'apps/server/lib', 'apps/web/public', 'apps/cli', 'tools/produce', 'apps/server/demo-tracks', 'config.json', 'dj.mjs']) { assert.ok(guide.includes(f.split('/').at(-1)), f); assert.ok(fs.existsSync(path.join(root, f)), f); }
     // nothing of the desktop app's own, and none of its dependencies, is needed there
     assert.ok(!fs.existsSync(path.join(root, 'apps', 'desktop')) && !fs.existsSync(path.join(root, 'node_modules')));
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

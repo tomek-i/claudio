@@ -21,12 +21,12 @@ Requirements: **Node 20+**, **ffmpeg + ffprobe** on PATH, a Chromium-based brows
 ```bash
 git clone <this repo> dj-claude && cd dj-claude
 node dj.mjs doctor --fix     # checks the server, engine and library, downloads yt-dlp into bin/
-node dj.mjs starter          # optional: 12 Creative Commons tracks (hip-hop, house, techno, drum & bass) into library/starter/
+node dj.mjs demo          # optional: 12 Creative Commons tracks (hip-hop, house, techno, drum & bass) into data/dj/library/demo/
 node dj.mjs start            # starts the server and opens http://localhost:4747
 ```
 Click **Start engine** in the tab once (browsers need one click before they may play audio). Drop some music into
-`library/` or let Claude download it. An empty crate shows a **Download demo tracks** button that fetches the same
-starter crate as `dj starter` (tracks and licences in [starter/README.md](starter/README.md)). Then open Claude Code in
+`data/dj/library/` or let Claude download it. An empty crate shows a **Download demo tracks** button that fetches the same
+starter crate as `dj demo` (tracks and licences in [apps/server/demo-tracks/README.md](apps/server/demo-tracks/README.md)). Then open Claude Code in
 this folder and talk to it:
 
 - `play a 30 minute house set that builds to a peak`
@@ -59,7 +59,7 @@ More in [The desktop app](docs/desktop-app.md).
 | [Stems](docs/stems.md) | Splitting tracks into vocals, drums, bass and other: `node dj.mjs stems setup`, GPU or CPU. |
 | [Visuals](docs/visuals.md) | The full-screen visualiser at `/visuals` for a second screen or a projector. |
 | [Videos, speech clips and albums](docs/production.md) | Recording a set and rendering a video; talk clips as vocals; a produced album. |
-| [Configuration and data](docs/configuration.md) | `config.json` and the settings page, key bindings, what is kept in `.dj/`. |
+| [Configuration and data](docs/configuration.md) | `config.json` and the settings page, key bindings, what is kept in `data/dj/`. |
 | [Development](docs/development.md) | Tests, benchmarks, CI, releases, building the installer. |
 
 `node dj.mjs help` lists every command. `CLAUDE.md` is the map of the code, written for Claude.

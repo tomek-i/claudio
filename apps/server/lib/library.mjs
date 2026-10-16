@@ -48,7 +48,7 @@ function parseFilename(file) {
 }
 
 export class Library {
-  constructor({ dirs, cacheFile, targetLoudnessDb = -10, stemsDir = null, log = () => {} }) {
+  constructor({ dirs, cacheFile, editsFile = null, targetLoudnessDb = -10, stemsDir = null, log = () => {} }) {
     this.stemsDir = stemsDir;
     this.backfilling = false;
     this.dirs = dirs.map(expandHome).map((d) => path.resolve(d));
@@ -61,7 +61,7 @@ export class Library {
     this.active = 0;
     this.listeners = new Set();
     // manual beat-grid corrections (dj grid), kept outside the analysis cache so re-analysis re-applies them
-    this.editsFile = path.join(path.dirname(cacheFile), 'grid-edits.json');
+    this.editsFile = editsFile || path.join(path.dirname(cacheFile), 'grid-edits.json');
     try { this.gridEdits = JSON.parse(fs.readFileSync(this.editsFile, 'utf8')); } catch { this.gridEdits = {}; }
     try {
       const saved = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));

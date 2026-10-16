@@ -6,9 +6,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 const args = process.argv.slice(2); const flag = (n, d = null) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const ALBUM = flag('--album'); if (!ALBUM) { console.log('usage: full-album.mjs --album "Album Name" [--artist name]'); process.exit(1); }
-const ARTIST = flag('--artist', 'DJ Claude'); const DIR = '.dj/exports/album', OUT = `${DIR}/${ALBUM} - Full Album`;
-const metas = fs.readdirSync('.dj/produce/out/album').filter((f) => /^t\d\d\.json$/.test(f)).sort().map((f) => ({ n: Number(f.slice(1, 3)), ...JSON.parse(fs.readFileSync(path.join('.dj/produce/out/album', f), 'utf8')) }));
-if (!metas.length) { console.log('no .dj/produce/out/album/tNN.json yet (run cut-track first)'); process.exit(1); }
+const ARTIST = flag('--artist', 'DJ Claude'); const DIR = 'data/dj/exports/album', OUT = `${DIR}/${ALBUM} - Full Album`;
+const metas = fs.readdirSync('data/dj/produce/out/album').filter((f) => /^t\d\d\.json$/.test(f)).sort().map((f) => ({ n: Number(f.slice(1, 3)), ...JSON.parse(fs.readFileSync(path.join('data/dj/produce/out/album', f), 'utf8')) }));
+if (!metas.length) { console.log('no data/dj/produce/out/album/tNN.json yet (run cut-track first)'); process.exit(1); }
 const vid = (m) => { const f = fs.readdirSync(DIR).find((x) => x.startsWith(`${ALBUM} - ${String(m.n).padStart(2, '0')} - `) && x.endsWith('.mp4') && !x.includes('(480p)')); return f ? path.join(DIR, f) : null; };
 const dur = (f) => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' }).trim();
 const segs = []; let prevEnd = null;

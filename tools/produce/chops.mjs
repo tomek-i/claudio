@@ -7,8 +7,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
-const { ROOT } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'apps', 'server', 'lib', 'paths.mjs')));
-const LIB = JSON.parse(fs.readFileSync(path.join(ROOT, '.dj/library.json'), 'utf8')).tracks;
+const { CACHE_DIR } = await import(pathToFileURL(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'apps', 'server', 'lib', 'paths.mjs')));
+const LIB = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, 'library.json'), 'utf8')).tracks;
 const tr = (id) => LIB[id] || Object.values(LIB).find((t) => t.id === id);
 const SR = 16000, HOP = 0.005;
 
@@ -18,7 +18,7 @@ function decode(file, from, dur) {
 }
 export async function chop(id, from, dur) {
   const t = tr(id); if (!t) throw new Error(`clip ${id} not in library`);
-  const stem = path.join(ROOT, '.dj/stems', id, 'vocals.wav');
+  const stem = path.join(CACHE_DIR, 'stems', id, 'vocals.wav');
   const file = fs.existsSync(stem) ? stem : t.file;
   const pre = 0.25, x = decode(file, from - pre, dur + pre + 0.25);
   const n = Math.floor(x.length / (HOP * SR)), env = new Float32Array(n);

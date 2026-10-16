@@ -2,7 +2,7 @@
 //
 //   node tools/produce/album-design.mjs                 report per section (lines, hooks, coverage, duplicates, missing texts)
 //   node tools/produce/album-design.mjs --track N       full timeline of one track
-//   ALBUM_BEDS=<beds.mjs> ALBUM_SONGS=<dir>       inputs (defaults .dj/produce/beds.mjs and .dj/produce/songs/)
+//   ALBUM_BEDS=<beds.mjs> ALBUM_SONGS=<dir>       inputs (defaults data/dj/produce/beds.mjs and data/dj/produce/songs/)
 //
 // Every track has a TITLE HOOK (an exact spoken phrase from the caption word index) that returns as a chorus at the top of
 // each phrase and leads every drop; drop builds roll the hook's last word as whole-word stabs (halves, then quarters);
@@ -12,14 +12,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { bedRoll, bassKill } from './remix.mjs';
-const BEDS = process.env.ALBUM_BEDS || '.dj/produce/beds.mjs';
-const SONG_DIR = process.env.ALBUM_SONGS || '.dj/produce/songs';
+const BEDS = process.env.ALBUM_BEDS || 'data/dj/produce/beds.mjs';
+const SONG_DIR = process.env.ALBUM_SONGS || 'data/dj/produce/songs';
 const base = (await import(pathToFileURL(path.resolve(BEDS)).href)).default;
-const SENT = JSON.parse(fs.readFileSync('.dj/voice/sentences.json', 'utf8'));
-const CUR = fs.existsSync('.dj/voice/lines.json') ? JSON.parse(fs.readFileSync('.dj/voice/lines.json', 'utf8')) : [];
-const WORDS = JSON.parse(fs.readFileSync('.dj/voice/words.json', 'utf8'));
-const FEAT = fs.existsSync('.dj/voice/features.json') ? JSON.parse(fs.readFileSync('.dj/voice/features.json', 'utf8')) : {};
-const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const SENT = JSON.parse(fs.readFileSync('data/dj/voice/sentences.json', 'utf8'));
+const CUR = fs.existsSync('data/dj/voice/lines.json') ? JSON.parse(fs.readFileSync('data/dj/voice/lines.json', 'utf8')) : [];
+const WORDS = JSON.parse(fs.readFileSync('data/dj/voice/words.json', 'utf8'));
+const FEAT = fs.existsSync('data/dj/voice/features.json') ? JSON.parse(fs.readFileSync('data/dj/voice/features.json', 'utf8')) : {};
+const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const tr = (id) => Object.values(LIB).find((t) => t.id === id);
 const norm = (w) => w.toLowerCase().replace(/[^a-z0-9']/g, '');
 export const MISSING = [], WARN = [];

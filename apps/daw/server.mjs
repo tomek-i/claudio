@@ -54,7 +54,15 @@ function serveFile(res, root, rel) {
   return true;
 }
 
-export function createServer({ home = process.env.CLAUDEBASE_HOME || path.join(HERE, '.claudebase') } = {}) {
+// Saved in the project's data/daw/ (in this repository; CLAUDEBASE_HOME to put it elsewhere). It was apps/daw/.claudebase/,
+// which is moved over the first time.
+export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'daw');
+const OLD_HOME = path.join(HERE, '.claudebase');
+
+export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOME } = {}) {
+  if (home === DEFAULT_HOME && fs.existsSync(OLD_HOME) && !fs.existsSync(home)) {
+    try { fs.mkdirSync(path.dirname(home), { recursive: true }); fs.renameSync(OLD_HOME, home); } catch { /* left where it was */ }
+  }
   const store = new Store({ file: path.join(home, 'project.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

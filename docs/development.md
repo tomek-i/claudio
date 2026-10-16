@@ -12,7 +12,7 @@ No install is needed for them: the code has no dependencies. They need ffmpeg an
 
 - **Server tests** (`test/server-*.mjs`) run scratch copies on ports 4851–4858 and 4861 with a fake engine and a
   generated library (synthetic tracks run through the real analyser), so they need no music on the machine and never
-  touch `.dj/`.
+  touch `data/`.
 - **The desktop test** (`test/desktop.test.mjs`, ports 4859–4860 and 4862) starts the real desktop app in Electron on
   a scratch project folder and a scratch profile. It is skipped when Electron is not installed (`pnpm install`).
 - **The three small apps** have their own tests in `apps/drums/test/`, `apps/synth/test/` and `apps/daw/test/`.

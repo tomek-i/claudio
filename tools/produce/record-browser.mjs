@@ -4,7 +4,7 @@
 //   node tools/produce/record-browser.mjs            start (runs until stopped)
 //   node tools/produce/record-browser.mjs --stop     stop a running recorder (finalises the .webm)
 //
-// Writes .dj/produce/out/screen/browser.json {start, file, ready, done} — `start` is the epoch ms the video began, which
+// Writes data/dj/produce/out/screen/browser.json {start, file, ready, done} — `start` is the epoch ms the video began, which
 // tools/produce/make-video.mjs uses to line the footage up with an exported set.
 // Needs Playwright (`npm i -g playwright && npx playwright install chromium`, or a local install). Set PLAYWRIGHT_CHROMIUM
 // to a chrome.exe/chromium path to use a specific build. Start this BEFORE loading decks: taking over the engine resets them.
@@ -13,7 +13,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const DIR = '.dj/produce/out/screen', STOP = path.join(DIR, 'stop'), INFO = path.join(DIR, 'browser.json');
+const DIR = 'data/dj/produce/out/screen', STOP = path.join(DIR, 'stop'), INFO = path.join(DIR, 'browser.json');
 fs.mkdirSync(DIR, { recursive: true });
 if (process.argv.includes('--stop')) { fs.writeFileSync(STOP, ''); console.log('stop requested'); process.exit(0); }
 fs.rmSync(STOP, { force: true });

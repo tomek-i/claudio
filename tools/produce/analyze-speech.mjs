@@ -1,14 +1,14 @@
 // Speech features for every indexed sentence/line: pitch (median f0 → MIDI + pitch class, contour slope), and percussion
-// (strongest transient offset, percussiveness). → .dj/voice/features.json keyed "id|from".
+// (strongest transient offset, percussiveness). → data/dj/voice/features.json keyed "id|from".
 //   node tools/produce/analyze-speech.mjs [--limit N]        (after tools/produce/index-captions.mjs)
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 const SR = 16000;
-const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const tr = (id) => Object.values(LIB).find((t) => t.id === id);
-const items = [...JSON.parse(fs.readFileSync('.dj/voice/sentences.json', 'utf8')), ...(fs.existsSync('.dj/voice/lines.json') ? JSON.parse(fs.readFileSync('.dj/voice/lines.json', 'utf8')) : [])];
+const items = [...JSON.parse(fs.readFileSync('data/dj/voice/sentences.json', 'utf8')), ...(fs.existsSync('data/dj/voice/lines.json') ? JSON.parse(fs.readFileSync('data/dj/voice/lines.json', 'utf8')) : [])];
 const LIMIT = process.argv.includes('--limit') ? Number(process.argv[process.argv.indexOf('--limit') + 1]) : Infinity;
-const outPath = '.dj/voice/features.json';
+const outPath = 'data/dj/voice/features.json';
 const feats = fs.existsSync(outPath) ? JSON.parse(fs.readFileSync(outPath, 'utf8')) : {};
 const dec = (file, from, dur) => { const b = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(Math.max(0, from)), '-t', String(dur), '-i', file, '-ac', '1', '-ar', String(SR), '-f', 'f32le', 'pipe:1'], { windowsHide: true, maxBuffer: 1 << 26 }); return new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4); };
 // f0 by normalised autocorrelation on 40 ms frames (hop 10 ms), voiced if r > 0.6 and energy above floor

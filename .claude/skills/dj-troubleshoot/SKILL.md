@@ -17,8 +17,8 @@ node dj.mjs record status     # whether a recording is running
 ```
 
 - The page at http://localhost:4747/health shows one entry per system: ok, warn (an optional system such as stems or downloads has a fault; the decks still play), fail (a required system is down) or off. It is the place that checks ffmpeg and ffprobe, which `dj doctor` does not check.
-- The server log is `.dj/server.log`.
-- The test command is `node --test test/*.test.mjs test/server-*.mjs`. The tests are safe to run during a set; they do not read the library or write `.dj/`.
+- The server log is `data/dj/cache/server.log`.
+- The test command is `node --test test/*.test.mjs test/server-*.mjs`. The tests are safe to run during a set; they do not read the library or write `data/dj/`.
 - The ⚠ lines in `dj status` are mix warnings, not faults. The dj-mix skill explains each one in "The mix monitor".
 
 In this skill `dj` is short for `node dj.mjs`, `<deck>` is A, B, C or D, and `<id>` is a track's library id.
@@ -57,7 +57,7 @@ Keep at least 15 GB free and switch off automatic stem separation before a long 
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| The set crashed and the disk is full | `.dj/pcm` (decoded audio) and `.dj/stems` grow with every track. | Delete `.dj/pcm/*`, which is a cache and safe to delete. Delete old folders in `.dj/sessions` and the files in `.dj/produce/out/*`. |
+| The set crashed and the disk is full | `data/dj/cache/pcm` (decoded audio) and `data/dj/cache/stems` grow with every track. | Delete `data/dj/cache/pcm/*`, which is a cache and safe to delete. Delete old folders in `data/dj/sessions` and the files in `data/dj/produce/out/*`. |
 | Everything is sluggish while playing | Stem separation is running at full speed, or a video is rendering. | 1. Check `dj stems status`.<br>2. Kill the `separate.py` process.<br>3. Switch off "Separate new tracks automatically" on http://localhost:4747/settings.<br>4. Never render a video during a set. |
 | `dj stems status` says the separator is not set up, or health shows "Stem separation: not set up" | There is no `.venv` with PyTorch and demucs in the project folder. | Tell the user it is a download of about 600 MB, then run `node dj.mjs stems setup` (with an NVIDIA card: `--gpu`). It needs `uv`; if that is missing the command prints how to install it. The running server picks the result up and queues the library. |
 | `node dj.mjs stems` queued every track | `stems` without an id means all tracks. | Use `dj stems <id>`. The queue is emptied when the server restarts with "Separate new tracks automatically" switched off. |
@@ -66,9 +66,9 @@ Keep at least 15 GB free and switch off automatic stem separation before a long 
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `dj get` fails with "confirm you're not a bot" | YouTube wants a login. | Export your YouTube cookies in Netscape format to `.dj/youtube-cookies.txt`. `dj get` and `tools/produce/get-sample.mjs` use that file when it exists. Keep the file private. |
+| `dj get` fails with "confirm you're not a bot" | YouTube wants a login. | Export your YouTube cookies in Netscape format to `data/dj/youtube-cookies.txt`. `dj get` and `tools/produce/get-sample.mjs` use that file when it exists. Keep the file private. |
 | `n challenge solving failed` | yt-dlp needs a JavaScript runtime. | `dj get` already passes `--js-runtimes node`, so make sure `node` is on PATH. Then update yt-dlp: delete the copy in `bin/` and run `node dj.mjs doctor --fix`, which installs yt-dlp only when it is missing. |
-| A short clip reports "analysis failed" | The clip is too short for BPM analysis. | Keep short samples out of `library/`. The dj-video skill explains where they go in "Samples for the sampler". |
+| A short clip reports "analysis failed" | The clip is too short for BPM analysis. | Keep short samples out of `data/dj/library/`. The dj-video skill explains where they go in "Samples for the sampler". |
 
 ## Scripts and server
 

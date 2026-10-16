@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------ automation on the page
 // The recorder and player are in ../automation-core.js; this runs them for the active set: a recording belongs to the
-// set (sets/<name>.automation.json, through /api/sets/automation) and its 0:00 is the set's saved decks, so recording
+// set (data/dj/sets/<name>.automation.json, through /api/sets/automation) and its 0:00 is the set's saved decks, so recording
 // saves them first and playing opens the set (puts them back) before it starts. A worker is the clock: timers on the
 // page are slowed down in a background tab, a worker's much less.
 // Export: the flight recorder records the master while the recording plays from 0:00, then the server cuts exactly
-// 0:00 to the end out of it (/api/export) into .dj/exports/<set>.mp3 + tracklist. It takes as long as the set does.
+// 0:00 to the end out of it (/api/export) into data/dj/exports/<set>.mp3 + tracklist. It takes as long as the set does.
 import { AutomationCore } from '../automation-core.js';
 import { mixer, tracks } from './state.js';
 import { post } from './util.js';

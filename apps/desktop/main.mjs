@@ -23,14 +23,17 @@ import { app, BrowserWindow, nativeTheme, screen, shell, utilityProcess } from '
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONFIG_FILE, DJ_DIR, ROOT, SERVER_FILE } from '../server/lib/paths.mjs';
+import { CONFIG_FILE, DESKTOP_DIR, ROOT, SERVER_FILE } from '../server/lib/paths.mjs';
+import { migrateLayout, layoutReport } from '../server/lib/layout.mjs';
 import { banner } from '../server/lib/banner.mjs';
 import { loadWindow, placement, saveWindow } from './window-state.mjs';
 
+// before config.json is read: a folder in the layout before data/ is moved into it (lib/layout.mjs)
+for (const l of layoutReport(migrateLayout(ROOT))) console.log(l);
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const PORT = Number(process.env.DJ_PORT || config.port || 4747);
 const ORIGIN = `http://localhost:${PORT}`;
-const WINDOW_FILE = path.join(DJ_DIR, 'desktop-window.json');
+const WINDOW_FILE = path.join(DESKTOP_DIR, 'desktop-window.json');
 
 // the app owns its flags, so these need no separate browser profile
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');

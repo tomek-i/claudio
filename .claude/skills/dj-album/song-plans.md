@@ -6,7 +6,7 @@ Give each agent:
 - the brief, which is `tools/produce/songs/README.md`, to read first;
 - its track number and working title;
 - its two beds, with the bpm, bars and drops of each;
-- the file to write: `.dj/produce/songs/track-NN.mjs`.
+- the file to write: `data/dj/produce/songs/track-NN.mjs`.
 
 Tell each agent:
 - Write only your own file and sample downloads.

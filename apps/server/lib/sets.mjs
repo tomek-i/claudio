@@ -1,5 +1,5 @@
-// Saved sets: a named list of tracks that Auto-DJ plays from. One JSON file per set in sets/ (in the project folder,
-// beside library/), named after the set:
+// Saved sets: a named list of tracks that Auto-DJ plays from. One JSON file per set in data/dj/sets/ (in the project folder,
+// beside data/dj/library/), named after the set:
 //   { version: 1, name, pick: 'fit' | 'order', then: 'library' | 'stop', tracks: [{ id, title, artist }], created, updated }
 // pick:  'fit' = the track of the set that fits the live deck best (tempo, key, energy), 'order' = top to bottom.
 // then:  what Auto-DJ does when every track of the set has played: carry on from the whole library, or stop.

@@ -1,6 +1,6 @@
 // Shared harness for the server feature tests (no tests in here).
 //  - scratch(): copies the project code into a scratch dir with its own config (port, stems off) and a library of
-//    generated tracks (fixtures.mjs). The machine's own library is never read and its .dj is never written (only the
+//    generated tracks (fixtures.mjs). The machine's own library is never read and its data/ is never written (only the
 //    export test reads a recorded session from it, if there is one). The tracks come
 //    back by role in `fx` (fx.main, fx.second, …) since their ids depend on where the scratch dir is.
 //  - startServer(): runs that copy with DJ_PORT, DJ_NO_BACKFILL=1.
@@ -20,14 +20,14 @@ const SCRATCH_BASE = process.env.DJ_SCRATCH || path.join(os.tmpdir(), 'dj-claude
 export function scratch(name, { port, config = {}, mutateLibrary } = {}) {
   const dir = path.join(SCRATCH_BASE, name);
   fs.rmSync(dir, { recursive: true, force: true });
-  fs.mkdirSync(path.join(dir, '.dj'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'data', 'dj', 'cache'), { recursive: true });
   // the same layout as the project, without the page (the server tests never load it)
   for (const f of ['dj.mjs', 'package.json']) fs.copyFileSync(path.join(REAL, f), path.join(dir, f));
   for (const d of ['apps/server', 'apps/cli']) fs.cpSync(path.join(REAL, d), path.join(dir, d), { recursive: true });
   const real = JSON.parse(fs.readFileSync(path.join(REAL, 'config.json'), 'utf8'));
   const cfg = {
     ...real, port,
-    libraryDirs: [path.join(dir, 'library')],
+    libraryDirs: [path.join(dir, 'data', 'dj', 'library')],
     downloadDir: path.join(dir, 'downloads'),
     stems: { ...(real.stems || {}), enabled: false, auto: false },
     deadAirGuard: false,
@@ -37,22 +37,22 @@ export function scratch(name, { port, config = {}, mutateLibrary } = {}) {
   // the fixture library: each track is one of the cached renders under its own name, already analysed
   execFileSync(process.execPath, [path.join(REAL, 'test', 'fixtures.mjs'), SCRATCH_BASE], { stdio: 'inherit' });
   const cache = fixtureDir(SCRATCH_BASE), analysis = JSON.parse(fs.readFileSync(path.join(cache, 'analysis.json'), 'utf8'));
-  fs.mkdirSync(path.join(dir, 'library'));
+  fs.mkdirSync(path.join(dir, 'data', 'dj', 'library'), { recursive: true });
   const fx = {};
   for (const [role, { render, ...tags }] of Object.entries(TRACKS)) {
-    const src = path.join(cache, `render-${render}.wav`), file = path.join(dir, 'library', `${tags.title}.wav`);
+    const src = path.join(cache, `render-${render}.wav`), file = path.join(dir, 'data', 'dj', 'library', `${tags.title}.wav`);
     try { fs.linkSync(src, file); } catch { fs.copyFileSync(src, file); }
     const st = fs.statSync(file);
     fx[role] = { id: trackId(file), file, size: st.size, mtimeMs: st.mtimeMs, addedAt: new Date().toISOString(), ...structuredClone(analysis[render]), artist: 'Fixtures', ...tags };
   }
   const lib = { savedAt: new Date().toISOString(), tracks: Object.values(fx) };
   if (mutateLibrary) mutateLibrary(lib, fx);
-  fs.writeFileSync(path.join(dir, '.dj', 'library.json'), JSON.stringify(lib));
+  fs.writeFileSync(path.join(dir, 'data', 'dj', 'cache', 'library.json'), JSON.stringify(lib));
   return { dir, port, base: `http://localhost:${port}`, lib, fx };
 }
 
 export async function startServer(sc) {
-  const logFile = path.join(sc.dir, '.dj', 'server.log');
+  const logFile = path.join(sc.dir, 'data', 'dj', 'cache', 'server.log');
   const fd = fs.openSync(logFile, 'a');
   const child = spawn(process.execPath, [path.join(sc.dir, 'apps', 'server', 'server.mjs')], { cwd: sc.dir, env: { ...process.env, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1' }, stdio: ['ignore', fd, fd], windowsHide: true });
   for (let i = 0; i < 80; i++) {

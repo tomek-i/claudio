@@ -1,19 +1,19 @@
 // Index speech clips from their YouTube caption files: every sentence and every word with timings.
-//   node tools/produce/index-captions.mjs [captionsDir]        (default .dj/voice/captions)
+//   node tools/produce/index-captions.mjs [captionsDir]        (default data/dj/voice/captions)
 //   node tools/produce/index-captions.mjs --find <words…>      exact phrase occurrences from the word index
 //
 // Captions: `yt-dlp --write-auto-sub --sub-lang en --skip-download -o "<dir>/sub-%(id)s" <url>` gives sub-<videoId>.en.vtt.
 // Clips: the audio must be in the crate with the YouTube id in its file name, e.g. "Title [<videoId>].mp3" (that is how
 // `dj get` names downloads), so the index can point at a library track id. Speaker = "| Name |" in the title when present,
-// or .dj/voice/clips.json { "<videoId>": { "speaker": "…" } }.
-// Output: .dj/voice/sentences.json [{id, videoId, speaker, from, dur, text, kind}] and .dj/voice/words.json [{id, videoId, speaker, t, end, w}].
+// or data/dj/voice/clips.json { "<videoId>": { "speaker": "…" } }.
+// Output: data/dj/voice/sentences.json [{id, videoId, speaker, from, dur, text, kind}] and data/dj/voice/words.json [{id, videoId, speaker, t, end, w}].
 import fs from 'node:fs';
 import path from 'node:path';
 const args = process.argv.slice(2);
 const fi = args.indexOf('--find');
-const DIR = (args[0] && !args[0].startsWith('--')) ? args[0] : '.dj/voice/captions';
-const OUT = '.dj/voice'; fs.mkdirSync(OUT, { recursive: true });
-const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+const DIR = (args[0] && !args[0].startsWith('--')) ? args[0] : 'data/dj/voice/captions';
+const OUT = 'data/dj/voice'; fs.mkdirSync(OUT, { recursive: true });
+const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
 const extra = fs.existsSync(path.join(OUT, 'clips.json')) ? JSON.parse(fs.readFileSync(path.join(OUT, 'clips.json'), 'utf8')) : {};
 const byVideo = {};
 for (const t of Object.values(LIB)) { const m = String(t.file || '').match(/\[([A-Za-z0-9_-]{11})\]\.[a-z0-9]+$/); if (!m) continue; const sp = String(t.title || '').match(/\|\s*([A-Z][a-z]+ [A-Z][a-zA-Z'-]+)\s*\|/); byVideo[m[1]] = { id: t.id, speaker: extra[m[1]]?.speaker || (sp ? sp[1] : '') }; }

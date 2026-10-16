@@ -6,7 +6,7 @@ const a = process.argv.slice(2); const q = a[0]; if (!q) { console.log('usage: m
 const ti = a.indexOf('--thresh'); const thresh = ti > 0 ? a[ti + 1] : '-35'; const mi = a.indexOf('--min'); const min = mi > 0 ? Number(a[mi + 1]) : 0.15;
 let file = q;
 if (!fs.existsSync(q)) {
-  const LIB = JSON.parse(fs.readFileSync('.dj/library.json', 'utf8')).tracks;
+  const LIB = JSON.parse(fs.readFileSync('data/dj/cache/library.json', 'utf8')).tracks;
   const t = Object.values(LIB).find((t) => t.id === q || String(t.file).includes(q) || String(t.title).toLowerCase().includes(q.toLowerCase()));
   if (!t) { console.log('not found:', q); process.exit(1); }
   file = t.file; console.log(`${t.id}  ${t.artist || ''} - ${t.title}  ${t.duration?.toFixed(2)}s`);

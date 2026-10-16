@@ -14,7 +14,7 @@ node --test apps/drums/test/*.test.mjs
 ```
 
 Needs Node 20 or later. No dependencies, no build step. `CL808_PORT` changes the port and `CL808_HOME` the folder
-the beat is saved in (default `apps/drums/.cl-808/`).
+the beat is saved in (default `data/drums/` in the project folder).
 
 ## What it does
 

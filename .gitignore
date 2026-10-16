@@ -1,11 +1,13 @@
-# what the rig generates or downloads
-.dj/
-library/
-sets/
+# what the apps make (data/), and the tools the rig downloads
+data/
 bin/
 .venv/
 apps/web/public/samples/src/
 *.log
+# the layout before data/, until a start moves it (apps/server/lib/layout.mjs)
+.dj/
+library/
+sets/
 apps/drums/.cl-808/
 apps/synth/.miniclaude/
 apps/daw/.claudebase/

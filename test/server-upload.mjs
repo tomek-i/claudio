@@ -12,7 +12,7 @@ after(() => srv.stop());
 
 const wav = fs.readFileSync(sc.fx.far.file); // a real, analysable track (110 BPM)
 const send = (name, body) => fetch(`${sc.base}/api/upload?name=${encodeURIComponent(name)}`, { method: 'POST', body }).then(async (r) => ({ status: r.status, ...(await r.json()) }));
-const uploads = path.join(sc.dir, 'library', 'uploads');
+const uploads = path.join(sc.dir, 'data', 'dj', 'library', 'uploads');
 const everything = () => fs.readdirSync(sc.dir, { recursive: true }).map(String);
 
 test('an audio file is stored in the library, analysed and listed, with a job like a download', async () => {
@@ -24,7 +24,7 @@ test('an audio file is stored in the library, analysed and listed, with a job li
   assert.ok(lib.tracks.some((t) => t.id === r.track.id), 'in the crate');
   const job = (await api(sc.base, '/api/jobs')).find((j) => j.input === 'Dropped Track.wav');
   assert.equal(job.status, 'ready');
-  const saved = await waitUntil(() => JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'library.json'), 'utf8')).tracks.find((t) => t.id === r.track.id), 3000);
+  const saved = await waitUntil(() => JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'cache', 'library.json'), 'utf8')).tracks.find((t) => t.id === r.track.id), 3000);
   assert.ok(saved, 'saved to the library cache, so it survives a restart');
 });
 

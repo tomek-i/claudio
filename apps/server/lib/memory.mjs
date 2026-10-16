@@ -1,5 +1,5 @@
 // Set memory: every transition (from/to, style, bars, anchors, monitor warnings) and every rating,
-// persisted to .dj/memory.json. Feeds small bonuses/penalties into `suggest`.
+// persisted to data/dj/memory.json. Feeds small bonuses/penalties into `suggest`.
 import fs from 'node:fs';
 import path from 'node:path';
 

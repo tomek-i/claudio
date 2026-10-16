@@ -1,5 +1,5 @@
 // Stem separation queue + vocal map.
-// Splits library tracks into .dj/stems/<trackId>/{vocals,drums,bass,other}.wav with demucs
+// Splits library tracks into data/dj/cache/stems/<trackId>/{vocals,drums,bass,other}.wav with demucs
 // (htdemucs, idle priority) via apps/server/lib/separate.py in the project .venv. On the CPU: few threads, up to
 // `concurrency` jobs at a time (one while music plays). On a GPU (`device` 'auto' and torch finds one): one job at a
 // time, and a GPU run that fails is redone on the CPU. Output goes to a temp dir first and is moved into place only when
@@ -72,7 +72,7 @@ export class StemQueue {
     // while music plays: 1 job at 2 threads (running jobs finish; nothing is killed). Full speed after 30 s of quiet.
     this.lastMusicAt = 0;
     this.quietSec = 30;
-    this.root = root;           // the project folder: .venv, .dj/models and the job's working directory
+    this.root = root;           // the project folder: .venv and the job's working directory
     this.script = script;       // the separation worker (apps/server/lib/separate.py)
     this.library = library;
     this.stemsDir = stemsDir;
@@ -84,7 +84,7 @@ export class StemQueue {
     this.enabled = enabled;
     this.device = device === 'cpu' ? 'cpu' : 'auto'; // the setting; `picked` is what the separator chose (cuda / mps / cpu), known once a job has started
     this.picked = null;
-    this.modelsDir = modelsDir || path.join(root, '.dj', 'models');
+    this.modelsDir = modelsDir || path.join(stemsDir, '..', 'models'); // the separator's weights, beside the stems
     this.log = log;
     this.onEvent = onEvent;
     this.queue = [];            // track ids

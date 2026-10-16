@@ -106,7 +106,7 @@ test('transition critique → booth log, memory; dj rate + memory + suggest use 
   const log = await waitUntil(async () => (await api(sc.base, '/api/log?n=80')).find((e) => /^🧐 Critique A→B bassswap/.test(e.text)), 3000);
   assert.ok(log, 'critique in booth log');
   assert.match(log.text, /flam/);
-  const mem = JSON.parse(fs.readFileSync(path.join(sc.dir, '.dj', 'memory.json'), 'utf8'));
+  const mem = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'dj', 'memory.json'), 'utf8'));
   const e = mem.transitions.at(-1);
   assert.equal(e.from.id, T.id); assert.equal(e.to.id, U.id);
   assert.ok(e.warnings.includes('flam'));
@@ -118,11 +118,11 @@ test('transition critique → booth log, memory; dj rate + memory + suggest use 
   await eng.set('B', { playing: false, trackId: null, loaded: false });
   // U has been on air, so suggest excludes it now; check the scorer the server passes to suggest
   const { Memory } = await import('../apps/server/lib/memory.mjs');
-  const adj = new Memory(path.join(sc.dir, '.dj', 'memory.json')).adjust(T, U);
+  const adj = new Memory(path.join(sc.dir, 'data', 'dj', 'memory.json')).adjust(T, U);
   assert.ok(adj.delta < 0 && adj.reasons.some((x) => /rated good/.test(x)), JSON.stringify(adj));
   const { Library } = await import('../apps/server/lib/library.mjs');
-  const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, '.dj', 'library.json') });
-  const u = lib.suggest({ from: T.id, limit: 50, memory: new Memory(path.join(sc.dir, '.dj', 'memory.json')) }).find((x) => x.id === U.id);
+  const lib = new Library({ dirs: [], cacheFile: path.join(sc.dir, 'data', 'dj', 'cache', 'library.json') });
+  const u = lib.suggest({ from: T.id, limit: 50, memory: new Memory(path.join(sc.dir, 'data', 'dj', 'memory.json')) }).find((x) => x.id === U.id);
   assert.ok(u.reasons.some((x) => /memory: this pair rated good/.test(x)), u.reasons.join('; '));
   const sug = await api(sc.base, `/api/suggest?from=${T.id}&limit=5`);
   assert.ok(sug.length && sug.every((x) => 'effectiveKey' in x && 'recommendedKeyShift' in x));

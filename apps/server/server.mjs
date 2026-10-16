@@ -8,7 +8,8 @@ import { Library, AUDIO_EXT, trackId } from './lib/library.mjs';
 import { Downloader } from './lib/downloader.mjs';
 import { StemQueue, STEMS } from './lib/stems.mjs';
 import { VisualsHub, lanAddress } from './lib/visuals.mjs';
-import { ROOT, DJ_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR, SETS_DIR } from './lib/paths.mjs';
+import { ROOT, DJ_DIR, CACHE_DIR, LIBRARY_DIR, EXPORTS_DIR, CONFIG_FILE, PUBLIC_DIR, LIB_DIR, SETS_DIR } from './lib/paths.mjs';
+import { migrateLayout, layoutReport } from './lib/layout.mjs';
 import { Memory } from './lib/memory.mjs';
 import { Cues } from './lib/cues.mjs';
 import { Monitor } from './lib/monitor.mjs';
@@ -27,8 +28,12 @@ import { spawn } from 'node:child_process';
 
 try { os.setPriority(process.pid, 10); } catch { /* keep the audio tab ahead of us for CPU */ }
 
+// before config.json is read: a folder in the layout before data/ is moved into it (lib/layout.mjs)
+const layoutMoved = layoutReport(migrateLayout(ROOT));
+for (const l of layoutMoved) console.log(l);
+
 // ---- PCM cache: tracks pre-converted to the engine's sample rate so browser decoding is trivial
-const PCM_DIR = path.join(DJ_DIR, 'pcm');
+const PCM_DIR = path.join(CACHE_DIR, 'pcm');
 const pcmJobs = new Map();
 let engineSampleRate = null;
 function pcmFile(t, sr) {
@@ -84,6 +89,7 @@ function addLog(kind, text, extra = {}) {
   broadcast('log', entry);
   return entry;
 }
+for (const l of layoutMoved) addLog('system', l);
 const inbox = [];          // crowd requests waiting for Claude
 const history = [];        // tracks that have gone live
 let set = null;            // the current set: { start, last } (lib/set-clock.mjs), for the set timer on the page
@@ -97,16 +103,17 @@ let cmdSeq = 0;
 
 const library = new Library({
   dirs: config.libraryDirs.map(resolveDir),
-  cacheFile: path.join(DJ_DIR, 'library.json'),
+  cacheFile: path.join(CACHE_DIR, 'library.json'),
+  editsFile: path.join(DJ_DIR, 'grid-edits.json'),
   targetLoudnessDb: config.targetLoudnessDb,
-  stemsDir: path.join(DJ_DIR, 'stems'),
+  stemsDir: path.join(CACHE_DIR, 'stems'),
   log: (t) => addLog('system', t),
 });
 const stemCfg = { enabled: true, auto: true, threads: 2, concurrency: 2, model: 'htdemucs', minFreeGB: 3, ...(config.stems || {}) };
 const stems = new StemQueue({
   root: ROOT,
   library,
-  stemsDir: path.join(DJ_DIR, 'stems'),
+  stemsDir: path.join(CACHE_DIR, 'stems'),
   python: stemCfg.python ? resolveDir(stemCfg.python) : undefined,
   threads: stemCfg.threads,
   concurrency: stemCfg.concurrency,
@@ -138,22 +145,23 @@ const monitor = new Monitor({
   },
 });
 
-const downloadDir = path.resolve(resolveDir(config.downloadDir || './library/downloads'));
+const downloadDir = path.resolve(resolveDir(config.downloadDir || path.join(LIBRARY_DIR, 'downloads')));
 const downloader = new Downloader({
   root: ROOT,
   downloadDir,
+  cookies: path.join(DJ_DIR, 'youtube-cookies.txt'),
   onEvent: (ev) => (ev.type === 'log' ? addLog('system', ev.text) : broadcast('job', ev.job)),
 });
 
-// ---- starter crate: the demo tracks behind the button on an empty crate (and `dj starter`, which downloads by itself)
+// ---- starter crate: the demo tracks behind the button on an empty crate (and `dj demo`, which downloads by itself)
 let starterJob = null; // the last run: { running, done, total, failed: [file names], error }
-const starterInfo = () => { const list = starterTracks(ROOT); return { tracks: list.length, bytes: list.reduce((a, t) => a + t.bytes, 0), job: starterJob }; };
+const starterInfo = () => { const list = starterTracks(); return { tracks: list.length, bytes: list.reduce((a, t) => a + t.bytes, 0), job: starterJob }; };
 function startStarter() {
   if (starterJob?.running) return;
-  const tracks = starterTracks(ROOT), job = (starterJob = { running: true, done: 0, total: tracks.length, failed: [] });
+  const tracks = starterTracks(), job = (starterJob = { running: true, done: 0, total: tracks.length, failed: [] });
   addLog('system', `⬇ Downloading ${tracks.length} demo tracks into the library`);
   downloadStarter({
-    dir: path.join(library.dirs[0], 'starter'), tracks,
+    dir: path.join(library.dirs[0], 'demo'), tracks,
     onProgress: ({ track, status }) => {
       if (status === 'start') return;
       job.done++;
@@ -164,7 +172,7 @@ function startStarter() {
   }).catch((e) => { job.error = e.message; addLog('system', `⚠ Demo track download stopped: ${e.message}`); }).finally(() => {
     job.running = false;
     library.scan();
-    if (!job.error) addLog('system', `✓ Demo tracks: ${job.total - job.failed.length} of ${job.total} in the library (credits and licences: starter/README.md)`);
+    if (!job.error) addLog('system', `✓ Demo tracks: ${job.total - job.failed.length} of ${job.total} in the library (credits and licences: apps/server/demo-tracks/README.md)`);
     broadcast('starter', job);
   });
 }
@@ -519,7 +527,7 @@ sequencer = new Sequencer({
 });
 
 // ---------------------------------------------------------------- saved sets (lib/sets.mjs)
-// The active one, and what of it has played, outlives a restart in .dj/active-set.json.
+// The active one, and what of it has played, outlives a restart in data/dj/active-set.json.
 const sets = new SetStore(SETS_DIR);
 const ACTIVE_SET_FILE = path.join(DJ_DIR, 'active-set.json');
 function saveActiveSet(view) {
@@ -666,7 +674,7 @@ async function setAction(b) {
 
 // ---------------------------------------------------------------- flight recorder
 // A session = timestamped actions + engine telemetry + engine audio + screen/mic capture,
-// all under .dj/sessions/<id>/ so silences can be reconciled against what the DJ did.
+// all under data/dj/sessions/<id>/ so silences can be reconciled against what the DJ did.
 let session = null;
 const SESS_ROOT = path.join(DJ_DIR, 'sessions');
 function sessionLog(file, obj) { if (session) fs.appendFileSync(path.join(session.dir, file), JSON.stringify(obj) + '\n'); }
@@ -705,7 +713,7 @@ async function stopSession() {
   s.info.stoppedAt = Date.now();
   fs.writeFileSync(path.join(s.dir, 'session.json'), JSON.stringify(s.info, null, 2));
   session = null;
-  addLog('system', '⏹ Recording saved: .dj/sessions/' + s.id);
+  addLog('system', '⏹ Recording saved: data/dj/sessions/' + s.id);
   return s.info;
 }
 
@@ -799,7 +807,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/state') return send(res, 200, liveState());
     if (p === '/api/record/start' && req.method === 'POST') { const b = await readBody(req); return send(res, 200, startSession(b)); }
     if (p === '/api/record/stop' && req.method === 'POST') return send(res, 200, (await stopSession()) || { error: 'not recording' });
-    // a recorded session as a mix file + tracklist in .dj/exports (dj export does it from the CLI); from / to (wall ms)
+    // a recorded session as a mix file + tracklist in data/dj/exports (dj export does it from the CLI); from / to (wall ms)
     // and name: a set's export (ui/automation.js), from its recording's 0:00 to its end, named after the set
     if (p === '/api/export' && req.method === 'POST') {
       const b = await readBody(req);
@@ -807,9 +815,9 @@ const server = http.createServer(async (req, res) => {
       if (!/^[\w-]+$/.test(id) || !fs.existsSync(path.join(SESS_ROOT, id, 'session.json'))) return send(res, 200, { ok: false, error: `no recorded session "${id}"` });
       const name = b.name ? String(b.name).replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || null : null;
       try {
-        const r = await exportSession(path.join(SESS_ROOT, id), { format: b.format === 'm4a' ? 'm4a' : 'mp3', outDir: path.join(DJ_DIR, 'exports'), libraryFile: path.join(DJ_DIR, 'library.json'),
+        const r = await exportSession(path.join(SESS_ROOT, id), { format: b.format === 'm4a' ? 'm4a' : 'mp3', outDir: EXPORTS_DIR, libraryFile: path.join(CACHE_DIR, 'library.json'),
           from: Number.isFinite(b.from) ? b.from : null, to: Number.isFinite(b.to) ? b.to : null, name });
-        addLog('action', `⤓ Exported${name ? ` "${name}"` : ''}: .dj/exports/${path.basename(r.audio)} (${mmssOf(r.duration)}, ${r.tracks.length} track${r.tracks.length === 1 ? '' : 's'})`);
+        addLog('action', `⤓ Exported${name ? ` "${name}"` : ''}: data/dj/exports/${path.basename(r.audio)} (${mmssOf(r.duration)}, ${r.tracks.length} track${r.tracks.length === 1 ? '' : 's'})`);
         return send(res, 200, { ok: true, ...r });
       } catch (e) { addLog('system', `⚠ Export failed: ${e.message}`); return send(res, 200, { ok: false, error: e.message }); }
     }
@@ -887,7 +895,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: !r.missing.length, ...r, ...(r.missing.length ? { error: `no track matches: ${r.missing.join(', ')}` } : {}) });
     }
     if (p === '/api/queue') return send(res, 200, sequencer.queue);
-    // a set's automation (ui/automation.js records and plays it): sets/<name>.automation.json, its summary in the set
+    // a set's automation (ui/automation.js records and plays it): data/dj/sets/<name>.automation.json, its summary in the set
     if (p === '/api/sets/automation' && req.method === 'POST') {
       const b = await readBody(req);
       try {
@@ -968,7 +976,7 @@ const server = http.createServer(async (req, res) => {
       try { return serveFile(req, res, await pcmFile(t, sr)); } catch { return serveFile(req, res, t.file); }
     }
 
-    // --- stems: .dj/stems/<id>/<stem>.wav, served like /audio/<id> (optionally resampled for the engine)
+    // --- stems: data/dj/cache/stems/<id>/<stem>.wav, served like /audio/<id> (optionally resampled for the engine)
     if ((m = /^\/audio\/(\w+)\/stem\/(\w+)$/.exec(p))) {
       const [, id, stem] = m;
       if (!STEMS.includes(stem) || !library.tracks.has(id)) return send(res, 404, 'no such stem');
@@ -1048,8 +1056,8 @@ const server = http.createServer(async (req, res) => {
       const b = await readBody(req);
       if (!isLocal(req.socket.remoteAddress)) return send(res, 403, { ok: false, error: 'only a page on the machine the server runs on can open windows there' });
       if (!REVEALS.includes(b.what)) return send(res, 400, { ok: false, error: `what: one of ${REVEALS.join(', ')}` });
-      if (b.what === 'exports') fs.mkdirSync(path.join(DJ_DIR, 'exports'), { recursive: true });
-      return send(res, 200, await reveal(b.what, ROOT));
+      if (b.what === 'exports') fs.mkdirSync(EXPORTS_DIR, { recursive: true });
+      return send(res, 200, await reveal(b.what === 'exports' ? 'folder' : b.what, b.what === 'exports' ? EXPORTS_DIR : ROOT));
     }
     if (p === '/api/folder') return send(res, 200, { root: ROOT, local: isLocal(req.socket.remoteAddress) });
     if (p === '/settings') return serveFile(req, res, path.join(PUBLIC_DIR, 'settings.html'));

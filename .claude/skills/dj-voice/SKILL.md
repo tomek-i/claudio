@@ -28,14 +28,14 @@ During the run the beds play live with their own vocals muted and the reel plays
 
 ```bash
 node dj.mjs get "<youtube url>"                       # audio into the crate; the file name keeps the [videoId]
-bin/yt-dlp.exe --write-auto-sub --sub-lang en --skip-download -o ".dj/voice/captions/sub-%(id)s" "<youtube url>"
+bin/yt-dlp.exe --write-auto-sub --sub-lang en --skip-download -o "data/dj/voice/captions/sub-%(id)s" "<youtube url>"
 node dj.mjs stems <clipId>                            # vocal stem = the speech without the clip's background music
-node tools/produce/index-captions.mjs                        # writes .dj/voice/sentences.json (with kind and speaker) and words.json
+node tools/produce/index-captions.mjs                        # writes data/dj/voice/sentences.json (with kind and speaker) and words.json
 node tools/produce/analyze-speech.mjs                        # optional: pitch class, contour and strongest-consonant offset per line
 ```
 - Separate the stems of every clip, even though it takes time. The reel builder cuts each line from the vocal stem when one exists.
-- The speaker name comes from "| Name |" in the clip's title. If the title has none, set it in `.dj/voice/clips.json` as `{ "<videoId>": { "speaker": "Name" } }`.
-- You can add hand-picked lines in `.dj/voice/lines.json` as `[{ id, from, dur, text, speaker, kind }]`. This file is optional.
+- The speaker name comes from "| Name |" in the clip's title. If the title has none, set it in `data/dj/voice/clips.json` as `{ "<videoId>": { "speaker": "Name" } }`.
+- You can add hand-picked lines in `data/dj/voice/lines.json` as `[{ id, from, dur, text, speaker, kind }]`. This file is optional.
 
 ## Find material
 ```bash
@@ -73,16 +73,16 @@ Read `design.md` in this folder before writing or editing a design file. It defi
 
 ## Build the reel and play it
 ```bash
-node tools/produce/build-reel.mjs <design.mjs>        # writes library/voice-reels/Voice Reel - <name>.wav and .dj/voices/<name>-reel.json
+node tools/produce/build-reel.mjs <design.mjs>        # writes data/dj/library/voice-reels/Voice Reel - <name>.wav and data/dj/voices/<name>-reel.json
 node dj.mjs scan                                 # the reel becomes a track (artist "Voice Reel")
 node tools/produce/run-design.mjs --design <design.mjs> --dry    # cues the beds and the reel, checks everything resolves
 node tools/produce/run-design.mjs --design <design.mjs>          # records, plays every section with hand-offs, exports at the end
 ```
-- `.dj/voice/` holds the speech index. `.dj/voices/` holds each reel's metadata.
+- `data/dj/voice/` holds the speech index. `data/dj/voices/` holds each reel's metadata.
 - The build prints a ⚠ line for each line that starts before the anchor bar or overlaps the previous line. Change the design until it prints none.
 - Run the commands in the order shown. The runner stops with an error if the reel has not been scanned.
 - If you want DJ-table footage, start `tools/produce/record-browser.mjs` before the runner (see "Record the DJ table" in the dj-video skill). The runner reads its timing.
-- During a live run, check `.dj/produce/out/run-design.log` and `dj status`, and never go more than 60 s without checking for new user text. The live-set rules in CLAUDE.md apply.
+- During a live run, check `data/dj/produce/out/run-design.log` and `dj status`, and never go more than 60 s without checking for new user text. The live-set rules in CLAUDE.md apply.
 
 ## Volume and feel
 - Every line in the reel is levelled to the same speech loudness.
