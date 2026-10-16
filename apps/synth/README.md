@@ -23,7 +23,10 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
 - A low-pass filter: cutoff, resonance, how far its envelope moves it (up or down, in octaves), key tracking.
 - An ADSR for the filter and one for the level, both drawn on the page.
 - One LFO (rate, shape, depth) to the pitch, the filter or the level. Glide. Unison of up to four copies, detuned.
-- A delay and a reverb, each on a send. Master volume and a limiter.
+- A delay and a reverb, each on a send. Master volume and a limiter, with a meter of the level coming out.
+- The panel is laid out as the sound travels: four columns with arrows between them (sources → filter → amp →
+  out), with what moves the sound under them (the filter envelope and the LFO, and the voice settings). A narrower
+  window gets two columns, then one.
 - Eight voices. A ninth note takes the voice that is dying away, or the oldest.
 - Played from the keys on the screen (mouse or touch; lower on a key is louder), two rows of the computer's
   keyboard, and a MIDI keyboard where the browser has Web MIDI. The keys on the screen are the bottom row of the
@@ -68,7 +71,8 @@ instead of pretending.
 
 - `lib/app.mjs`: the name and the port, each written once.
 - `lib/patch.mjs`: the schema (`PARAMS`: every parameter with its range, default, unit and slider curve), making
-  a patch well-formed, `setParams`, values and patches as text. `lib/presets.mjs`.
+  a patch well-formed, `setParams`, values and patches as text, and `PANEL`, which column of the page each section
+  is in. `lib/presets.mjs`.
 - `lib/notes.mjs`: note ↔ frequency ↔ name. `lib/envelope.mjs`: the level of an ADSR at any moment.
   `lib/voices.mjs`: which voice a ninth note takes. `lib/wav.mjs`.
 - `lib/seq.mjs`: the sequence, its edits (`applySeqOp`), rows as text, and `notesInWindow`: which notes start

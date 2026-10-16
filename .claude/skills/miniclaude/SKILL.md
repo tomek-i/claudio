@@ -28,6 +28,8 @@ seq     118 bpm   gate 0.6   swing 0
         C2 . C3 . | Eb2 . C3 G2 | C2 . Bb2 C3 | . G2 Bb2 -
 ```
 
+The page's panel is in the same order as the sound: sources (osc1, osc2, mix) → filter → amp (aenv) → out (delay, reverb, master, with a level meter), and under them the modulation (fenv, lfo) and the voice. When you point the user at a control, say which column it is in.
+
 A parameter's name is its line and its word: `filter.cutoff`, `aenv.attack`. Times are seconds, the cutoff and the LFO rate are Hz, levels and amounts are 0 to 1 (`60%` is accepted for 0.6), `fine` and `detune` are cents, `filter.env` is octaves (negative closes the filter).
 
 ## Making a sound

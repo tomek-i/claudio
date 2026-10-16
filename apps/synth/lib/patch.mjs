@@ -68,6 +68,21 @@ export const GROUPS = [
   { id: 'master', name: 'Master', family: 'fx' },
 ];
 
+// The page's panel, laid out as the sound travels: four columns, each feeding the next, and under them what moves
+// the sound. Every section is in it once (test/synth.test.mjs).
+export const PANEL = {
+  flow: [
+    { name: 'Sources', family: 'osc', groups: ['osc1', 'osc2', 'mix'] },
+    { name: 'Filter', family: 'filter', groups: ['filter'] },
+    { name: 'Amp', family: 'amp', groups: ['aenv'] },
+    { name: 'Out', family: 'fx', groups: ['delay', 'reverb', 'master'] },
+  ],
+  under: [
+    { name: 'Modulation', family: 'mod', groups: ['fenv', 'lfo'], className: 'mod' },
+    { name: 'Voice', family: 'mod', groups: ['voice'], className: 'voices' },
+  ],
+};
+
 const BY_ID = new Map(PARAMS.map((p) => [p.id, p]));
 export const groupOf = (id) => id.split('.')[0];
 export const paramsOf = (group) => PARAMS.filter((p) => groupOf(p.id) === group);
