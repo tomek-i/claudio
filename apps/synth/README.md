@@ -20,7 +20,11 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
 ## What it does
 
 - Two oscillators (sine, triangle, saw, square; octave, semitone, fine, level), a sine sub an octave down, noise.
-- A low-pass filter: cutoff, resonance, how far its envelope moves it (up or down, in octaves), key tracking.
+- A low-pass filter: cutoff, resonance, how far its envelope moves it (up or down, in octaves), key tracking. Its
+  curve is drawn in the filter section and moves as they turn; dragging it sets the cutoff (across) and the
+  resonance (up) at once, as one undo step.
+- A strip under the patch's name shows the sound coming out: its waveform, steadied on the note being played, and
+  its spectrum.
 - An ADSR for the filter and one for the level, both drawn on the page.
 - One LFO (rate, shape, depth) to the pitch, the filter or the level. Glide. Unison of up to four copies, detuned.
 - A delay and a reverb, each on a send. Master volume and a limiter, with a meter of the level coming out.
@@ -73,6 +77,8 @@ instead of pretending.
 - `lib/patch.mjs`: the schema (`PARAMS`: every parameter with its range, default, unit and slider curve), making
   a patch well-formed, `setParams`, values and patches as text, and `PANEL`, which column of the page each section
   is in. `lib/presets.mjs`.
+- `lib/filter.mjs`: the filter's curve (the level of the voices' low-pass at each frequency) and what a drag on it
+  sets.
 - `lib/notes.mjs`: note ↔ frequency ↔ name. `lib/envelope.mjs`: the level of an ADSR at any moment.
   `lib/voices.mjs`: which voice a ninth note takes. `lib/wav.mjs`.
 - `lib/seq.mjs`: the sequence, its edits (`applySeqOp`), rows as text, and `notesInWindow`: which notes start
