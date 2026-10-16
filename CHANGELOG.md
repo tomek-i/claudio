@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0](https://github.com/tomek-i/dj-claude/compare/v0.5.0...v0.6.0) (2026-10-16)
+
+
+### Features
+
+* **automation:** an Automation tab to see and edit a set's recording, and export the set ([#74](https://github.com/tomek-i/dj-claude/issues/74)) ([fd8fb1c](https://github.com/tomek-i/dj-claude/commit/fd8fb1cc2f6fd022188e62227262b3a51e0aa2d2))
+* **automation:** export a set silently ([#76](https://github.com/tomek-i/dj-claude/issues/76)) ([5a94b63](https://github.com/tomek-i/dj-claude/commit/5a94b639efe26244b0629614120594a0cc3aa2a4))
+* **automation:** record everything done on the decks and play it back ([#73](https://github.com/tomek-i/dj-claude/issues/73)) ([2b3706a](https://github.com/tomek-i/dj-claude/commit/2b3706ac6744636c51d05b7a0232f53e981b0e59))
+* **sets:** a set keeps the decks and the mixer, and puts them back ([#72](https://github.com/tomek-i/dj-claude/issues/72)) ([c90a69d](https://github.com/tomek-i/dj-claude/commit/c90a69dc1a309b7f133282934ccfee97345fe622))
+* **sets:** a Sets tab beside the library ([#77](https://github.com/tomek-i/dj-claude/issues/77)) ([0a115aa](https://github.com/tomek-i/dj-claude/commit/0a115aad2acfbe6908a8729845562312790c6ccc))
+* **sets:** saved sets that Auto-DJ plays from ([#71](https://github.com/tomek-i/dj-claude/issues/71)) ([086fb3d](https://github.com/tomek-i/dj-claude/commit/086fb3df80711ebb61af7364195defca0f03835f))
+* **synth:** save presets of your own, browse them all in a list, and sixteen new built-in sounds ([#79](https://github.com/tomek-i/dj-claude/issues/79)) ([4f53b08](https://github.com/tomek-i/dj-claude/commit/4f53b08aaa18dd398e20c8a9b19bb981a0bb16c1))
+
+
+### Bug fixes
+
+* **booth:** Auto-DJ lines are no longer shown as Claude ([#69](https://github.com/tomek-i/dj-claude/issues/69)) ([28b14b4](https://github.com/tomek-i/dj-claude/commit/28b14b448fbcae394d620d75e8d5ca70a14174df))
+* **mixer:** +6 dB on the master and on a channel fader is real level again ([#78](https://github.com/tomek-i/dj-claude/issues/78)) ([7b5a28f](https://github.com/tomek-i/dj-claude/commit/7b5a28f3cbff6803ea807f3d90a74f7c9b1a6c41))
+
 ## [0.5.0](https://github.com/tomek-i/dj-claude/compare/v0.4.0...v0.5.0) (2026-10-08)
 
 
