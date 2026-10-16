@@ -94,7 +94,8 @@ body[data-layout="stacked"] .rig.four .strip[data-deck="B"] { grid-column: 4; }
 body[data-layout="stacked"] .rig.four .strip[data-deck="D"] { grid-column: 5; }
 body[data-layout="stacked"] .rig.four .fxpair { gap: 2px; }
 /* the master level is a knob here (the slider is the classic layout's, in the header): LEVEL with -inf, 0 dB and +6 dB
-   marked round it where the knob points at them, and a CLIP light under it */
+   marked round it where the knob points at them, and the LIMIT light under it (amber: the limiter catches peaks; red:
+   it takes 3 dB or more off) */
 body[data-layout="stacked"] .master .mastervol { display: none; }
 .mlevel { position: relative; align-self: center; width: 84px; padding-top: 10px; display: flex; justify-content: center; --c: var(--text); }
 .mlevel .k svg { width: 56px; height: 56px; }
@@ -104,6 +105,7 @@ body[data-layout="stacked"] .master .mastervol { display: none; }
 .mlevel > i.max { left: 71px; top: 64px; }
 .clip { align-self: center; padding: 2px 7px; border: 1px solid #3a1217; border-radius: 3px; background: #1a0b0d; font: 600 10px/1 var(--mono); letter-spacing: 0.12em; color: #6a2a31; }
 .clip.on { background: #ff4d5e; border-color: #ff4d5e; color: #1a0508; box-shadow: 0 0 8px #ff4d5e; }
+.clip.warn { background: var(--warn); border-color: var(--warn); color: #1a1405; box-shadow: 0 0 6px color-mix(in srgb, var(--warn) 60%, transparent); }
 .mastermeters { flex: 1 1 60px; align-self: stretch; display: flex; justify-content: center; gap: 4px; min-height: 60px; }
 .mm { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 10px var(--mono); color: var(--dim); }
 .mm .meter { flex: 1 1 0; width: 14px; height: 0; min-height: 0; }

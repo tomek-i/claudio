@@ -81,6 +81,17 @@ test('clipping + warnings in dj status', async () => {
   eng.extraMaster = {};
 });
 
+test('a master the limiter is squashing (#68): warned when it takes 3 dB or more off, not for a peak now and then', async () => {
+  eng.extraMaster = { limiting: 1.2 };
+  await sleep(700);
+  assert.doesNotMatch((await cli(sc, ['status'])).out, /master too hot/);
+  assert.match((await cli(sc, ['monitor'])).out, /master limiter taking 1\.2 dB off/);
+  eng.extraMaster = { limiting: 4.5 };
+  await sleep(700);
+  assert.match((await cli(sc, ['status'])).out, /⚠ master too hot: the limiter is taking 4\.5 dB off/);
+  eng.extraMaster = {};
+});
+
 test('transition critique → booth log, memory; dj rate + memory + suggest use it', async () => {
   // A (T) → B (U), 30 ms out during the transition
   const p = posOfBeat(T, 200);

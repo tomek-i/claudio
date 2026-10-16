@@ -192,6 +192,7 @@ dj automation clear               delete the set's recording`;
         if (c.phase) console.log(`  phase ${c.phase.decks.join('/')}: ${c.phase.offsetMs == null ? 'n/a' : c.phase.offsetMs + ' ms'}  tempo diff ${c.phase.bpmDiffPct}%`);
         if (c.key) console.log(`  keys ${c.key.a} / ${c.key.b}: ${['same', 'neighbour', 'energy boost', 'CLASH'][c.key.distance] ?? '?'}`);
         if (c.peakDb != null) console.log(`  master peak ${c.peakDb} dBFS`);
+        if (c.limiting != null) console.log(`  master limiter ${c.limiting ? `taking ${c.limiting} dB off` : 'idle'}`);
         if (c.dipBars) console.log(`  low energy for ${c.dipBars} bars`);
         const w = warnLines(m);
         console.log(w.length ? w.join('\n') : '✓ no warnings');

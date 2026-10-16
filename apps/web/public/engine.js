@@ -105,6 +105,9 @@ export class Ctl {
 }
 
 const dbToGain = (db) => Math.pow(10, db / 20);
+// the master's headroom: what a track at its normal level leaves below full scale with the master at 0 dB (the
+// limiter's ceiling is -1 dBFS), and so what the master's and the channel faders' +6 dB have to go into
+export const HEADROOM_DB = -6;
 export const LOOP_MIN = 1 / 16, LOOP_MAX = 64; // beats
 const eqDb = (v) => (v < 0 ? v * 45 : v * 6);
 // channel fader: 1 is unity (0 dB), where a fader normally sits; above it is headroom, up to +6 dB at VOL_MAX.
@@ -862,15 +865,16 @@ function makeGateWave(ctx, duty = 0.5, H = 24) {
 export class Mixer {
   constructor() {
     const ctx = (this.ctx = new AudioContext({ latencyHint: 'playback' }));
+    // The master: the decks' sum → HEADROOM → the master level → the limiter → out. The headroom comes first, so at the
+    // master's 0 dB a track plays below full scale and both the master's and a channel fader's +6 dB are real level,
+    // not just squashing. The limiter (LimiterCore in worklets/deck-player.js, put in by init()) only catches what
+    // would go over its ceiling (-1 dBFS): nothing passes over it, nothing below it changes (no make-up gain).
+    // `out` feeds the speakers, the analyser, the master meters, the recorder and the visuals.
     this.bus = ctx.createGain();
+    this.headroom = ctx.createGain(); this.headroom.gain.value = dbToGain(HEADROOM_DB);
     this.masterGain = ctx.createGain();
-    // Master limiter. DynamicsCompressor adds automatic makeup gain and lets 1-2 ms of transient through, so on its
-    // own two full-level decks still hard-clip at the DAC / recorder on every kick. Grab early, then a fixed 6 dB of
-    // headroom after it (this.out feeds the speakers, the analyser, the master meters and the recorder).
-    this.limiter = ctx.createDynamicsCompressor();
-    this.limiter.threshold.value = -10; this.limiter.knee.value = 4; this.limiter.ratio.value = 20;
-    this.limiter.attack.value = 0.001; this.limiter.release.value = 0.1;
-    this.out = ctx.createGain(); this.out.gain.value = 0.5;
+    this.limiter = null; this.limiterGr = 0; // how many dB the limiter took off lately (it says ~20 times a second)
+    this.out = ctx.createGain();
     this.analyser = Object.assign(ctx.createAnalyser(), { fftSize: 2048 });
     // echo bus
     this.echoIn = ctx.createGain();
@@ -883,7 +887,7 @@ export class Mixer {
     // speakers: only what this computer plays out loud. Everything else (meters, the recorder, the visuals) listens to
     // `out`, so the speakers can be off while a set exports and the export still gets every sample (setSpeakers)
     this.speakers = ctx.createGain();
-    this.bus.connect(this.masterGain).connect(this.limiter).connect(this.out).connect(this.speakers).connect(ctx.destination);
+    this.bus.connect(this.headroom).connect(this.masterGain).connect(this.out).connect(this.speakers).connect(ctx.destination);
     this.out.connect(this.analyser);
     // stereo tap for the master meter: an analyser mixes its input down to one channel, so one per side
     const split = ctx.createChannelSplitter(2);
@@ -943,6 +947,10 @@ export class Mixer {
   async init() {
     if (this.xfader) return;
     await this.ctx.audioWorklet.addModule(new URL('./worklets/deck-player.js', import.meta.url));
+    this.limiter = new AudioWorkletNode(this.ctx, 'master-limiter', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+    this.limiter.port.onmessage = (e) => { this.limiterGr = e.data.gr; };
+    this.masterGain.disconnect(this.out);
+    this.masterGain.connect(this.limiter).connect(this.out);
     this.reverbIR = makeIR(this.ctx);
     this.gateWave = makeGateWave(this.ctx);
     for (const n of DECKS) this.decks[n] = new Deck(this, n);
@@ -1350,7 +1358,7 @@ export class Mixer {
     for (const [n, d] of Object.entries(this.decks)) if (n === 'A' || n === 'B' || d.track) decks[n] = d.state();
     return {
       started: this.ctx.state === 'running',
-      master: { volume: +this.master.value().toFixed(2), xfader: +this.xfader.value().toFixed(2), ...(this.speakersOn === false ? { speakers: false } : {}) },
+      master: { volume: +this.master.value().toFixed(2), xfader: +this.xfader.value().toFixed(2), limiting: +this.limiterGr.toFixed(1), ...(this.speakersOn === false ? { speakers: false } : {}) },
       decks,
       sampler: this.sampler?.state(),
       transition: this.transition,
