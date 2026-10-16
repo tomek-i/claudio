@@ -72,7 +72,8 @@ test('key clash uses effective keys and needs harmonic content up on both', asyn
 test('clipping + warnings in dj status', async () => {
   eng.extraMaster = { peakDb: -0.1 };
   await eng.setMany({ A: { position: posOfBeat(T, 400) }, B: { position: posOfBeat(T, 400) - 0.03 } });
-  await sleep(700);
+  // until the monitor has measured the new positions (a busy machine can take longer than a few of its ticks)
+  assert.ok(await waitUntil(async () => { const m = await api(sc.base, '/api/monitor'); return Math.abs((m.checks?.phase?.offsetMs ?? 0) - 30) < 3 && m.warnings.some((w) => w.type === 'clipping'); }, 5000), 'monitor caught up');
   const r = await cli(sc, ['status']);
   assert.match(r.out, /⚠ master clipping/);
   assert.match(r.out, /⚠ flamming: B is 30 ms behind A/);

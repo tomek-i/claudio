@@ -156,7 +156,12 @@ export class FakeEngine {
     for (const [n, d] of Object.entries(this.decks)) decks[n] = { ...d, position: +this.pos(n, now).toFixed(3) };
     return { started: true, master: { ...this.master, ...this.extraMaster }, decks, transition: this.transition };
   }
-  push() { if (this.stopped) return Promise.resolve(); return api(this.base, '/api/state', { client: this.client, state: this.state() }).catch(() => {}); }
+  // one at a time, each with the state as it is when it goes: a send still on its way with older positions (the
+  // 200 ms timer's) can then never land after a newer one and leave the server a step behind
+  push() {
+    if (this.stopped) return Promise.resolve();
+    return (this.sending = (this.sending || Promise.resolve()).then(() => this.stopped ? null : api(this.base, '/api/state', { client: this.client, state: this.state() }).catch(() => {})));
+  }
   nextBoundary(n, beats = 4, minAhead = 0.15) {
     const d = this.decks[n], beat = 60 / d.bpm;
     const b = (this.pos(n) + minAhead * d.rate - d.firstBeat) / beat;
