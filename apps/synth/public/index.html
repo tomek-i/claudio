@@ -63,6 +63,11 @@
       <section class="machine" aria-label="Sequencer">
         <div class="bar wrap">
           <h2>Sequence</h2>
+          <div class="seg" id="bars" role="group" aria-label="Length of the sequence">
+            <button type="button" data-bars="1" title="One bar of sixteen steps">1 bar</button>
+            <button type="button" data-bars="2" title="Two bars: making it longer repeats what is there">2</button>
+            <button type="button" data-bars="4" title="Four bars: making it longer repeats what is there">4</button>
+          </div>
           <label class="field">Gate <input id="gate" type="range" min="5" max="100" step="1"> <output id="gateOut" for="gate"></output></label>
           <label class="field">Swing <input id="swing" type="range" min="0" max="100" step="1"> <output id="swingOut" for="swing"></output></label>
           <span class="spacer"></span>
@@ -70,14 +75,21 @@
           <button id="tie" title="Hold the note before through the chosen step (−)">Tie</button>
           <button id="clearseq">Clear</button>
         </div>
-        <div id="steps" class="steps" role="group" aria-label="Steps"></div>
+        <!-- the steps (the chosen one is where a key played is written) over the piano roll, which scrolls sideways
+             on a narrow screen -->
+        <div class="rollbox" id="rollbox">
+          <div id="steps" class="steps" role="group" aria-label="Steps"></div>
+          <canvas id="roll" class="roll" aria-label="Piano roll: click to add a note, drag its end for its length, click it to remove it; the lane under it is velocity"></canvas>
+        </div>
         <form id="rowForm" class="line">
           <input id="row" aria-label="The sequence as text" spellcheck="false" autocomplete="off">
           <button class="primary">Write</button>
         </form>
         <p class="hint">
-          Choose a step, then play a note or a chord to write it there; the next step is chosen for you.
-          Or type the bar: sixteen steps, <kbd>.</kbd> rest, <kbd>-</kbd> tie, <kbd>C3+G3</kbd> chord, <kbd>C3!</kbd> accent.
+          Click the roll to add a note, drag its end for its length, click it again to remove it; draw on the lane
+          under it for velocity, and turn the wheel over it for higher or lower notes. Or choose a step above it and
+          play a note or a chord to write it there. Or type it: a step per token, <kbd>.</kbd> rest, <kbd>-</kbd> tie,
+          <kbd>C3+G3</kbd> chord, <kbd>C3!</kbd> accent, <kbd>||</kbd> between bars.
         </p>
       </section>
 

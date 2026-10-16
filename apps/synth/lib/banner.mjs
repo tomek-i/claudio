@@ -40,14 +40,15 @@ export function logoRows(wide = false) {
   return [0, 1, 2, 3, 4].map((r) => [...TEXT].map((ch) => GLYPHS[ch][r]).join(' ').replace(/./g, (c) => (wide ? c + c : c)));
 }
 
-// A sequence as the strip's lanes: its range of pitch cut in four, each lane named by its highest note. A chord
-// lights every lane it has a note in; a note longer than a step is held (1) through the steps it lasts.
-export function lanesOf(seq) {
+// A bar of a sequence (the first, or the one playing) as the strip's lanes: the sequence's range of pitch cut in
+// four, each lane named by its highest note. A chord lights every lane it has a note in; a note longer than a step
+// is held (1) through the steps it lasts.
+export function lanesOf(seq, bar = 0) {
   const all = seq.steps.flatMap((s) => s?.notes || []);
   if (!all.length) return Array.from({ length: LANES }, () => ({ name: '', cells: Array(STEPS).fill(0) }));
   const hi = Math.max(...all), lo = Math.min(...all), size = Math.max(1, Math.ceil((hi - lo + 1) / LANES));
   const lanes = Array.from({ length: LANES }, (_, l) => ({ name: noteName(hi - l * size), cells: Array(STEPS).fill(0) }));
-  seq.steps.forEach((step, s) => {
+  seq.steps.slice(bar * STEPS, (bar + 1) * STEPS).forEach((step, s) => {
     for (const note of step?.notes || []) {
       const cells = lanes[Math.min(LANES - 1, Math.floor((hi - note) / size))].cells;
       cells[s] = Math.max(cells[s], step.vel >= VEL.accent ? 3 : 2);

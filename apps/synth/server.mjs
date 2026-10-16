@@ -124,7 +124,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const live = () => {
       const t = store.transport;
       const pos = t.playing && t.at && store.listeners.size ? ((Date.now() - t.at) / 1000 - 0.08) / stepSeconds(store.seq.bpm) : -1;
-      return { lanes: lanesOf(store.seq), head: pos < 0 ? -1 : Math.floor(pos) % STEPS };
+      const at = pos < 0 ? -1 : Math.floor(pos) % store.seq.steps.length;   // the step of the whole sequence
+      return { lanes: lanesOf(store.seq, at < 0 ? 0 : Math.floor(at / STEPS)), head: at < 0 ? -1 : at % STEPS };
     };
     banner({
       url: `http://localhost:${port}`,

@@ -6,7 +6,8 @@ import { GROUPS, PANEL, SLOTS, paramsOf, format, toSlider, fromSlider, envOf } f
 import { envLevel } from '../lib/envelope.mjs';
 import { lowpassDb, qOf, dragTo, xOfFreq, yOfDb, freqOfX, CURVE } from '../lib/filter.mjs';
 import { NOTE_MAX, isBlack, noteName, noteFreq } from '../lib/notes.mjs';
-import { STEPS, tokens, rowText } from '../lib/seq.mjs';
+import { STEPS, VEL, tokens, rowText } from '../lib/seq.mjs';
+import { ROWS, rollTop, pressCell, dragLength, removeNote, velocityAt } from '../lib/roll.mjs';
 import { Engine, renderWav } from './engine.js';
 import { createBrowser } from './browser.js';
 
@@ -370,33 +371,38 @@ function renderNotes() {
   $('notes').scrollTop = $('notes').scrollHeight;
 }
 
-// ---- the sequence
+// ---- the sequence: a ruler of steps (the one chosen is where a key played is written) over a piano roll, with a
+// lane of velocities under it, one, two or four bars long
 
 let selected = null;          // the step that the next note played is written to
 let entry = { last: null, notes: [] };   // the step just written, so a second key held with the first makes a chord
+const length = () => state.seq.steps.length;
 
 function buildSteps() {
-  $('steps').replaceChildren(...Array.from({ length: STEPS }, (_, s) => {
-    const b = el('button', { type: 'button', className: 'step' }, el('span'), el('small', {}, String(s + 1)));
+  $('steps').replaceChildren(...Array.from({ length: length() }, (_, s) => {
+    const label = s % 4 ? '' : s % STEPS ? String(s / 4 % 4 + 1) : String(s / STEPS + 1);   // the bar, then its beats
+    const b = el('button', { type: 'button', className: `step${s % STEPS ? '' : ' bar'}${s % 4 ? '' : ' beat'}` }, label);
     b.dataset.s = s;
     return b;
   }));
+  $('steps').style.setProperty('--n', length());
+  $('rollbox').style.setProperty('--n', length());
 }
 
 function renderSteps() {
+  if ($('steps').children.length !== length()) { buildSteps(); if (selected >= length()) selected = null; }
   const shown = tokens(state.seq);
   [...$('steps').children].forEach((b, s) => {
     const token = shown[s];
-    b.firstChild.textContent = token === '.' ? '·' : token === '-' ? '—' : token.replace(/[!:].*$/, '').replaceAll('+', ' ');
     b.classList.toggle('on', token !== '.' && token !== '-');
-    b.classList.toggle('tied', token === '-');
-    b.classList.toggle('rest', token === '.');
     b.setAttribute('aria-pressed', s === selected);
-    b.title = `Step ${s + 1}: ${token === '.' ? 'rest' : token === '-' ? 'tied to the note before' : token}`;
+    b.title = `Step ${s + 1}${state.seq.bars > 1 ? ` (bar ${Math.floor(s / STEPS) + 1})` : ''}: ${token === '.' ? 'rest' : token === '-' ? 'tied to the note before' : token}`;
     b.setAttribute('aria-label', b.title);
   });
+  for (const b of $('bars').children) b.setAttribute('aria-pressed', Number(b.dataset.bars) === state.seq.bars);
   setValue($('row'), rowText(state.seq));
   $('rest').disabled = $('tie').disabled = selected === null;
+  drawRoll();
 }
 
 function select(step) {
@@ -409,7 +415,7 @@ function select(step) {
 function writeStep(op) {
   if (selected === null) return;
   send({ op: 'step', step: selected, ...op });
-  const next = (selected + 1) % STEPS;
+  const next = (selected + 1) % length();
   select(next);
   if ($('steps').contains(document.activeElement)) $('steps').children[next].focus();
 }
@@ -423,7 +429,7 @@ $('steps').addEventListener('keydown', (e) => {
   if (!b || e.ctrlKey || e.metaKey || e.altKey) return;
   const s = Number(b.dataset.s);
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-    const next = (s + (e.key === 'ArrowRight' ? 1 : STEPS - 1)) % STEPS;
+    const next = (s + (e.key === 'ArrowRight' ? 1 : length() - 1)) % length();
     $('steps').children[next].focus();
     if (selected !== null) select(next);
   } else if (e.key === 'Delete' || e.key === 'Backspace') { select(s); writeStep({ token: '.' }); }
@@ -435,11 +441,142 @@ $('steps').addEventListener('keydown', (e) => {
 $('rest').addEventListener('click', () => writeStep({ token: '.' }));
 $('tie').addEventListener('click', () => writeStep({ token: '-' }));
 $('clearseq').addEventListener('click', () => send({ op: 'clearseq' }));
+$('bars').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) send({ op: 'seqparam', key: 'bars', value: Number(b.dataset.bars) }); });
 $('rowForm').addEventListener('submit', (e) => {
   e.preventDefault();
   $('row').blur();
   send({ op: 'row', text: $('row').value });
 });
+
+// ---- the piano roll (lib/roll.mjs does the sums): a note per row, a step per column, the velocities under it.
+// A click on an empty cell adds a note there (and a drag on from it sets how long it is), a drag on a note's row
+// sets its length, a click on a note without dragging removes it, and the lane under it is drawn on for velocity.
+// Each press is one undo step, however long the drag. The wheel moves the notes shown up and down.
+const ROLL = { gutter: 38, row: 14, lane: 40, gap: 6 };
+let rollShift = 0;            // semitones the wheel has moved the view
+let rollHold = null;          // { mode: 'note' | 'vel', step, note, from, moved, gesture }
+let rollFrom = '';            // what is drawn, so a frame that changes nothing draws nothing
+
+function rollGeometry(canvas) {
+  const dpr = devicePixelRatio || 1;
+  const top = rollTop(state.seq, rollShift);
+  const grid = ROWS * ROLL.row;
+  return { dpr, top, grid, colW: (canvas.clientWidth - ROLL.gutter) / length(), laneTop: grid + ROLL.gap, height: grid + ROLL.gap + ROLL.lane };
+}
+
+// where a pointer is: the step, and the note (on the grid) or the height in the lane (0 top, 1 bottom)
+function rollAt(e) {
+  const canvas = $('roll'), r = canvas.getBoundingClientRect(), g = rollGeometry(canvas);
+  const x = e.clientX - r.left - ROLL.gutter, y = e.clientY - r.top;
+  const step = Math.min(length() - 1, Math.max(0, Math.floor(x / g.colW)));
+  if (y >= g.laneTop) return { step, lane: (y - g.laneTop) / ROLL.lane, inGutter: x < 0 };
+  return { step, note: g.top - Math.min(ROWS - 1, Math.max(0, Math.floor(y / ROLL.row))), inGutter: x < 0 };
+}
+
+function rollSend(key, op) { sendLatest(`roll:${key}`, { ...op, gesture: rollHold.gesture }); }
+
+$('roll').addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || !state) return;
+  const at = rollAt(e);
+  if (at.inGutter) return;
+  e.preventDefault();
+  $('roll').setPointerCapture(e.pointerId);
+  rollHold = { gesture: newGesture(), moved: false, from: at.step };
+  if (at.lane !== undefined) {
+    rollHold.mode = 'vel';
+    const op = velocityAt(state.seq, at.step, at.lane);
+    if (op) rollSend(`vel${at.step}`, op);
+    return;
+  }
+  const press = pressCell(state.seq, at.step, at.note);
+  Object.assign(rollHold, { mode: 'note', step: press.step, note: at.note, held: press.held });
+  if (press.op) { rollSend('note', press.op); engine.sound([at.note], 0.18, 0.7); }
+});
+$('roll').addEventListener('pointermove', (e) => {
+  if (!rollHold) { $('roll').style.cursor = rollAt(e).inGutter ? 'default' : ''; return; }
+  const at = rollAt(e);
+  if (rollHold.mode === 'vel') {
+    const op = velocityAt(state.seq, at.step, at.lane ?? 0);
+    if (op) rollSend(`vel${at.step}`, op);
+    return;
+  }
+  if (at.step === rollHold.from && !rollHold.moved) return;
+  rollHold.moved = true;
+  rollSend('note', dragLength(state.seq, rollHold.step, Math.max(rollHold.step, at.step)));
+});
+for (const type of ['pointerup', 'pointercancel']) {
+  $('roll').addEventListener(type, () => {
+    if (!rollHold) return;
+    if (type === 'pointerup' && rollHold.mode === 'note' && rollHold.held && !rollHold.moved) rollSend('note', removeNote(state.seq, rollHold.step, rollHold.note));
+    rollHold = null;
+  });
+}
+$('roll').addEventListener('wheel', (e) => {
+  e.preventDefault();
+  rollShift += e.deltaY < 0 ? 1 : -1;
+  drawRoll();
+}, { passive: false });
+
+function drawRoll() {
+  const canvas = $('roll');
+  if (!state || !canvas.clientWidth) return;
+  const g = rollGeometry(canvas);
+  canvas.style.height = `${g.height}px`;
+  const w = Math.round(canvas.clientWidth * g.dpr), h = Math.round(g.height * g.dpr);
+  const key = JSON.stringify([state.seq.steps, g.top, w, h, selected, rollShownStep]);
+  if (key === rollFrom) return;
+  rollFrom = key;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const c = canvas.getContext('2d'), css = getComputedStyle(canvas);
+  c.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+  const x0 = ROLL.gutter, colW = g.colW, gridW = colW * length();
+  // the rows: black keys darker, every C marked, each named in the gutter
+  c.font = '10px ui-monospace, Consolas, monospace';
+  c.textBaseline = 'middle';
+  for (let r = 0; r < ROWS; r++) {
+    const note = g.top - r, y = r * ROLL.row;
+    c.fillStyle = isBlack(note) ? '#0b0b0f' : '#121218';
+    c.fillRect(x0, y, gridW, ROLL.row);
+    if (note % 12 === 0) { c.fillStyle = '#262631'; c.fillRect(x0, y + ROLL.row - 1, gridW, 1); }
+    c.fillStyle = note % 12 === 0 ? '#ecebf2' : isBlack(note) ? '#5d5c6e' : '#8a899c';
+    c.fillText(noteName(note), 4, y + ROLL.row / 2);
+  }
+  // the columns: steps faint, beats stronger, bars strongest; the chosen step and the playhead lit
+  for (let s = 0; s <= length(); s++) {
+    c.fillStyle = s % STEPS === 0 ? '#4a4a5a' : s % 4 === 0 ? '#2e2e3a' : '#1b1b23';
+    c.fillRect(x0 + s * colW - (s === length() ? 1 : 0), 0, 1, g.grid);
+  }
+  const lit = (s, colour) => { c.fillStyle = colour; c.fillRect(x0 + s * colW, 0, colW, g.grid); };
+  if (selected !== null) lit(selected, 'rgba(54, 214, 231, 0.10)');
+  if (rollShownStep >= 0) lit(rollShownStep, 'rgba(236, 235, 242, 0.08)');
+  // the notes, brighter for a higher velocity, and the ones above or below the view as a mark at its edge
+  const accent = css.getPropertyValue('--low').trim() || '#ff7a45';
+  state.seq.steps.forEach((step, s) => {
+    if (!step) return;
+    for (const note of step.notes) {
+      const r = g.top - note;
+      c.globalAlpha = 0.45 + 0.55 * step.vel;
+      c.fillStyle = accent;
+      if (r < 0 || r >= ROWS) { c.fillRect(x0 + s * colW + 1, r < 0 ? 0 : g.grid - 2, Math.max(2, step.len * colW - 2), 2); continue; }
+      c.fillRect(x0 + s * colW + 1, r * ROLL.row + 1, Math.max(3, step.len * colW - 2), ROLL.row - 2);
+    }
+  });
+  c.globalAlpha = 1;
+  // the velocity lane: a bar for each step a note starts on, a dash for the rest
+  c.fillStyle = '#0d0d12';
+  c.fillRect(x0, g.laneTop, gridW, ROLL.lane);
+  c.fillStyle = '#5d5c6e';
+  c.fillText('vel', 4, g.laneTop + ROLL.lane / 2);
+  state.seq.steps.forEach((step, s) => {
+    const x = x0 + s * colW + Math.max(1, colW * 0.2), bw = Math.max(2, colW * 0.6);
+    if (!step) { c.fillStyle = '#262631'; c.fillRect(x, g.laneTop + ROLL.lane - 2, bw, 2); return; }
+    const bh = Math.max(2, step.vel * (ROLL.lane - 4));
+    c.fillStyle = step.vel >= VEL.accent ? accent : '#a09fb0';
+    c.fillRect(x, g.laneTop + ROLL.lane - bh, bw, bh);
+  });
+}
+let rollShownStep = -1;
 
 // ---- playing notes: the keys on the screen, the computer's keys, MIDI
 
@@ -612,11 +749,12 @@ navigator.permissions?.query({ name: 'midi' }).then((p) => { if (p.state === 'gr
 let shownStep = -1;
 function frame() {
   const seq = state?.seq;
-  const step = engine.playing && seq ? Math.floor(Math.max(0, engine.position())) % STEPS : -1;
+  const step = engine.playing && seq ? Math.floor(Math.max(0, engine.position())) % seq.steps.length : -1;
   if (step !== shownStep) {
     $('steps').children[shownStep]?.classList.remove('now');
     $('steps').children[step]?.classList.add('now');
-    shownStep = step;
+    shownStep = rollShownStep = step;
+    drawRoll();
   }
   const now = performance.now();
   const sounding = new Set(down);
@@ -712,11 +850,10 @@ $('ask').addEventListener('submit', async (e) => {
 
 document.title = APP_NAME;
 buildPanel();
-buildSteps();
 buildKeys();
 try { if (localStorage.getItem(FOLDED) === '1') foldKeys(true); } catch { /* storage is closed to the page: the keyboard shows */ }
 let wide = innerWidth >= 700;
-addEventListener('resize', () => { if ((innerWidth >= 700) !== wide) { wide = innerWidth >= 700; buildKeys(); } });
+addEventListener('resize', () => { if ((innerWidth >= 700) !== wide) { wide = innerWidth >= 700; buildKeys(); } drawRoll(); });
 engine.onChange();             // a page just loaded cannot sound yet, whatever the one before it told the server
 connect();
 requestAnimationFrame(frame);
