@@ -34,7 +34,7 @@ A parameter's name is its line and its word: `filter.cutoff`, `aenv.attack`. Tim
 
 1. Start near it: `preset` lists the starting sounds by kind, `preset warm` loads one. `init` is one plain saw.
 2. Set what makes it that sound, several at once: `set osc2.level 0.8 osc2.fine 14 unison 2 cutoff 900`. The last part of a name is enough when only one parameter ends that way (`cutoff`, `resonance`, `glide`, `unison`); `level`, `attack`, `mix` and the like need their section.
-3. Name it: `name Night bass`.
+3. Name it: `name Night bass`. When the user likes it, or asks to keep it, `preset save` keeps it as a preset of theirs under that name (`preset save Night bass` names and saves at once; the same name again replaces it; built-in names are taken). Saved presets come first in `preset` and load the same way; `preset delete <name>` removes one.
 
 What to reach for:
 

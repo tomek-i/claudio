@@ -1,21 +1,25 @@
-// What the server holds: four patch slots, which one is being played, the sequence, the undo history, and the
-// notes between the page and Claude. Every change goes through apply(), from the page and from the CLI alike,
-// so both see one synth and one undo history.
+// What the server holds: four patch slots, which one is being played, the sequence, the undo history, the
+// presets the player has saved, and the notes between the page and Claude. Every change goes through apply(),
+// from the page and from the CLI alike, so both see one synth and one undo history.
 import fs from 'node:fs';
 import path from 'node:path';
 import { SLOTS, clonePatch, initPatch, normalizePatch, setParams } from './patch.mjs';
-import { PRESET_LIST, preset } from './presets.mjs';
+import { PRESET_LIST, findPreset, isBuiltIn, preset } from './presets.mjs';
 import { applySeqOp, normalizeSeq, parseRow } from './seq.mjs';
 import { NOTE_MAX, NOTE_MIN } from './notes.mjs';
 
 const UNDO_STEPS = 100;
 const NOTES_KEPT = 40;
+const SAVED_MAX = 200;                               // presets the player can save
 const START = ['Acid bass', 'Warm pad', 'Pluck', 'Electric keys'];   // what the four slots hold on a first run
 const START_ROW = 'C2 . C3 . | Eb2 . C3 G2 | C2 . Bb2 C3 | . G2 Bb2 -';
 
 export class Store {
-  constructor({ file = null } = {}) {
+  // file: the slots and the sequence. presetsFile: the saved presets, kept apart so that undo never takes one away.
+  constructor({ file = null, presetsFile = null } = {}) {
     this.file = file;
+    this.presetsFile = presetsFile;
+    this.saved = [];                                 // the player's presets: patches, in the order they were first saved
     this.slot = 'A';
     this.slots = Object.fromEntries(SLOTS.map((s, i) => [s, clonePatch(preset(START[i]))]));
     this.seq = normalizeSeq({ bpm: 118, steps: parseRow(START_ROW) });
@@ -30,6 +34,25 @@ export class Store {
     this.listeners = new Set();
     this.waiters = new Set();
     this.load();
+    this.loadPresets();
+  }
+
+  loadPresets() {
+    if (!this.presetsFile || !fs.existsSync(this.presetsFile)) return;
+    try {
+      const saved = JSON.parse(fs.readFileSync(this.presetsFile, 'utf8'));
+      this.saved = (Array.isArray(saved.presets) ? saved.presets : []).slice(0, SAVED_MAX).map(normalizePatch);
+    } catch (err) {
+      console.error(`could not read ${this.presetsFile}: ${err.message} (starting with no saved presets)`);
+    }
+  }
+
+  savePresets() {
+    if (!this.presetsFile) return;
+    fs.mkdirSync(path.dirname(this.presetsFile), { recursive: true });
+    const tmp = `${this.presetsFile}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify({ presets: this.saved }, null, 1));
+    fs.renameSync(tmp, this.presetsFile);
   }
 
   load() {
@@ -65,7 +88,7 @@ export class Store {
     return {
       rev: this.rev, slot: this.slot, slots: this.slots, seq: this.seq,
       canUndo: this.past.length > 0, canRedo: this.future.length > 0,
-      presets: PRESET_LIST, notes: this.notes,
+      presets: [...this.saved.map((p) => ({ name: p.name, kind: 'saved', saved: true })), ...PRESET_LIST], notes: this.notes,
     };
   }
 
@@ -111,8 +134,28 @@ export class Store {
         this.slots[this.slot] = normalizePatch({ ...this.patch, name: op.value });
         break;
       case 'preset':
-        this.slots[this.slot] = clonePatch(preset(op.name));
+        this.slots[this.slot] = clonePatch(findPreset(op.name, this.saved));
         break;
+      case 'savepreset': {                           // the playing patch as a preset, under its own name or a new one
+        const name = String(op.name ?? this.patch.name).trim().slice(0, 40);
+        if (!name) throw new Error('a preset needs a name');
+        if (isBuiltIn(name)) throw new Error(`"${name}" is a built-in preset: save yours under another name`);
+        const same = this.saved.findIndex((p) => p.name.toLowerCase() === name.toLowerCase());
+        if (same < 0 && this.saved.length >= SAVED_MAX) throw new Error(`${SAVED_MAX} presets are saved already: delete one first`);
+        this.slots[this.slot] = normalizePatch({ ...this.patch, name });   // the patch takes the name it is saved under
+        if (same >= 0) this.saved[same] = clonePatch(this.patch);
+        else this.saved.push(clonePatch(this.patch));
+        this.savePresets();
+        break;
+      }
+      case 'deletepreset': {                         // not an undo step: undo is for the sound, not the list
+        const name = String(op.name ?? '').trim().toLowerCase();
+        const at = this.saved.findIndex((p) => p.name.toLowerCase() === name);
+        if (at < 0) throw new Error(isBuiltIn(name) ? 'the built-in presets cannot be deleted' : `no saved preset "${op.name}"${this.saved.length ? ` (saved: ${this.saved.map((p) => p.name).join(', ')})` : ''}`);
+        this.saved.splice(at, 1);
+        this.savePresets();
+        break;
+      }
       case 'init':
         this.slots[this.slot] = initPatch();
         break;

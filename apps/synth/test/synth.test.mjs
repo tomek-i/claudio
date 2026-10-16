@@ -114,7 +114,7 @@ test('the presets are well-formed, differ from each other and cover every kind',
   assert.equal(new Set(PRESETS.map((p) => JSON.stringify({ ...p.patch, name: '' }))).size, PRESETS.length);
   for (const { patch } of PRESETS) {
     assert.deepEqual(normalizePatch(patch), patch, patch.name);
-    assert.ok(patch['osc1.level'] + patch['osc2.level'] + patch['mix.sub'] > 0, `${patch.name} makes a sound`);
+    assert.ok(patch['osc1.level'] + patch['osc2.level'] + patch['mix.sub'] + patch['mix.noise'] > 0, `${patch.name} makes a sound`);
   }
   assert.equal(preset('warm').name, 'Warm pad');
   assert.equal(preset('PLUCK').name, 'Pluck');
