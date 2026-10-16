@@ -389,7 +389,8 @@ export function wireJog(canvas, d) {
 // last 6 dB below 0 dB, red above it (pushed past unity); the master never passes the limiter's -1 dBFS, so its zones
 // sit lower: amber from -6 dB, red from -3 dB (at the ceiling, the limiter at work). The level jumps up and falls back
 // at 30 dB a second.
-// ui.meterStyle: 'bar' is a smooth bar, 'led' a ladder of segments whose highest one stays lit for a second.
+// ui.meterStyle: 'bar' is a smooth bar in those solid zones, 'fade' the same bar with the colours blending into each
+// other (amber reached at the red zone's edge), 'led' a ladder of segments whose highest one stays lit for a second.
 const M_FLOOR = -60, M_FALL = 30, M_HOLD = 1000, M_SEGS = 24;
 const M_POS = (db) => Math.min(1, volOfDb(db) / VOL_MAX);
 export const M_ZONES = { channel: { amber: M_POS(-6), red: M_POS(0) }, master: { amber: M_POS(-6), red: M_POS(-3) } };
@@ -412,13 +413,16 @@ export function drawMeter(canvas, analyser, zones = M_ZONES.channel) {
   const led = ui.meterStyle === 'led', w = canvas.width, h = canvas.height;
   const lvl = m.lvl <= M_FLOOR ? 0 : M_POS(m.lvl), held = m.peak <= M_FLOOR ? 0 : M_POS(m.peak);
   const lit = led ? Math.round(lvl * M_SEGS) : Math.round(lvl * h), top = led ? Math.round(held * M_SEGS) : 0;
-  const key = `${led}${lit}/${top}/${h}`; if (m.key === key) return; m.key = key;
+  const key = `${ui.meterStyle}${lit}/${top}/${h}`; if (m.key === key) return; m.key = key;
   const g = canvas.getContext('2d');
   g.clearRect(0, 0, w, h);
   if (!led) {
     const grd = g.createLinearGradient(0, h, 0, 0);
     const { amber, red } = zones;
-    grd.addColorStop(0, M_LIT.g); grd.addColorStop(amber, M_LIT.g); grd.addColorStop(amber, M_LIT.a); grd.addColorStop(red, M_LIT.a); grd.addColorStop(red, M_LIT.r); grd.addColorStop(1, M_LIT.r);
+    grd.addColorStop(0, M_LIT.g); grd.addColorStop(amber, M_LIT.g);
+    if (ui.meterStyle === 'fade') { grd.addColorStop(red, M_LIT.a); grd.addColorStop(Math.min(1, red + 0.08), M_LIT.r); }
+    else { grd.addColorStop(amber, M_LIT.a); grd.addColorStop(red, M_LIT.a); grd.addColorStop(red, M_LIT.r); }
+    grd.addColorStop(1, M_LIT.r);
     g.fillStyle = grd; g.fillRect(0, h - lit, w, lit);
     return;
   }

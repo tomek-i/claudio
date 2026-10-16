@@ -112,4 +112,5 @@ recording or an export. The **LIMIT** light under the master level is amber when
 3 dB or more off; at that point the mix is being squashed, and the mix monitor says so too ("master too hot"): turn
 the master or a channel down. The meters are green, amber and red in solid zones: on a channel amber is the last 6 dB
 below 0 and red is above it (the fader pushed past the track's normal level); the master's bars never pass -1 dBFS, so
-they turn amber from -6 dB and red from -3 dB, where they reach the limiter.
+they turn amber from -6 dB and red from -3 dB, where they reach the limiter. The setting "Level meters" (Mixer)
+draws them as that solid bar, as a bar whose colours blend into each other, or as a ladder of LED segments.
