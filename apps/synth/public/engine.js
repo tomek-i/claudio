@@ -4,7 +4,7 @@
 // is exported is what was heard.
 //
 //   oscillators, sub, noise → filter (its envelope and the LFO move it) → amp (its envelope) → bus
-//   bus → master, and through the delay and the reverb → master → limiter → out
+//   bus → master, and through the delay and the reverb → master → limiter → out (and the page's meter)
 //
 // The imports are relative so that this file loads in the browser (where ../lib is /lib) and in Node (the tests
 // run it on a pretend audio context).
@@ -58,6 +58,7 @@ export class Synth {
     const limiter = ctx.createDynamicsCompressor();    // eight loud voices do not clip
     limiter.threshold.value = -8; limiter.knee.value = 6; limiter.ratio.value = 12; limiter.attack.value = 0.003; limiter.release.value = 0.15;
     limiter.connect(ctx.destination);
+    this.out = limiter;                                // what is heard: the page's meter listens here
     this.master = gain(0, limiter);
     this.bus = gain(1, this.master);                   // every voice ends here; the LFO's tremolo is this gain
 
@@ -265,6 +266,9 @@ export class Engine {
     if (!this.ctx) {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       this.miniclaude = new Synth(this.ctx, this.source().patch);
+      this.analyser = this.ctx.createAnalyser();       // the page's meter reads the sound from here
+      this.analyser.fftSize = 2048;
+      this.miniclaude.out.connect(this.analyser);
       this.ctx.onstatechange = () => this.onChange?.();
     }
     if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});

@@ -120,16 +120,39 @@ h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: 
 .name { font-weight: 600; font-size: 16px; background: transparent !important; border-color: transparent !important; width: min(340px, 50%); padding-left: 4px !important; }
 .name:hover, .name:focus { border-color: var(--line) !important; background: #0d0d12 !important; }
 
-.panel { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 10px; }
+/* As the sound travels: four columns with arrows between them (sources → filter → amp → out). What moves the sound
+   sits under it: the modulation row (filter envelope, LFO) under the filter and the amp, the voice under the out, and
+   the sources run down beside them. Narrower, two columns and then one; the arrow that would point across a row goes. */
+.panelbox { container-type: inline-size; }
+.panel { display: grid; grid-template-columns: minmax(0, 1.1fr) 16px minmax(0, 1fr) 16px minmax(0, 1fr) 16px minmax(0, 1fr); gap: 10px 4px; }
+.col { border: 1px solid color-mix(in srgb, var(--c) 30%, var(--line)); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 8px; min-width: 0; --c: var(--low); }
+.col > h3 { margin: 0 4px; font: 600 10px var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--c); }
+.col[data-family="osc"] { grid-row: span 2; }
+.col.mod { grid-column: 3 / 6; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+.col.mod > h3 { grid-column: 1 / -1; }
+.col.voices { grid-column: 7; }
+.arrow { align-self: center; justify-self: center; color: var(--faint); font-size: 16px; }
+.col[data-family="filter"], .group[data-family="filter"] { --c: var(--mid); }
+.col[data-family="amp"], .group[data-family="amp"] { --c: var(--high); }
+.col[data-family="mod"], .group[data-family="mod"] { --c: var(--perc); }
+.col[data-family="fx"], .group[data-family="fx"] { --c: var(--fx); }
+@container (max-width: 1020px) {
+  .panel { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); }
+  .panel > .arrow:nth-of-type(2) { display: none; }   /* filter → amp would point across the row break */
+  .col[data-family="osc"] { grid-row: auto; }
+  .col.mod, .col.voices { grid-column: 1 / -1; }
+}
+@container (max-width: 560px) {
+  .panel { grid-template-columns: minmax(0, 1fr); }
+  .panel > .arrow, .panel > .arrow:nth-of-type(2) { display: block; transform: rotate(90deg); }   /* down the page */
+  .col.mod { grid-template-columns: minmax(0, 1fr); }
+}
 .group { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0; --c: var(--low); }
-.group[data-family="filter"] { --c: var(--mid); }
-.group[data-family="amp"] { --c: var(--high); }
-.group[data-family="mod"] { --c: var(--perc); }
-.group[data-family="fx"] { --c: var(--fx); }
+.meter { width: 100%; height: 10px; display: block; border-radius: 3px; margin-top: 2px; }
 .group h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .group h2:not(:first-child) { margin-top: 10px; }
 .group h2::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }   /* the colour of the section's sliders */
-.ctl { display: grid; grid-template-columns: 78px minmax(0, 1fr) 62px; align-items: center; gap: 8px; min-height: 24px; }
+.ctl { display: grid; grid-template-columns: 70px minmax(0, 1fr) 56px; align-items: center; gap: 8px; min-height: 24px; }
 .ctl label, .ctl .label { font: 600 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
 .ctl input[type="range"] { accent-color: var(--c); width: 100%; }
 .ctl output { font: 12px var(--mono); color: var(--text); text-align: right; white-space: nowrap; }

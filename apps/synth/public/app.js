@@ -2,7 +2,7 @@
 // the sound. The state comes back on the server's event stream, so an edit made from the CLI shows here, and is
 // heard here, as it is made.
 import { APP_NAME } from '../lib/app.mjs';
-import { GROUPS, SLOTS, paramsOf, format, toSlider, fromSlider, envOf } from '../lib/patch.mjs';
+import { GROUPS, PANEL, SLOTS, paramsOf, format, toSlider, fromSlider, envOf } from '../lib/patch.mjs';
 import { envLevel } from '../lib/envelope.mjs';
 import { NOTE_MAX, isBlack, noteName } from '../lib/notes.mjs';
 import { STEPS, tokens, rowText } from '../lib/seq.mjs';
@@ -123,28 +123,67 @@ function buildControl(def, groupName) {
   return el('div', { className: 'ctl' }, el('label', { htmlFor: id }, def.label), input, output);
 }
 
-const SHARES_A_CARD = { master: 'reverb' };   // a section with one control sits under another: section → the card it joins
+// The panel is laid out as the sound travels (PANEL in lib/patch.mjs): four columns, each feeding the next
+// (sources → filter → amp → out), and what moves the sound under them: the filter envelope and the LFO under the
+// filter and the amp, the voice settings under the out (style.css places them).
+
+function envelopeShape(id) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'shape');
+  svg.setAttribute('viewBox', '0 0 100 40');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.id = `shape-${id}`;
+  svg.innerHTML = '<polyline fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+  return svg;
+}
+
+function buildCard(id) {
+  const group = GROUPS.find((g) => g.id === id);
+  const card = el('section', { className: 'group', ariaLabel: group.name });
+  card.dataset.family = group.family;
+  card.append(el('h2', {}, group.name));
+  if (id === 'fenv' || id === 'aenv') card.append(envelopeShape(id));   // the shape first: what the sliders under it make
+  card.append(...paramsOf(id).map((def) => buildControl(def, group.name)));
+  if (id === 'master') card.append(el('canvas', { id: 'meter', className: 'meter', width: 240, height: 10, ariaHidden: 'true', title: 'The level coming out' }));
+  return card;
+}
+
+function buildColumn({ name, family, groups, className = '' }) {
+  const col = el('div', { className: `col ${className}`.trim(), role: 'group', ariaLabel: name }, el('h3', {}, name), ...groups.map(buildCard));
+  col.dataset.family = family;
+  return col;
+}
 
 function buildPanel() {
-  const cards = new Map();
-  for (const group of GROUPS) {
-    const host = cards.get(SHARES_A_CARD[group.id]);
-    const card = host || el('section', { className: 'group', ariaLabel: group.name });
-    card.dataset.family = group.family;
-    cards.set(group.id, card);
-    card.append(el('h2', {}, group.name), ...paramsOf(group.id).map((def) => buildControl(def, group.name)));
-    if (group.id === 'fenv' || group.id === 'aenv') {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'shape');
-      svg.setAttribute('viewBox', '0 0 100 40');
-      svg.setAttribute('preserveAspectRatio', 'none');
-      svg.setAttribute('aria-hidden', 'true');
-      svg.id = `shape-${group.id}`;
-      svg.innerHTML = '<polyline fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
-      card.append(svg);
-    }
+  const arrow = () => el('span', { className: 'arrow', ariaHidden: 'true' }, '→');
+  const flow = PANEL.flow.flatMap((c, i) => (i ? [arrow(), buildColumn(c)] : [buildColumn(c)]));
+  $('panel').replaceChildren(...flow, ...PANEL.under.map(buildColumn));
+}
+
+// the level coming out, as a bar: solid green, amber from -12 dB, red from -3 dB (the limiter is working)
+const METER_FLOOR = -48;
+let meterLevel = METER_FLOOR, meterBuf = null;
+function drawMeter() {
+  const canvas = $('meter'), analyser = engine.analyser;
+  if (!canvas) return;
+  let db = METER_FLOOR;
+  if (analyser) {
+    if (meterBuf?.length !== analyser.fftSize) meterBuf = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(meterBuf);
+    let peak = 0;
+    for (const v of meterBuf) peak = Math.max(peak, Math.abs(v));
+    db = Math.max(METER_FLOOR, 20 * Math.log10(peak + 1e-9));
   }
-  $('panel').replaceChildren(...new Set(cards.values()));
+  meterLevel = Math.max(db, meterLevel - 1.2);            // up at once, down slowly
+  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+  const x = (d) => Math.round(((d - METER_FLOOR) / -METER_FLOOR) * w);
+  g.fillStyle = '#0d0d12'; g.fillRect(0, 0, w, h);
+  const lit = x(meterLevel);
+  for (const [from, to, colour] of [[METER_FLOOR, -12, '#9be564'], [-12, -3, '#f2cc60'], [-3, 0, '#ff5566']]) {
+    const a = x(from), b = Math.min(lit, x(to));
+    if (b > a) { g.fillStyle = colour; g.fillRect(a, 0, b - a, h); }
+  }
 }
 
 // an envelope as a line: the key held until the level has settled, then let go
@@ -461,6 +500,7 @@ function frame() {
     for (const key of $('keys').children) key.classList.toggle('down', sounding.has(Number(key.dataset.note)));
     lit = sounding;
   }
+  drawMeter();
   requestAnimationFrame(frame);
 }
 

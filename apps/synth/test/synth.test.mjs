@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { noteFreq, noteName, parseNote, isBlack } from '../lib/notes.mjs';
 import { envLevel, envEnd, tau } from '../lib/envelope.mjs';
-import { PARAMS, GROUPS, initPatch, normalizePatch, setParams, paramDef, format, toSlider, fromSlider, patchText, paramsText, groupOf } from '../lib/patch.mjs';
+import { PARAMS, GROUPS, PANEL, initPatch, normalizePatch, setParams, paramDef, format, toSlider, fromSlider, patchText, paramsText, groupOf } from '../lib/patch.mjs';
 import { PRESETS, KINDS, preset } from '../lib/presets.mjs';
 import { STEPS, emptySeq, normalizeSeq, parseRow, rowText, seqText, applySeqOp, notesInWindow, stepSeconds } from '../lib/seq.mjs';
 import { voiceToSteal, MAX_VOICES } from '../lib/voices.mjs';
@@ -211,4 +211,11 @@ test('a WAV file has its header and its samples', () => {
   assert.equal(wav.getInt16(44 + 6, true), 16383);
   assert.equal(wav.getInt16(44 + 8, true), -32767);
   assert.equal(wav.getInt16(44 + 12, true), 32767);                    // a sample over full scale is held at it
+});
+
+test('the panel has a place for every section, once, in the order the sound goes', () => {
+  const placed = [...PANEL.flow, ...PANEL.under].flatMap((c) => c.groups);
+  assert.deepEqual([...placed].sort(), GROUPS.map((g) => g.id).sort());
+  assert.deepEqual(PANEL.flow.map((c) => c.name), ['Sources', 'Filter', 'Amp', 'Out']);
+  assert.ok(PANEL.flow.at(-1).groups.includes('master'), 'the master is in the out column');
 });
