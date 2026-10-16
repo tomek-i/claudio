@@ -26,7 +26,10 @@ const HELP = `${APP_NAME} synthesizer — ${URL_SHOWN}
  the sound
   set <param> <value> …          one or more: set filter.cutoff 800 resonance 60%
                                  (the last part of a name is enough when only one parameter has it)
-  preset [name]                  load a starting sound (no name: list them)
+  preset [name]                  load a preset, yours or a built-in one (no name: list them, yours first)
+  preset save [name]             save the playing patch as a preset (no name: under its own name;
+                                 the same name again replaces it)
+  preset delete <name>           delete a saved preset
   init                           the plain patch: one saw, filter open
   name <text>                    name the patch
   slot <A-D>      copy <A-D>     switch slot | copy the playing patch to a slot
@@ -123,6 +126,12 @@ async function main([cmd = 'help', ...args]) {
     }
     case 'preset': {
       if (!args.length) return console.log((await call('GET', '/api/state')).presets.map((p) => `${p.kind.padEnd(7)}${p.name}`).join('\n'));
+      if (args[0] === 'save') return console.log(`${title(await edit({ op: 'savepreset', name: args.length > 1 ? args.slice(1).join(' ') : undefined }))}  saved as a preset`);
+      if (args[0] === 'delete') {
+        const name = need(args[1], 'the name of a saved preset') && args.slice(1).join(' ');
+        await edit({ op: 'deletepreset', name });
+        return console.log(`deleted the preset "${name}"`);
+      }
       return show(await edit({ op: 'preset', name: args.join(' ') }));
     }
     case 'init': return show(await edit({ op: 'init' }));

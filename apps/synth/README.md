@@ -31,7 +31,14 @@ the patches are saved in (default `apps/synth/.miniclaude/`).
   "Hide keys" folds them away (the browser remembers it) and the room goes to the page.
 - A sixteen-step sequence with rests, ties, chords, accents, tempo, gate and swing. Choose a step and play a note
   to write it, or type the bar as text.
-- Eleven presets (bass, lead, pad, pluck, keys) and four patch slots.
+- Twenty-seven built-in presets (bass, lead, pad, pluck, keys, fx) and four patch slots.
+- A preset browser down the left side ("Presets" in the top bar shows and hides it; on a narrow screen it lies
+  over the page): every preset in one list, yours first, with a search box and a category row. A click loads one
+  into the playing slot, ↑ ↓ walk the list, and ◀ ▶ by the patch's name step through it as it is narrowed.
+- Presets of your own: "Save" in the browser or Ctrl+S (or `miniclaude preset save <name>`) keeps the playing
+  patch under a name; saving under the same name again replaces it, and the × on its row (or
+  `preset delete <name>`) takes it off the list. They are kept in `presets.json` beside the state, so undo never
+  takes one away.
 - Undo for everything, shared by the page and the CLI. Saved as you go.
 - Export: the sequence as a WAV, rendered in the browser by the same code that plays it.
 
@@ -70,10 +77,10 @@ instead of pretending.
   picks one, `MINICLAUDE_NO_BANNER=1` gives plain lines), then its strip of the sixteen steps shows the riff as it is
   written, with a playhead while the page plays (`MINICLAUDE_BANNER_LOOP=0` turns that off). Preview:
   `node miniclaude.mjs banner [name]`.
-- `lib/store.mjs`: slots, undo, saving, play requests, notes. `server.mjs`: the HTTP API and static files (the
+- `lib/store.mjs`: slots, undo, saving, the saved presets, play requests, notes. `server.mjs`: the HTTP API and static files (the
   API is listed at its top).
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` builds the
-  panel from the schema and handles the keys and the sequence. The page imports `lib/` as `/lib/*.mjs`.
+  panel from the schema and handles the keys and the sequence; `browser.js` is the preset browser. The page imports `lib/` as `/lib/*.mjs`.
 - `miniclaude.mjs`: the CLI.
 - `test/`: `synth.test.mjs` (the arithmetic), `engine.test.mjs` (the engine on a pretend audio context,
   `fake-audio.mjs`), `server.test.mjs` (the server on a scratch folder, port 4864, and the CLI as a process).

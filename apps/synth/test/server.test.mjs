@@ -60,11 +60,12 @@ test('it starts with four patches and a riff, and serves the page and the shared
   assert.ok(page.includes(`<title>${APP_NAME}</title>`) && !page.includes('%NAME%'));
   assert.match(page, /id="startOverlay" role="dialog"[^]*id="startBtn"[^>]*>Start sound</);   // shown from the first paint, no script needed
   assert.ok(!page.includes('Turn the sound on'));
-  assert.match(page, /<\/main>\s*(<!--[^>]*-->\s*)?<section class="board"[^>]*>[^]*id="fold"/);   // the keyboard comes after the page, with its "hide"
+  assert.match(page, /<\/main>\s*<\/div>\s*(<!--[^>]*-->\s*)?<section class="board"[^>]*>[^]*id="fold"/);   // the keyboard comes after the page, with its "hide"
+  assert.match(page, /<div class="room">\s*(<!--[^>]*-->\s*)?<aside class="browser"[^]*<main>/);   // the preset browser is beside the page, not in it
   assert.doesNotMatch(await (await fetch(BASE + '/style.css')).text(), /\.board \{[^}]*position:/);   // and is not laid over it
   assert.match(await (await fetch(BASE + '/lib/patch.mjs')).text(), /PARAMS/);
   assert.match(await (await fetch(BASE + '/engine.js')).text(), /class Synth/);
-  for (const file of ['app.js', 'engine.js']) {                       // what the page imports is all there to be served
+  for (const file of ['app.js', 'engine.js', 'browser.js']) {                       // what the page imports is all there to be served
     const source = fs.readFileSync(path.join(path.dirname(CLI), 'public', file), 'utf8');
     for (const [, from] of source.matchAll(/from '([^']+)'/g)) assert.equal((await fetch(new URL(from, `${BASE}/${file}`))).status, 200, from);
   }
@@ -212,6 +213,37 @@ test('the CLI tells a page to sound, hears a note from it and answers', async ()
   assert.equal((await cli('wait', '0')).out, '(no notes)');
   assert.equal((await cli('say', 'resonance', 'up')).out, 'said');
   assert.equal((await get('/api/state')).notes.at(-1).text, 'resonance up');
+});
+
+test('a sound saved as a preset is listed first, loads by name, survives a restart and can be deleted', async () => {
+  await edit({ op: 'preset', name: 'hoover' });
+  await edit({ op: 'set', values: { 'filter.cutoff': 1100 } });
+  const saved = await edit({ op: 'savepreset', name: 'Night hoover' });
+  assert.equal(patch(saved).name, 'Night hoover');                    // the patch takes the name it is saved under
+  assert.deepEqual(saved.presets[0], { name: 'Night hoover', kind: 'saved', saved: true });
+  await edit({ op: 'preset', name: 'pluck' });
+  const loaded = patch(await edit({ op: 'preset', name: 'night' }));
+  assert.equal(loaded.name, 'Night hoover');
+  assert.equal(loaded['filter.cutoff'], 1100);
+  // the same name again replaces it, whatever its case
+  await edit({ op: 'set', values: { 'filter.cutoff': 1500 } });
+  assert.equal((await edit({ op: 'savepreset', name: 'night HOOVER' })).presets.filter((p) => p.saved).length, 1);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(home, 'presets.json'), 'utf8')).presets[0]['filter.cutoff'], 1500);
+  assert.equal(createServer({ home }).store.saved[0].name, 'night HOOVER');
+
+  for (const [op, reason] of [[{ op: 'savepreset', name: 'Acid Bass' }, /built-in/], [{ op: 'savepreset', name: '  ' }, /needs a name/],
+    [{ op: 'deletepreset', name: 'Pluck' }, /cannot be deleted/], [{ op: 'deletepreset', name: 'nope' }, /no saved preset "nope" \(saved: night HOOVER\)/]]) {
+    const { status, body } = await post('/api/op', op);
+    assert.equal(status, 400);
+    assert.match(body.error, reason);
+  }
+
+  assert.equal((await cli('preset', 'save', 'Tape', 'pluck')).out, 'slot A  "Tape pluck"  saved as a preset');
+  assert.match((await cli('preset')).out, /^saved  night HOOVER\nsaved  Tape pluck\nbass {3}Acid bass$/m);
+  assert.equal((await cli('preset', 'delete', 'tape', 'pluck')).out, 'deleted the preset "tape pluck"');
+  const after = await edit({ op: 'deletepreset', name: 'Night hoover' });
+  assert.equal(after.presets.some((p) => p.saved), false);
+  assert.equal(patch(after).name, 'Tape pluck');                      // deleting the preset leaves the sound playing
 });
 
 test('the patches and the sequence are saved and come back after a restart', async () => {

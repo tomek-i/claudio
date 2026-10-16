@@ -7,6 +7,7 @@ import { envLevel } from '../lib/envelope.mjs';
 import { NOTE_MAX, isBlack, noteName } from '../lib/notes.mjs';
 import { STEPS, tokens, rowText } from '../lib/seq.mjs';
 import { Engine, renderWav } from './engine.js';
+import { createBrowser } from './browser.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...children) => {
@@ -22,6 +23,7 @@ const current = () => state.slots[state.slot];
 const newGesture = () => `g${Date.now()}-${++gestureCount}`;
 
 const engine = new Engine(() => ({ patch: current(), seq: state.seq }));
+const browser = createBrowser({ state: () => state, current, send: (op) => send(op) });
 
 // ---- the link to the server
 
@@ -186,11 +188,7 @@ function render() {
   }
   $('undo').disabled = !state.canUndo;
   $('redo').disabled = !state.canRedo;
-  if ($('preset').options.length === 1) {
-    for (const kind of [...new Set(state.presets.map((s) => s.kind))]) {
-      $('preset').append(el('optgroup', { label: kind }, ...state.presets.filter((s) => s.kind === kind).map((s) => el('option', { value: s.name }, s.name))));
-    }
-  }
+  browser.render();
   renderSteps();
   renderNotes();
 }
@@ -389,8 +387,9 @@ const KEY_NOTE = new Map([...LOWER.map((code, i) => [code, i]), ...UPPER.map((co
 const typed = new Map();      // key code → the note it started, so an octave change does not leave it sounding
 
 addEventListener('keydown', (e) => {
-  if (e.target.matches('input:not([type="range"]), select, textarea')) return;
   const mod = e.ctrlKey || e.metaKey;
+  if (mod && !e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); return browser.save(); }   // from a text box too
+  if (e.target.matches('input:not([type="range"]), select, textarea')) return;
   if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); send({ op: e.shiftKey ? 'redo' : 'undo' }); }
   else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); send({ op: 'redo' }); }
   else if (mod || e.altKey) return;
@@ -515,7 +514,6 @@ for (const key of ['gate', 'swing']) {
 }
 $('slots').append(...SLOTS.map((s) => { const b = el('button', { type: 'button' }, s); b.dataset.slot = s; return b; }));
 $('slots').addEventListener('click', (e) => e.target.dataset.slot && send({ op: 'slot', slot: e.target.dataset.slot }));
-$('preset').addEventListener('change', () => { if ($('preset').value) send({ op: 'preset', name: $('preset').value }); $('preset').value = ''; });
 $('init').addEventListener('click', () => send({ op: 'init' }));
 $('undo').addEventListener('click', () => send({ op: 'undo' }));
 $('redo').addEventListener('click', () => send({ op: 'redo' }));
