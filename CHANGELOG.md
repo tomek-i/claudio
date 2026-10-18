@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/tomek-i/dj-claude/compare/v0.6.0...v0.7.0) (2026-10-18)
+
+
+### Features
+
+* **apps:** an Apps menu in every page's header, and pnpm all ([2736983](https://github.com/tomek-i/dj-claude/commit/2736983a55d1962a82fc909656955f39c50adb35))
+* **apps:** an Apps menu in every page's header, and pnpm all ([47d7d06](https://github.com/tomek-i/dj-claude/commit/47d7d062b237f6938f83498d6f5715fd4a86b75d)), closes [#34](https://github.com/tomek-i/dj-claude/issues/34)
+* **desktop:** Claudio, the suite: a home window and a window per app ([#91](https://github.com/tomek-i/dj-claude/issues/91)) ([a1603eb](https://github.com/tomek-i/dj-claude/commit/a1603ebb4d31d6ecbf6ac3d09b025ad85faaa541)), closes [#42](https://github.com/tomek-i/dj-claude/issues/42)
+* keep everything the apps make in data/, one folder per app ([#85](https://github.com/tomek-i/dj-claude/issues/85)) ([4f69846](https://github.com/tomek-i/dj-claude/commit/4f69846e44246ea9a0121799de8d52de7dd2ece8))
+* **synth:** a piano roll, and sequences of one, two or four bars ([#83](https://github.com/tomek-i/dj-claude/issues/83)) ([f9708b4](https://github.com/tomek-i/dj-claude/commit/f9708b417f0fc12967fc6c1351e678f885776d33))
+* **synth:** hear a preset without loading it, and list only your own ([#82](https://github.com/tomek-i/dj-claude/issues/82)) ([4b8bd8e](https://github.com/tomek-i/dj-claude/commit/4b8bd8e94595ac7b0ff2e4953670b4b98ec5e93a))
+* **synth:** lay the panel out as the sound travels, with a level meter ([#80](https://github.com/tomek-i/dj-claude/issues/80)) ([85f7332](https://github.com/tomek-i/dj-claude/commit/85f7332f5b4e6112a7917f6f08f7b53da671bcb5))
+* **synth:** show the sound: a scope, a spectrum and a filter curve to drag ([#81](https://github.com/tomek-i/dj-claude/issues/81)) ([2ad5954](https://github.com/tomek-i/dj-claude/commit/2ad59546970a34a82c2aed3441a88dec24c65442))
+
+
+### Bug fixes
+
+* **apps:** the Apps button last in every header, the icon alone; a race in the desktop test ([6b92358](https://github.com/tomek-i/dj-claude/commit/6b923586b969f64485b17ffe3413914f324fb0cb))
+* **desktop:** install into Claudio, and keep the app's own things in data/claudio ([050d64e](https://github.com/tomek-i/dj-claude/commit/050d64e59a1b1597efa9feadc1fe472193865808))
+* **desktop:** install into Claudio, and keep the app's own things in data/claudio ([19a00bf](https://github.com/tomek-i/dj-claude/commit/19a00bf6d291cfaf5daba3b4c4b84b01f84e6f49))
+
 ## [0.6.0](https://github.com/tomek-i/dj-claude/compare/v0.5.0...v0.6.0) (2026-10-16)
 
 
