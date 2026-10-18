@@ -154,3 +154,9 @@ test('the page is told of every change', async () => {
   assert.equal(next.slots.A.swing, 0.33);
   await reader.cancel();
 });
+
+test('GET /api/ping says which app this is, open to the pages of the other apps (their Apps menus)', async () => {
+  const res = await fetch(BASE + '/api/ping');
+  assert.equal(res.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await res.json(), { app: 'drums', name: 'Claude-808' });
+});

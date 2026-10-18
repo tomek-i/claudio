@@ -142,11 +142,13 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home').cards), ['dj', 'drums', 'synth', 'daw'], r.out);
   assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
   // the card says it is starting, then the drum machine's own page is in a window of its own
-  const starting = at((e) => e.ev === 'home' && e.cards.drums === 'starting'), shown = at((e) => e.ev === 'app');
-  assert.ok(starting >= 0 && shown > starting, r.out);
+  // (the order is checked from the click: the driver can see a window before the card says "starting", as the DJ test below says)
+  const clicked = at((e) => e.ev === 'home'), shown = at((e) => e.ev === 'app');
+  assert.ok(ev.some((e) => e.ev === 'home' && e.cards.drums === 'starting'), r.out);
+  assert.ok(clicked >= 0 && shown > clicked, r.out);
   assert.equal(ev[shown].url, drums + '/');
   assert.match(ev[shown].title, /808/);
-  assert.ok(at((e) => e.ev === 'home' && e.cards.drums === 'open') > starting, r.out);
+  assert.ok(at((e) => e.ev === 'home' && e.cards.drums === 'open') > clicked, r.out);
   // closed: its card says so, and the server the suite started for it is gone
   assert.ok(ev.findLastIndex((e) => e.ev === 'home' && e.cards.drums === 'off') > shown, r.out);
   assert.match(r.out, /\[Claude-808\] .*http:\/\/localhost:4869/, 'its output, with its name before each line');
@@ -159,8 +161,10 @@ test('home: DJ Claude from its card: the start-up window, then the DJ page; clos
   const r = await run(sc, { DRIVE_OPEN: 'dj' }, []);
   assert.equal(r.code, 0, r.out);
   const ev = r.events, at = (f) => ev.findIndex(f);
-  const clicked = at((e) => e.ev === 'home' && e.cards.dj === 'starting');
-  assert.ok(clicked >= 0, r.out);
+  // the driver clicks the card once it has seen the cards; it looks at the windows every 100 ms, so the start-up
+  // window can be seen before the card says "starting": the order is checked from the click, not from that
+  const clicked = at((e) => e.ev === 'home');
+  assert.ok(clicked >= 0 && ev.some((e) => e.ev === 'home' && e.cards.dj === 'starting'), r.out);
   assert.ok(at((e) => e.ev === 'win' && e.kind === 'splash' && e.visible) > clicked, r.out);
   assert.ok(at((e) => e.ev === 'win' && e.kind === 'main' && e.visible) > clicked, r.out);
   assert.equal(ev.find((e) => e.ev === 'state')?.page?.engine, 'live', r.out);

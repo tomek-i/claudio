@@ -5,6 +5,9 @@ import { stepSeconds, swingSteps, clampOffset, beatName, beatSteps } from '/lib/
 import { SLOTS } from '/lib/pattern.mjs';
 import { FEELS, morph } from '/lib/groove.mjs';
 import { Engine, renderWav } from './engine.js';
+import { mountAppsMenu } from './apps-menu.js';
+
+mountAppsMenu(document.getElementById('appsBtn'), 'drums');
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...children) => {

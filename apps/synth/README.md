@@ -17,6 +17,10 @@ node --test apps/synth/test/*.test.mjs
 Needs Node 20 or later. No dependencies, no build step. `MINICLAUDE_PORT` changes the port and `MINICLAUDE_HOME` the folder
 the patches are saved in (default `data/synth/` in the project folder).
 
+The header's Apps menu (the nine dots) lists the four apps of the suite, with a dot for each one running; it asks each
+server's `GET /api/ping`. Its code, `public/apps-menu.js`, is the same file in each app (`test/apps-menu.test.mjs` at the
+top of the repository keeps the copies the same).
+
 ## What it does
 
 - Two oscillators (sine, triangle, saw, square; octave, semitone, fine, level), a sine sub an octave down, noise.

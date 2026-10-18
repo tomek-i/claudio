@@ -798,6 +798,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/visuals') return serveFile(req, res, path.join(PUBLIC_DIR, 'visuals.html'));
 
     // --- control (CLI / Claude)
+    // which app this is, for the other apps' Apps menus (their pages are on other ports, so it is open to them)
+    if (p === '/api/ping') return send(res, 200, { app: 'dj', name: 'DJ Claude' }, { 'access-control-allow-origin': '*' });
     if (p === '/api/state') return send(res, 200, liveState());
     if (p === '/api/record/start' && req.method === 'POST') { const b = await readBody(req); return send(res, 200, startSession(b)); }
     if (p === '/api/record/stop' && req.method === 'POST') return send(res, 200, (await stopSession()) || { error: 'not recording' });

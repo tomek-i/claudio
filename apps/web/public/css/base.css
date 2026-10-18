@@ -77,6 +77,8 @@ a.status:hover, a.status:focus-visible { color: var(--text); }
 /* the set timer and the time of day (ui/clock.js): readouts, so mono like the status. Never wrapped, and it gives
    no width away: a clock that changes shape is read as a change. order: the last thing in the header, at its far end,
    wherever it is in the markup */
+/* the Apps menu's button is last in every app's header: after the clock, which is ordered last itself */
+#appsBtn { order: 2; }
 .topclock { order: 1; flex: none; display: flex; align-items: baseline; gap: 12px; font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: nowrap; }
 .topclock b { font-weight: 600; color: var(--text); }
 /* the buttons on the right of the header: the shortcut list, and the links to the other pages. An arrow marks the

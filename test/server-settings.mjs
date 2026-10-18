@@ -56,3 +56,9 @@ test('the project folder: where it is, and that only a known thing can be opened
   assert.equal(bad.ok, false);
   assert.match(bad.error, /folder, claude/);
 });
+
+test('GET /api/ping says which app this is, open to the pages of the other apps (their Apps menus)', async () => {
+  const res = await fetch(sc.base + '/api/ping');
+  assert.equal(res.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await res.json(), { app: 'dj', name: 'DJ Claude' });
+});

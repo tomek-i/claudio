@@ -17,6 +17,10 @@ node --test apps/daw/test/*.test.mjs
 Needs Node 20 or later. No dependencies, no build step. `CLAUDEBASE_PORT` changes the port and `CLAUDEBASE_HOME` the folder the
 song is saved in (default `data/daw/` in the project folder).
 
+The header's Apps menu (the nine dots) lists the four apps of the suite, with a dot for each one running; it asks each
+server's `GET /api/ping`. Its code, `public/apps-menu.js`, is the same file in each app (`test/apps-menu.test.mjs` at the
+top of the repository keeps the copies the same).
+
 ## What it does
 
 - A song: tempo, swing, a length in bars, a loop region, 4/4. Up to 16 tracks.
