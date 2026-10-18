@@ -1,31 +1,43 @@
 // Runs inside Electron for desktop.test.mjs (no tests in here): `electron test/desktop-driver.mjs <main.mjs>`.
 // It loads the real desktop app and reports what its windows do as lines of `@@<json>` on stdout:
-//   { ev: 'win', kind: 'splash' | 'main', visible, maximized, bounds }   a window appeared or changed
+//   { ev: 'win', kind: 'home' | 'splash' | 'main' | 'app', visible, maximized, bounds }   a window appeared or changed
+//                                                                (main: the DJ page; app: another app's page)
 //   { ev: 'gone', kind }                                         a window closed
 //   { ev: 'splash', steps: { <id>: <state> }, failed }           the start-up window's lines changed
 //   { ev: 'state', engine, page }                                /api/state once the DJ page is on screen, and what the
 //                                                                page says of itself (data-engine: live | held)
 //   { ev: 'answered', page }                                     DRIVE_ANSWER=1: the page after its start button was pressed
-// Then it ends the run the way a user would: it closes the DJ page once that is shown, or presses Close on the
-// start-up window when the start failed. DRIVE_USERDATA keeps Electron's own profile out of the user's.
+//   { ev: 'home', cards: { <id>: <state> } }                      the home window's cards changed
+//   { ev: 'app', url, title }                                    another app's window is on screen
+// DRIVE_OPEN=<id>: once the home window is up, its card for that app is clicked. Then it ends the run the way a user
+// would: it closes the DJ page or the other app's window once that is shown (and then the home window, once its card
+// says so), or presses Close on the start-up window when the start failed. DRIVE_USERDATA keeps Electron's own
+// profile out of the user's.
 import { app, BrowserWindow } from 'electron';
 import { pathToFileURL } from 'node:url';
 
 app.setPath('userData', process.env.DRIVE_USERDATA);
 const say = (o) => console.log('@@' + JSON.stringify(o));
 const last = new Map(); // window id -> what was last reported about it
-let lastSplash = '', ending = false;
+let lastSplash = '', lastHome = '', ending = false, clicked = false, appClosed = false;
 
 async function look() {
   for (const w of BrowserWindow.getAllWindows()) {
     if (w.isDestroyed()) continue;
     const url = w.webContents.getURL();
     if (!url) continue;
-    const kind = url.startsWith('file:') ? 'splash' : 'main';
+    const kind = url.startsWith('file:') ? (url.includes('home.html') ? 'home' : 'splash') : new URL(url).port === process.env.DJ_PORT ? 'main' : 'app';
     const now = { ev: 'win', kind, visible: w.isVisible(), maximized: w.isMaximized(), bounds: w.getNormalBounds() };
     if (!last.has(w.id)) w.once('closed', () => say({ ev: 'gone', kind }));
     if (last.get(w.id) !== JSON.stringify(now)) { last.set(w.id, JSON.stringify(now)); say(now); }
-    if (kind === 'splash') {
+    if (kind === 'home') {
+      const cards = await w.webContents.executeJavaScript(`Object.fromEntries([...document.querySelectorAll('.app')].map((a) => [a.dataset.id, a.dataset.state]))`).catch(() => null);
+      if (cards && JSON.stringify(cards) !== lastHome) { lastHome = JSON.stringify(cards); say({ ev: 'home', cards }); }
+      if (process.env.DRIVE_OPEN && !clicked && now.visible && cards?.[process.env.DRIVE_OPEN]) { clicked = true; w.webContents.executeJavaScript(`document.querySelector('.app[data-id="${process.env.DRIVE_OPEN}"]').click()`).catch(() => {}); }
+      if (appClosed && cards?.[process.env.DRIVE_OPEN] === 'off') w.close(); // the app's card says it is closed: the run is over
+    } else if (kind === 'app') {
+      if (now.visible && !appClosed && !w.webContents.isLoading()) { appClosed = true; say({ ev: 'app', url, title: w.getTitle() }); w.close(); }
+    } else if (kind === 'splash') {
       const s = await w.webContents.executeJavaScript(`({ steps: Object.fromEntries([...document.querySelectorAll('#steps li')].map((li) => [li.dataset.id, li.dataset.state])), failed: document.body.classList.contains('failed') })`).catch(() => null);
       if (s && JSON.stringify(s) !== lastSplash) { lastSplash = JSON.stringify(s); say({ ev: 'splash', ...s }); }
       if (s?.failed && !ending) { ending = true; w.webContents.executeJavaScript(`document.getElementById('close').click()`).catch(() => {}); }
@@ -42,6 +54,7 @@ async function look() {
       }
       if (process.env.DRIVE_BOUNDS) { w.unmaximize(); w.setBounds(JSON.parse(process.env.DRIVE_BOUNDS)); await new Promise((r) => setTimeout(r, 300)); }
       w.close();
+      appClosed = true; // opened from the home window: that one closes once its card says so
     }
   }
 }

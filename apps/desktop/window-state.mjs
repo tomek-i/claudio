@@ -1,5 +1,5 @@
 // Where the DJ window was when it was last closed, so it opens there again: its size and position, and whether it
-// was maximised. Kept with the rest of what the rig keeps (data/desktop/desktop-window.json). No Electron in here: main.mjs
+// was maximised. Kept with the rest of what the rig keeps (data/desktop/window-<app>.json). No Electron in here: main.mjs
 // hands in the screens, so the tests can too.
 import fs from 'node:fs';
 import path from 'node:path';

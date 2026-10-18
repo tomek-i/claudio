@@ -15,6 +15,9 @@ on:
       - apps/server/**
       - apps/web/public/**
       - apps/cli/**
+      - apps/drums/**
+      - apps/synth/**
+      - apps/daw/**
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs
@@ -33,6 +36,9 @@ on:
       - apps/server/**
       - apps/web/public/**
       - apps/cli/**
+      - apps/drums/**
+      - apps/synth/**
+      - apps/daw/**
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs

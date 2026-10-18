@@ -28,10 +28,11 @@ let p = 0; const iv = setInterval(() => { p += 0.25; console.log('PROGRESS ' + p
   q.mapVocals = async () => ({});
   q.quietSec = 1;
   const peak = { full: 0, throttled: 0 }, threadsSeen = { full: new Set(), throttled: new Set() };
-  const sample = setInterval(() => { const m = q.mode(); peak[m] = Math.max(peak[m], q.jobs.size); for (const j of q.jobs.values()) threadsSeen[m].add(j.threads); }, 20);
+  // unref: a failed assertion below ends the test file, rather than leaving this to keep it running for ever
+  const sample = setInterval(() => { const m = q.mode(); peak[m] = Math.max(peak[m], q.jobs.size); for (const j of q.jobs.values()) threadsSeen[m].add(j.threads); }, 20).unref();
   // full speed: 3 at once, 4 threads each
   for (const id of ['t0', 't1', 't2']) q.enqueue(id);
-  await sleep(250);
+  for (let i = 0; i < 40 && q.jobs.size < 3; i++) await sleep(25); // on a busy machine the three take a moment to start
   assert.equal(q.jobs.size, 3);
   assert.equal(q.status().mode, 'full');
   // music starts: running jobs keep going (not killed), queued work drops to 1 × 2 threads

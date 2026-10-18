@@ -1,8 +1,9 @@
-// The desktop app's start-up, with the real Electron: the start-up window first, then the server, the checks and the
-// audio engine, then the DJ page in its place; and the start-up window saying so when the server cannot start.
+// The desktop app's start-up, with the real Electron: DJ Claude on its own (--app dj): the start-up window first, then
+// the server, the checks and the audio engine, then the DJ page in its place; the start-up window saying so when the
+// server cannot start; and Claudio's home window, opening another app's window and server from its card.
 // The app runs on a scratch project folder (DJ_ROOT: its own config, port and generated library) and a scratch
 // Electron profile, so it never meets the rig on this machine. Skipped when Electron is not installed (it is the
-// desktop app's own dependency: `pnpm install`). Ports 4859-4860 and 4862. desktop-driver.mjs is the part inside Electron.
+// desktop app's own dependency: `pnpm install`). Ports 4859-4860, 4862 and 4869-4871. desktop-driver.mjs is the part inside Electron.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,11 +19,12 @@ try { electron = createRequire(path.join(REAL, 'apps', 'desktop', 'package.json'
 if (!electron && process.env.DESKTOP_TEST_REQUIRED) throw new Error('Electron is not installed, and DESKTOP_TEST_REQUIRED is set');
 const skip = !electron && 'Electron is not installed (pnpm install)';
 
-// one run of the app, to its end: the driver's events in order, the exit code, and what the app printed
-function run(sc, env = {}) {
+// one run of the app, to its end: the driver's events in order, the exit code, and what the app printed.
+// args: the app's own (--app dj: DJ Claude alone, no home window)
+function run(sc, env = {}, args0 = ['--app=dj']) {
   return new Promise((resolve) => {
     // a Linux CI machine has no user namespace sandbox to give
-    const args = [...(process.platform === 'linux' && process.env.CI ? ['--no-sandbox'] : []), path.join(REAL, 'test', 'desktop-driver.mjs'), path.join(REAL, 'apps', 'desktop', 'main.mjs')];
+    const args = [...(process.platform === 'linux' && process.env.CI ? ['--no-sandbox'] : []), path.join(REAL, 'test', 'desktop-driver.mjs'), path.join(REAL, 'apps', 'desktop', 'main.mjs'), ...args0];
     const child = spawn(electron, args, {
       cwd: sc.dir, windowsHide: false,
       env: { ...process.env, DJ_ROOT: sc.dir, DJ_PORT: String(sc.port), DJ_NO_BACKFILL: '1', DJ_BANNER_LOOP: '0', DRIVE_USERDATA: path.join(sc.dir, 'electron-profile'), ...env },
@@ -73,7 +75,7 @@ test('start-up: the start-up window first, then the DJ page with a live engine; 
   // closed as a plain window at `left`: that is saved with the rig, and the next start opens there
   // (within a few pixels: on a scaled screen Windows rounds a new window's size to whole device pixels)
   const near = (a, b) => ['x', 'y', 'width', 'height'].every((k) => Math.abs(a[k] - b[k]) <= 8);
-  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'desktop', 'desktop-window.json'), 'utf8'));
+  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'desktop', 'window-dj.json'), 'utf8'));
   assert.equal(saved.maximized, false);
   assert.ok(near(saved.bounds, left), JSON.stringify(saved));
   const again = await run(sc);
@@ -127,4 +129,45 @@ test('start-up: a server whose sound system is another page keeps it; the app as
     assert.ok(!(await api(sc.base, '/api/state')).decks.A?.playing, 'the other page is no longer the engine');
     assert.ok(await up(sc), 'a server the app attached to is left running');
   } finally { await tab.stop(); srv.stop(); }
+});
+
+test('home: Claudio opens on its home window; a card starts that app\'s server and opens its window, and closing it stops the server', { skip, timeout: 90000 }, async () => {
+  const sc = scratch('desktop-home', { port: 4870 });
+  const drums = 'http://localhost:4869';
+  const drumsUp = async () => { try { return (await fetch(drums + '/api/state', { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; } };
+  const r = await run(sc, { DRIVE_OPEN: 'drums', CL808_PORT: '4869' }, []);
+  assert.equal(r.code, 0, r.out);
+  const ev = r.events, at = (f) => ev.findIndex(f);
+  // the home window, with a card per app, and no DJ start-up: nothing is started before it is asked for
+  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home').cards), ['dj', 'drums', 'synth', 'daw'], r.out);
+  assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
+  // the card says it is starting, then the drum machine's own page is in a window of its own
+  const starting = at((e) => e.ev === 'home' && e.cards.drums === 'starting'), shown = at((e) => e.ev === 'app');
+  assert.ok(starting >= 0 && shown > starting, r.out);
+  assert.equal(ev[shown].url, drums + '/');
+  assert.match(ev[shown].title, /808/);
+  assert.ok(at((e) => e.ev === 'home' && e.cards.drums === 'open') > starting, r.out);
+  // closed: its card says so, and the server the suite started for it is gone
+  assert.ok(ev.findLastIndex((e) => e.ev === 'home' && e.cards.drums === 'off') > shown, r.out);
+  assert.match(r.out, /\[Claude-808\] .*http:\/\/localhost:4869/, 'its output, with its name before each line');
+  for (let i = 0; i < 50 && (await drumsUp()); i++) await sleep(100);
+  assert.equal(await drumsUp(), false, 'the server the suite started stops with its window');
+});
+
+test('home: DJ Claude from its card: the start-up window, then the DJ page; closed, its server stops and the home window stays', { skip, timeout: 90000 }, async () => {
+  const sc = scratch('desktop-home-dj', { port: 4871 });
+  const r = await run(sc, { DRIVE_OPEN: 'dj' }, []);
+  assert.equal(r.code, 0, r.out);
+  const ev = r.events, at = (f) => ev.findIndex(f);
+  const clicked = at((e) => e.ev === 'home' && e.cards.dj === 'starting');
+  assert.ok(clicked >= 0, r.out);
+  assert.ok(at((e) => e.ev === 'win' && e.kind === 'splash' && e.visible) > clicked, r.out);
+  assert.ok(at((e) => e.ev === 'win' && e.kind === 'main' && e.visible) > clicked, r.out);
+  assert.equal(ev.find((e) => e.ev === 'state')?.page?.engine, 'live', r.out);
+  assert.ok(at((e) => e.ev === 'home' && e.cards.dj === 'open') > clicked, r.out);
+  // the home window is still there after the DJ page closed: it is closed last, by the driver, once the card says off
+  const djGone = at((e) => e.ev === 'gone' && e.kind === 'main'), homeGone = at((e) => e.ev === 'gone' && e.kind === 'home');
+  assert.ok(djGone >= 0 && homeGone > djGone, r.out);
+  assert.ok(ev.findLastIndex((e) => e.ev === 'home' && e.cards.dj === 'off') > djGone, r.out);
+  assert.ok(await stopped(sc), 'the server the suite started stops with the DJ window');
 });
