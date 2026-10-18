@@ -139,7 +139,8 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   assert.equal(r.code, 0, r.out);
   const ev = r.events, at = (f) => ev.findIndex(f);
   // the home window, with a card per app, and no DJ start-up: nothing is started before it is asked for
-  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home').cards), ['dj', 'drums', 'synth', 'daw'], r.out);
+  // (the first report can come before the cards are drawn: the first one with cards in it)
+  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home' && Object.keys(e.cards).length).cards), ['dj', 'drums', 'synth', 'daw'], r.out);
   assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
   // the card says it is starting, then the drum machine's own page is in a window of its own
   const starting = at((e) => e.ev === 'home' && e.cards.drums === 'starting'), shown = at((e) => e.ev === 'app');
