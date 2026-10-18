@@ -66,7 +66,17 @@ test('moveToClaudio: the folder moves, is laid out with data/, and its build sta
     assert.ok(!fs.existsSync(from));
     assert.equal(fs.readFileSync(path.join(to, 'data', 'dj', 'library', 'a.mp3'), 'utf8'), 'music');
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(to, 'config.json'), 'utf8')).libraryDirs, ['./data/dj/library']);
-    assert.ok(!fs.existsSync(path.join(to, 'data', 'desktop', 'app-build')) && !fs.existsSync(path.join(to, '.dj')), 'the new build writes its files in again');
+    assert.ok(!fs.existsSync(path.join(to, 'data', 'claudio', 'app-build')) && !fs.existsSync(path.join(to, '.dj')), 'the new build writes its files in again');
     assert.deepEqual(r.problems, []);
+    fs.rmSync(to, { recursive: true });
+
+    // a folder already laid out with data/, from when the desktop app's own was data/desktop
+    put(path.join(from, 'config.json'), '{}');
+    put(path.join(from, 'data', 'desktop', 'window-dj.json'), '{"maximized":true}');
+    put(path.join(from, 'data', 'desktop', 'app-build'), '0.6.0 1');
+    moveToClaudio(from, to);
+    assert.ok(!fs.existsSync(path.join(to, 'data', 'desktop')));
+    assert.equal(fs.readFileSync(path.join(to, 'data', 'claudio', 'window-dj.json'), 'utf8'), '{"maximized":true}');
+    assert.ok(!fs.existsSync(path.join(to, 'data', 'claudio', 'app-build')));
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });

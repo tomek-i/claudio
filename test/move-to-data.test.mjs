@@ -45,7 +45,7 @@ test('migrateLayout: the folders move into data/, one place for what is kept, on
     assert.deepEqual(r.problems, []);
     for (const f of ['.dj', 'library', 'sets']) assert.ok(!has(root, f), `${f} is gone`);
     for (const f of ['data/dj/library/demo/Demo.mp3', 'data/dj/library/downloads/Mine.mp3', 'data/dj/sets/friday.json', 'data/dj/cues.json', 'data/dj/grid-edits.json', 'data/dj/memory.json', 'data/dj/sessions/s1/events.jsonl', 'data/dj/produce/beds.mjs',
-      'data/dj/cache/library.json', 'data/dj/cache/server.log', 'data/desktop/desktop-window.json']) assert.ok(has(root, f), f);
+      'data/dj/cache/library.json', 'data/dj/cache/server.log', 'data/claudio/desktop-window.json']) assert.ok(has(root, f), f);
     assert.ok(!has(root, 'data/dj/.layout-plan.json'), 'the plan is deleted once done');
     // the library folders in config.json follow; one outside the project is left alone
     const config = read(root, 'config.json');

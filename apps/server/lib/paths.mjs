@@ -13,7 +13,7 @@
 //      data/dj/          what DJ Claude keeps: library/ (the music), sets/, cues, grid edits, memory, sessions,
 //                        exports, voice and produce work
 //      data/dj/cache/    what it can make again: the analysis cache, decoded audio, stems, models, the server log
-//      data/desktop/     the desktop app's: where its window was, which build wrote the folder
+//      data/claudio/     the desktop app's (the suite): where its windows were, which build wrote the folder
 //      data/drums/, data/synth/, data/daw/   the other apps' (each finds its own; nothing here reads them)
 //    A folder in the layout before data/ (.dj/, library/, sets/ at the top) is moved here by tools/move-to-data.mjs.
 //  - the code: the server's libraries, the page, the CLI, the demo track list. These are found from where this file
@@ -52,4 +52,4 @@ export const CACHE_DIR = path.join(DJ_DIR, 'cache');           // made again whe
 export const LIBRARY_DIR = path.join(DJ_DIR, 'library');       // the music (config.json libraryDirs says where to look)
 export const SETS_DIR = path.join(DJ_DIR, 'sets');             // saved sets (lib/sets.mjs)
 export const EXPORTS_DIR = path.join(DJ_DIR, 'exports');       // exported mixes and sets
-export const DESKTOP_DIR = path.join(DATA_DIR, 'desktop');     // the desktop app's window place and build stamp
+export const DESKTOP_DIR = path.join(DATA_DIR, 'claudio');     // the desktop app's window places and build stamp

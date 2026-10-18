@@ -75,7 +75,7 @@ test('start-up: the start-up window first, then the DJ page with a live engine; 
   // closed as a plain window at `left`: that is saved with the rig, and the next start opens there
   // (within a few pixels: on a scaled screen Windows rounds a new window's size to whole device pixels)
   const near = (a, b) => ['x', 'y', 'width', 'height'].every((k) => Math.abs(a[k] - b[k]) <= 8);
-  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'desktop', 'window-dj.json'), 'utf8'));
+  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'claudio', 'window-dj.json'), 'utf8'));
   assert.equal(saved.maximized, false);
   assert.ok(near(saved.bounds, left), JSON.stringify(saved));
   const again = await run(sc);

@@ -30,7 +30,7 @@ for the stem separator). Everything the apps make while they run is in `data/` (
 | `data/dj/sets/` | saved sets and their automation takes |
 | `data/dj/` | `cues.json`, `grid-edits.json`, `memory.json`, `active-set.json`, `sessions/` and `exports/` (recordings, mp3 + tracklist + cue), `voice/`, `produce/` |
 | `data/dj/cache/` | `library.json` (analysis), `pcm/` (decoded audio), `stems/`, `models/`, `server.log`: made again when deleted (stems take a while) |
-| `data/desktop/` | where the desktop app's window was, and which build wrote the folder |
+| `data/claudio/` | where the desktop app's windows were, and which build wrote the folder |
 | `data/drums/`, `data/synth/`, `data/daw/` | Claude-808's beat, MiniClaude's patches and sequence, Claudebase's song |
 
 A folder from before `data/` (`.dj/`, `library/` and `sets/` at the top, and the other apps' `apps/*/.cl-808` and the
