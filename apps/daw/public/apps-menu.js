@@ -5,8 +5,8 @@
 // class names of its own (apps-, am-) that no page uses.
 //
 //   mountAppsMenu(button, 'drums')     the header's button, and which app this page is
-// The button gets the app-switcher icon (nine dots) in front of its text; an empty button is the icon alone, for a
-// header with little room (the tool pages), and is named "Apps" for screen readers.
+// The button is the app-switcher icon (nine dots), last in each page's header, and is named "Apps" for screen readers
+// (a button with text of its own gets the icon in front of it).
 //
 // Whether an app runs is asked of its server, GET /api/ping on its usual port (each server answers it, open to the
 // other pages). A click on another app opens it in a new tab; in Claudio, the desktop suite, that opens the app's
