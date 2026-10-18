@@ -77,6 +77,11 @@ code with the DJ rig or with the others. They live here for now.
 
 Ask Claude for "a boom bap beat", "a fat detuned bass" or "a house track" and it uses the right one.
 
+`pnpm all` starts all four servers (the DJ rig too) in one terminal, each line marked with its app; one Ctrl+C stops
+them. Every page has an **Apps** menu in its header with the four, a dot for each one running: a click opens one in a
+new tab, and one that is not running shows the command that starts it. In the desktop app, Claudio, the menu opens the
+app's window and starts it.
+
 ## Notes
 - Built for personal use with music you have the rights to play. Downloads are your responsibility.
 - Windows is the primary platform (PowerShell/Git Bash); the engine and server are plain Node + browser and run elsewhere, but

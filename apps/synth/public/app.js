@@ -9,7 +9,10 @@ import { NOTE_MAX, isBlack, noteName, noteFreq } from '../lib/notes.mjs';
 import { STEPS, VEL, tokens, rowText } from '../lib/seq.mjs';
 import { ROWS, rollTop, pressCell, dragLength, removeNote, velocityAt } from '../lib/roll.mjs';
 import { Engine, renderWav } from './engine.js';
+import { mountAppsMenu } from './apps-menu.js';
 import { createBrowser } from './browser.js';
+
+mountAppsMenu(document.getElementById('appsBtn'), 'synth');
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...children) => {

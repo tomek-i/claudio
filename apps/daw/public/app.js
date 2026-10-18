@@ -6,6 +6,9 @@ import { $, el, ui, project, onRender, render, send, commit, post, connect, comp
 import { BAR_W } from './arrange.js';
 import { editorFrame } from './editor.js';
 import { renderWav } from './engine.js';
+import { mountAppsMenu } from './apps-menu.js';
+
+mountAppsMenu(document.getElementById('appsBtn'), 'daw');
 
 // ---- the top bar
 

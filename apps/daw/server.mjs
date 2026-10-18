@@ -69,6 +69,8 @@ export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOM
     const route = `${req.method} ${url.pathname}`;
     try {
       switch (route) {
+        // which app this is, for the other apps' Apps menus (their pages are on other ports, so it is open to them)
+        case 'GET /api/ping': res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, { app: 'daw', name: APP_NAME });
         case 'GET /api/state': return send(res, 200, store.state());
         case 'GET /api/events': {
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });

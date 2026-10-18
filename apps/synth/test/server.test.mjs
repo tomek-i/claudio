@@ -280,3 +280,9 @@ test('the patches and the sequence are saved and come back after a restart', asy
   console.error = () => {};
   try { assert.equal(createServer({ home: broken }).store.patch.name, 'Acid bass'); } finally { console.error = logged; fs.rmSync(broken, { recursive: true, force: true }); }
 });
+
+test('GET /api/ping says which app this is, open to the pages of the other apps (their Apps menus)', async () => {
+  const res = await fetch(BASE + '/api/ping');
+  assert.equal(res.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await res.json(), { app: 'synth', name: 'MiniClaude' });
+});

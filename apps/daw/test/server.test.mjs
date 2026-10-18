@@ -206,3 +206,9 @@ test('the song is saved and comes back after a restart', async () => {
   assert.deepEqual(again.store.project, server.store.project);
   assert.equal(again.store.state().canUndo, false);
 });
+
+test('GET /api/ping says which app this is, open to the pages of the other apps (their Apps menus)', async () => {
+  const res = await fetch(BASE + '/api/ping');
+  assert.equal(res.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await res.json(), { app: 'daw', name: 'Claudebase' });
+});
