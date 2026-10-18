@@ -19,7 +19,7 @@ import path from 'node:path';
 const APP_OWNED = ['apps/server', 'apps/cli', 'apps/web', 'apps/drums', 'apps/synth', 'apps/daw', 'tools', 'dj.mjs', 'CLAUDE.md'];
 const DROPPED = ['starter']; // now apps/server/demo-tracks
 const USER_OWNED = ['config.json', '.claude/settings.json'];
-const STAMP = 'data/desktop/app-build'; // which build of the app last wrote its files here
+const STAMP = 'data/claudio/app-build'; // which build of the app last wrote its files here
 
 // CLAUDE.md for the installed folder: the repository's, up to its "## Layout" (which describes the source tree, the
 // tests and the benchmarks, none of which a player has or needs), then what is true of this folder instead

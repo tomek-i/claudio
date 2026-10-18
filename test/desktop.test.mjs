@@ -75,7 +75,7 @@ test('start-up: the start-up window first, then the DJ page with a live engine; 
   // closed as a plain window at `left`: that is saved with the rig, and the next start opens there
   // (within a few pixels: on a scaled screen Windows rounds a new window's size to whole device pixels)
   const near = (a, b) => ['x', 'y', 'width', 'height'].every((k) => Math.abs(a[k] - b[k]) <= 8);
-  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'desktop', 'window-dj.json'), 'utf8'));
+  const saved = JSON.parse(fs.readFileSync(path.join(sc.dir, 'data', 'claudio', 'window-dj.json'), 'utf8'));
   assert.equal(saved.maximized, false);
   assert.ok(near(saved.bounds, left), JSON.stringify(saved));
   const again = await run(sc);
@@ -139,7 +139,8 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   assert.equal(r.code, 0, r.out);
   const ev = r.events, at = (f) => ev.findIndex(f);
   // the home window, with a card per app, and no DJ start-up: nothing is started before it is asked for
-  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home').cards), ['dj', 'drums', 'synth', 'daw'], r.out);
+  // (the first report can come before the cards are drawn: the first one with cards in it)
+  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home' && Object.keys(e.cards).length).cards), ['dj', 'drums', 'synth', 'daw'], r.out);
   assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
   // the card says it is starting, then the drum machine's own page is in a window of its own
   // (the order is checked from the click: the driver can see a window before the card says "starting", as the DJ test below says)

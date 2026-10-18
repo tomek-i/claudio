@@ -18,7 +18,11 @@ export function moveToClaudio(from, to) {
   // the app's build stamp: the new build is a different app, so it writes its files in again
   fs.rmSync(path.join(to, 'data', 'desktop', 'app-build'), { force: true });
   fs.rmSync(path.join(to, '.dj', 'app-build'), { force: true });
-  return migrateLayout(to);
+  const report = migrateLayout(to);
+  // the desktop app's own folder was data/desktop before it was data/claudio: the window places come along
+  const was = path.join(to, 'data', 'desktop'), now = path.join(to, 'data', 'claudio');
+  if (fs.existsSync(was) && !fs.existsSync(now)) fs.renameSync(was, now);
+  return report;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

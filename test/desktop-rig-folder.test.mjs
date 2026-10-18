@@ -46,7 +46,7 @@ test('prepareRigFolder: the first start makes a whole project; an update replace
     assert.equal(read(root, '.claude/skills/dj/SKILL.md'), 'dj 1.1.0');
     assert.equal(read(root, 'apps/server/demo-tracks/tracks.json'), '["one","two"]');
     assert.ok(!fs.existsSync(path.join(root, 'apps/server/lib/old.mjs')), 'a file the update dropped is gone');
-    assert.equal(read(root, 'data/desktop/app-build'), buildStamp(shipped));
+    assert.equal(read(root, 'data/claudio/app-build'), buildStamp(shipped));
     // the user's things are as they left them
     assert.equal(read(root, 'config.json'), '{"port":5000}');
     assert.equal(read(root, '.claude/settings.json'), '{"mine":true}');

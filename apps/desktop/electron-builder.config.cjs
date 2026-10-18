@@ -10,7 +10,9 @@ module.exports = {
   productName: 'Claudio',
   electronVersion: require('electron/package.json').version,
   directories: { output: 'dist', buildResources: path.join(__dirname) },
-  extraMetadata: { main: 'apps/desktop/main.mjs' },
+  // name: the installer's folder (%LOCALAPPDATA%\Programs\<it>) is the product name, except in a one-click per-user
+  // install, which takes the package name; the uninstaller also clears %APPDATA%\<it>, the app's own data
+  extraMetadata: { name: 'claudio', main: 'apps/desktop/main.mjs' },
   asar: false,
   npmRebuild: false,
   files: [

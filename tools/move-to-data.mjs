@@ -89,7 +89,7 @@ function* files(dir, skip) {
 // root: the project folder. Returns null when there was nothing to do, else { moved, tracks, files, problems }.
 export function migrateLayout(root) {
   const old = { dj: path.join(root, '.dj'), library: path.join(root, 'library'), sets: path.join(root, 'sets') };
-  const data = path.join(root, 'data'), dj = path.join(data, 'dj'), cache = path.join(dj, 'cache'), desktop = path.join(data, 'desktop');
+  const data = path.join(root, 'data'), dj = path.join(data, 'dj'), cache = path.join(dj, 'cache'), desktop = path.join(data, 'claudio');
   const lib = path.join(dj, 'library'), planFile = path.join(dj, PLAN);
   const moved = [], problems = [];
   let plan = null;
