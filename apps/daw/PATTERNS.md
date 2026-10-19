@@ -72,7 +72,8 @@ Numbers can be worked out (`1/8`, `3/4 + 1/16`). `silence` is a pattern with not
 
 ## The code around them
 
-- **Several patterns**, each on its own line, play together. A line may start with `$:`, as in Strudel; `_$:` mutes it.
+- **Several patterns**, each on its own line, play together. A line may start with `$:`, as in Strudel, or name its
+  block: `$drums:` (or `drums:`). `_` before either mutes it. On the live page each block can be muted and soloed.
 - **A chain can go on over lines:** `s("bd sd")` then `.fast(2)` on the next line.
 - **Comments** are `//` and `/* */`.
 - **Strings** take `"`, `'` or `` ` ``.

@@ -217,6 +217,9 @@ const READ = {
   },
 };
 
+// the places in the code of the two values that make one event
+const both = (a, b) => [...(a.locs ?? []), ...(b.locs ?? [])];
+
 // a degree of a scale as a pitch: 0 is the tonic, 7 the octave above in a seven-note scale, -1 the note below
 const degree = ({ tonic, steps }, d) => {
   const i = Math.round(d), len = steps.length;
@@ -267,7 +270,9 @@ function mini(text, from, readWord, ctx) {
     const m = /^[A-Za-z0-9#.:'\-^_]+/.exec(text.slice(i));
     if (!m) fail(`unexpected "${ch}"`);
     i += m[0].length;
-    try { return pure(read(m[0])); } catch (err) { return fail(err.message, at); }
+    let v;
+    try { v = read(m[0]); } catch (err) { return fail(err.message, at); }
+    return pure(typeof v === 'object' ? { ...v, locs: [[from + at, from + i]] } : v);   // where the word is, to light it up
   };
   // a number after * / @ ? or in ( ): a word, or a pattern of numbers in brackets
   const amount = (what) => {
@@ -310,7 +315,7 @@ function mini(text, from, readWord, ctx) {
 
 // ---- the code around the strings: the JavaScript that Strudel's snippets are written in, as far as patterns need it.
 // Calls and method chains, strings, numbers with + - * /, arrow functions (x => x.fast(2)), several patterns on
-// lines of their own (each may start with $:, and _$: mutes one), comments.
+// lines of their own (each may start with $: or $name:, and _ before it mutes it), comments.
 
 function tokens(code, fail) {
   const out = [];
@@ -326,8 +331,8 @@ function tokens(code, fail) {
     }
     const num = /^(\d+\.?\d*|\.\d+)/.exec(rest);
     if (num) { out.push({ t: 'num', v: Number(num[0]), pos: i }); i += num[0].length; continue; }
-    const label = /^_?\$:/.exec(rest);
-    if (label) { out.push({ t: 'op', v: label[0], pos: i }); i += label[0].length; continue; }
+    const label = /^(_?)(\$?)([A-Za-z]\w*)?:/.exec(rest);   // $: or $drums: or drums: begins a block, _ mutes it
+    if (label && (label[2] || label[3])) { out.push({ t: 'label', name: label[3] ?? null, muted: label[1] === '_', pos: i }); i += label[0].length; continue; }
     const id = /^[A-Za-z_$][\w$]*/.exec(rest);
     if (id) { out.push({ t: 'id', v: id[0], pos: i }); i += id[0].length; continue; }
     if (rest.startsWith('=>')) { out.push({ t: 'op', v: '=>', pos: i }); i += 2; continue; }
@@ -392,9 +397,9 @@ function syntax(code, fail) {
   const statements = [];
   while (k < toks.length) {
     if (peek(';')) { k++; continue; }
-    const muted = peek('_$:');
-    if (muted || peek('$:')) k++;
-    statements.push({ node: expr(), muted });
+    const label = toks[k].t === 'label' ? toks[k++] : null;
+    const pos = label?.pos ?? toks[k]?.pos ?? code.length;
+    statements.push({ node: expr(), muted: !!label?.muted, name: label?.name ?? null, pos });
   }
   return statements;
 }
@@ -427,8 +432,8 @@ const FUNCTIONS = {
   off: [['time', 'fn'], (p, t, f) => off(p, t, f)],
   late: [['time'], (p, t) => lateBy(p, t)],
   early: [['time'], (p, t) => lateBy(p, -t)],
-  scale: [['scale'], (p, sc) => setFrom(p, sc, (a, b) => (a.n === undefined ? a : { ...a, note: degree(b.scale, a.n) }))],
-  ...Object.fromEntries(CONTROLS.map((name) => [name, [['control'], (p, c) => setFrom(p, c, (a, b) => ({ ...a, ...b }))]])),
+  scale: [['scale'], (p, sc) => setFrom(p, sc, (a, b) => (a.n === undefined ? a : { ...a, note: degree(b.scale, a.n), locs: both(a, b) }))],
+  ...Object.fromEntries(CONTROLS.map((name) => [name, [['control'], (p, c) => setFrom(p, c, (a, b) => ({ ...a, ...b, locs: both(a, b) }))]])),
 };
 const RANDOM = new Set(['sometimesBy', 'sometimes', 'often', 'rarely', 'almostNever', 'almostAlways', 'degradeBy', 'degrade']);
 const inTurn = (ps) => timecat(ps.map((p) => ({ p, w: 1 })));
@@ -506,35 +511,41 @@ function evaluate(statements, ctx) {
     return fail('cannot read this', node.pos);
   };
 
-  return stack(statements.filter((st) => !st.muted).map((st) => patternOf(value(st.node, {}), st.node)));
+  return statements.map((st) => ({ ...st, pattern: patternOf(value(st.node, {}), st.node) }));
 }
 
 // ---- the two calls
 
-// The code as a pattern. Throws a PatternError that says the line, the column and what was expected.
+// The code as a pattern: its blocks that are not muted, together. Throws a PatternError that says the line, the
+// column and what was expected.
 export function parse(code) {
+  return stack(parseBlocks(code).filter((b) => !b.muted).map((b) => b.pattern));
+}
+
+// The blocks of the code, each on its own: { name, muted, line, pattern }. A block is a pattern on lines of its own,
+// begun by $: or $name: (or name:); _ before it mutes it. A block with no name is called by its number: 1, 2, …
+export function parseBlocks(code) {
   const text = String(code);
+  const lineOf = (pos) => text.slice(0, Math.max(0, pos)).split('\n');
   const ctx = {
     seed: 0,
-    fail(reason, pos) {
-      const before = text.slice(0, Math.max(0, pos)).split('\n');
-      throw new PatternError(reason, before.length, before.at(-1).length + 1);
-    },
+    fail(reason, pos) { const before = lineOf(pos); throw new PatternError(reason, before.length, before.at(-1).length + 1); },
   };
-  return evaluate(syntax(text, ctx.fail), ctx);
+  return evaluate(syntax(text, ctx.fail), ctx).map((st, i) => ({ name: st.name ?? String(i + 1), muted: st.muted, line: lineOf(st.pos).length, pattern: st.pattern }));
 }
 
 // The events that start in [from, to), in cycles (one cycle is one bar), in the order they sound:
-//   { start, len, sound, kind, pitch, vel }
+//   { start, len, sound, kind, pitch, vel, locs }
 // sound: a kit voice (kind 'drum') or a synth sound (kind 'synth'), or null when only a note is given (the track's
 // sound plays it). pitch: a MIDI number, or null for a drum. vel: 0 to 1, the normal level times gain and velocity.
+// locs: where the words of the event are in the code, as [from, to) offsets, to light them up as they sound.
 export function query(pattern, from, to) {
   return pattern.query(from, to).filter(startsIn(from, to)).map(({ start, end, value: v }) => {
     const sound = v.s !== undefined ? soundOf(v.s) : null;
     let pitch = v.note ?? null;
     if (pitch === null && v.n !== undefined && sound?.kind !== 'drum') pitch = 48 + v.n;   // n alone: semitones from C3
     const vel = Math.min(1, Math.max(0, DEFAULT_VEL * (v.gain ?? 1) * (v.velocity ?? 1)));
-    return { start: snap(start), len: snap(end - start), sound: sound?.id ?? null, kind: sound?.kind ?? null, pitch: sound?.kind === 'drum' ? null : pitch, vel };
+    return { start: snap(start), len: snap(end - start), sound: sound?.id ?? null, kind: sound?.kind ?? null, pitch: sound?.kind === 'drum' ? null : pitch, vel, locs: v.locs ?? [] };
   }).sort((a, b) => a.start - b.start || String(a.sound).localeCompare(String(b.sound)) || (a.pitch ?? 0) - (b.pitch ?? 0));
 }
 
