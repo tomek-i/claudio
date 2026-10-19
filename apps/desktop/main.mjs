@@ -32,6 +32,7 @@ import { fileURLToPath } from 'node:url';
 import { CONFIG_FILE, DATA_DIR, DESKTOP_DIR, ROOT } from '../server/lib/paths.mjs';
 import { banner } from '../server/lib/banner.mjs';
 import { loadWindow, placement, saveWindow } from './window-state.mjs';
+import { icoOf, relaunchCommand } from './taskbar.mjs';
 import { APPS, appById, appFromArgs, appOfUrl, originOf, portOf, serverEnv, serverFile } from './apps.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
@@ -318,11 +319,24 @@ function iconOf(href) {
   icons.set(href, drawn);
   return drawn;
 }
+// The taskbar button can be pinned: Windows keeps the command that opens this app again (taskbar.mjs) and the icon,
+// from an .ico in data/claudio/ (a pinned button's picture is read from a file), so a pinned MiniClaude opens MiniClaude
+// with its own picture, also when the suite is not running.
 function wearIcon(win, a) {
-  if (process.platform === 'win32') win.setAppDetails({ appId: `com.claudio.desktop.${a.id}` });
+  const win32 = process.platform === 'win32', appId = `com.claudio.desktop.${a.id}`;
+  const relaunch = { relaunchCommand: relaunchCommand(a.id, { execPath: process.execPath, appPath: app.getAppPath(), packaged: app.isPackaged }), relaunchDisplayName: a.name };
+  if (win32) win.setAppDetails({ appId, ...relaunch });
   win.webContents.on('page-favicon-updated', async (e, [href]) => {
     const img = href && await iconOf(href);
-    if (img && !win.isDestroyed()) win.setIcon(img);
+    if (!img || win.isDestroyed()) return;
+    win.setIcon(img);
+    if (!win32) return;
+    try {
+      const ico = path.join(DESKTOP_DIR, `icon-${a.id}.ico`);
+      fs.mkdirSync(DESKTOP_DIR, { recursive: true });
+      fs.writeFileSync(ico, icoOf(img.resize({ width: 256, height: 256 }).toPNG()));
+      win.setAppDetails({ appId, appIconPath: ico, appIconIndex: 0, ...relaunch });
+    } catch {} // the button keeps the window's icon, only a pinned one goes without
   });
 }
 
