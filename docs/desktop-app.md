@@ -22,7 +22,7 @@ DJ Claude's window adds:
   audio engine), then gives way to the DJ page when the engine is live. If the server cannot start, it says why.
 - **The window where you left it** (every app's): it opens on the same screen, at the same size, maximised or not
   (maximised the first time).
-- **No Start engine click**: the app may play sound without one, so the window is the sound system as soon as it opens.
+- **No Start engine or Start sound click**: the app may play sound without one, so each app's window plays as soon as it opens.
 - **No stale engine**: the window is not slowed down when it is hidden or minimised, as a background browser tab is.
 
 - **It asks before it takes over**: if a browser tab is already the sound system on that server, the app does not

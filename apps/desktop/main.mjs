@@ -8,8 +8,8 @@
 // window: opening it again brings that one forward. A link from one app's page to another's opens that app.
 //
 // What the app adds over browser tabs:
-//  - no "Start engine" click: the app allows sound without a gesture, and loads the DJ page with ?desktop, which
-//    starts the engine by itself;
+//  - no "Start engine" or "Start sound" click: the app allows sound without a gesture, and loads every app's page with
+//    ?desktop, which starts its sound by itself;
 //  - no background throttling: a window keeps running at full speed when it is hidden or minimised, so the engine
 //    does not go stale;
 //  - nothing to start by hand: an app's server starts when it is opened, and stops when its window closes;

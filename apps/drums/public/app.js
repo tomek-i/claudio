@@ -472,7 +472,7 @@ function startSound() {
     engine.wake();
     engine.ctx.onstatechange = soundChanged;           // the browser says when the sound is on, and if it takes it away again
     soundChanged();
-  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; }
+  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; $('startOverlay').hidden = false; }
 }
 $('startBtn').addEventListener('click', startSound);
 // While the card is up the keys are its own: Enter and Space start the sound, Tab stays on the one button, and the
@@ -484,6 +484,9 @@ $('startOverlay').addEventListener('keydown', (e) => {
 });
 $('startOverlay').addEventListener('mousedown', (e) => { if (e.target !== $('startBtn')) e.preventDefault(); });
 $('startBtn').focus();
+// The desktop suite (apps/desktop) loads the page with ?desktop: it may play sound without a click, so the card is
+// never shown there and the sound starts by itself.
+if (new URLSearchParams(location.search).has('desktop')) { $('startOverlay').hidden = true; startSound(); }
 
 soundChanged();
 connect();
