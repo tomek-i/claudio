@@ -22,7 +22,7 @@ import { stepSeconds } from './lib/timing.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_PORT = 4748;
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' };
 const MAX_BODY = 256 * 1024;
 const MAX_WAIT_MS = 60_000;
 
@@ -48,7 +48,8 @@ function serveFile(res, root, rel) {
   if (!file.startsWith(root + path.sep) || !TYPES[path.extname(file)]) return false;
   let body;
   try { body = fs.readFileSync(file); } catch { return false; }
-  res.writeHead(200, { 'Content-Type': `${TYPES[path.extname(file)]}; charset=utf-8`, 'Cache-Control': 'no-cache' });
+  const type = TYPES[path.extname(file)];
+  res.writeHead(200, { 'Content-Type': type.startsWith('font/') ? type : `${type}; charset=utf-8`, 'Cache-Control': 'no-cache' });   // a font is not text
   res.end(body);
   return true;
 }

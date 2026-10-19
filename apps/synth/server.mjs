@@ -23,7 +23,7 @@ import { STEPS, stepSeconds } from './lib/seq.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export { DEFAULT_PORT };
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' };
 const MAX_BODY = 256 * 1024;
 const MAX_WAIT_MS = 60_000;
 
@@ -51,7 +51,7 @@ function serveFile(res, root, rel) {
   let body;
   try { body = fs.readFileSync(file); } catch { return false; }
   if (ext === '.html') body = body.toString('utf8').replaceAll('%NAME%', APP_NAME);   // the name is in lib/app.mjs only
-  res.writeHead(200, { 'Content-Type': `${TYPES[ext]}; charset=utf-8`, 'Cache-Control': 'no-cache' });
+  res.writeHead(200, { 'Content-Type': TYPES[ext].startsWith('font/') ? TYPES[ext] : `${TYPES[ext]}; charset=utf-8`, 'Cache-Control': 'no-cache' });   // a font is not text
   res.end(body);
   return true;
 }

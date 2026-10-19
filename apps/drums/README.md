@@ -55,6 +55,10 @@ rules with a seeded random number generator (`lib/groove.mjs`), so they work wit
 - `lib/store.mjs`: slots, undo, saving, notes. `server.mjs`: the HTTP API and static files (the API is listed at its top).
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` the grid and controls.
   The page imports `lib/` as `/lib/*.mjs`.
+- `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
+  here so the page looks right with no network, and the rules the pages have in common), loaded before `style.css`,
+  which is this app's own. It is a copy: change `tools/theme/` at the top of the project and run `node tools/theme.mjs`
+  (`test/apps-theme.test.mjs` fails when the copies differ).
 - `cl808.mjs`: the CLI.
 - `lib/banner.mjs`: the server's startup banner. One of its `ANIMATIONS` plays at random (`CL808_BANNER=<name>`
   picks one, `CL808_NO_BANNER=1` gives plain lines), then its strip of pads shows the loaded beat as it is edited,

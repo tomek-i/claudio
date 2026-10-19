@@ -103,6 +103,10 @@ instead of pretending.
   API is listed at its top).
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` builds the
   panel from the schema and handles the keys and the sequence; `browser.js` is the preset browser. The page imports `lib/` as `/lib/*.mjs`.
+- `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
+  here so the page looks right with no network, and the rules the pages have in common), loaded before `style.css`,
+  which is this app's own. It is a copy: change `tools/theme/` at the top of the project and run `node tools/theme.mjs`
+  (`test/apps-theme.test.mjs` fails when the copies differ).
 - `miniclaude.mjs`: the CLI.
 - `test/`: `synth.test.mjs` (the arithmetic), `engine.test.mjs` (the engine on a pretend audio context,
   `fake-audio.mjs`), `server.test.mjs` (the server on a scratch folder, port 4864, and the CLI as a process).
