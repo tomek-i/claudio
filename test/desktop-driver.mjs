@@ -25,7 +25,7 @@ async function look() {
   for (const w of BrowserWindow.getAllWindows()) {
     if (w.isDestroyed()) continue;
     const url = w.webContents.getURL();
-    if (!url) continue;
+    if (!url || url.startsWith('data:')) continue; // the suite's hidden window that draws an app's icon
     const kind = url.startsWith('file:') ? (url.includes('home.html') ? 'home' : 'splash') : new URL(url).port === process.env.DJ_PORT ? 'main' : 'app';
     const now = { ev: 'win', kind, visible: w.isVisible(), maximized: w.isMaximized(), bounds: w.getNormalBounds() };
     if (!last.has(w.id)) w.once('closed', () => say({ ev: 'gone', kind }));

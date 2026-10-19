@@ -294,8 +294,36 @@ function open(url, a, show = true, bounds = null) {
     if (r === 'here') open(to, a); else if (r === 'outside') shell.openExternal(to); else openApp(r.id);
     return { action: 'deny' };
   });
+  wearIcon(win, a);
   win.loadURL(url);
   return win;
+}
+
+// Each app's window wears that app's own icon: the favicon its page has (an SVG), drawn once into a picture in a
+// hidden window, as a window icon cannot be an SVG. On Windows each app also gets a taskbar button of its own (an id
+// of its own), so the taskbar shows that icon and not the suite's.
+const icons = new Map(); // favicon → the picture, once drawn
+function iconOf(href) {
+  if (icons.has(href)) return icons.get(href);
+  // an offscreen window hands over each frame it paints (capturePage does not work on one): the first after the load
+  const w = new BrowserWindow({ show: false, width: 256, height: 256, frame: false, transparent: true, webPreferences: { offscreen: true, sandbox: true } });
+  const drawn = new Promise((resolve) => {
+    let loaded = false;
+    w.webContents.once('did-finish-load', () => { loaded = true; w.webContents.invalidate(); });
+    w.webContents.on('paint', (e, dirty, img) => { if (loaded && !img.isEmpty()) resolve(img); });
+    setTimeout(() => resolve(null), 5000);
+  }).finally(() => w.destroy());
+  const src = href.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  w.loadURL(`data:text/html,${encodeURIComponent(`<body style="margin:0;background:transparent"><img src="${src}" width="256" height="256">`)}`).catch(() => {});
+  icons.set(href, drawn);
+  return drawn;
+}
+function wearIcon(win, a) {
+  if (process.platform === 'win32') win.setAppDetails({ appId: `com.claudio.desktop.${a.id}` });
+  win.webContents.on('page-favicon-updated', async (e, [href]) => {
+    const img = href && await iconOf(href);
+    if (img && !win.isDestroyed()) win.setIcon(img);
+  });
 }
 
 // ---- the menu, in every window: the apps first. Ctrl+1 to 4 are free in all four pages (they leave a key with

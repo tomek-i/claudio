@@ -24,6 +24,8 @@ DJ Claude's window adds:
   (maximised the first time).
 - **No Start engine or Start sound click**: the app may play sound without one, so each app's window plays as soon as it opens.
 - **No stale engine**: the window is not slowed down when it is hidden or minimised, as a background browser tab is.
+- **Each app its own icon**: a window, and on Windows its taskbar button, shows the app's own icon (the one in its
+  browser tab), not the suite's.
 
 - **It asks before it takes over**: if a browser tab is already the sound system on that server, the app does not
   cut it off. Its window opens with "Another window is the sound system right now" and takes over on **Take over**.
