@@ -28,6 +28,18 @@ body { min-height: 100vh; }
 button, input, select, .btn { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--mid); outline-offset: 2px; }
 
+/* ---------- scrollbars: slim, in the panel colours (as DJ Claude's) ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border: 2px solid transparent; border-radius: 99px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--faint); }
+::-webkit-scrollbar-thumb:active { background-color: var(--dim); }
+::-webkit-scrollbar-button { display: none; }
+/* Firefox (setting these in Chromium would switch the rules above off) */
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+}
+
 /* ---------- controls ---------- */
 button, select, .btn {
   height: var(--h); padding: 0 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 7px;
