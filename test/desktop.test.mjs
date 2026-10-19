@@ -147,7 +147,9 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   const clicked = at((e) => e.ev === 'home'), shown = at((e) => e.ev === 'app');
   assert.ok(ev.some((e) => e.ev === 'home' && e.cards.drums === 'starting'), r.out);
   assert.ok(clicked >= 0 && shown > clicked, r.out);
-  assert.equal(ev[shown].url, drums + '/');
+  assert.equal(ev[shown].url, drums + '/?desktop');
+  // the app may play without a click: no "Start sound" card, the sound is on by itself
+  assert.deepEqual(ev[shown].page, { sound: 'sound on', card: false }, r.out);
   assert.match(ev[shown].title, /808/);
   assert.ok(at((e) => e.ev === 'home' && e.cards.drums === 'open') > clicked, r.out);
   // closed: its card says so, and the server the suite started for it is gone

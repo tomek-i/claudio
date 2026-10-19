@@ -42,24 +42,24 @@
   .app kbd { position: absolute; top: 10px; right: 12px; font: 11px ui-monospace, Consolas, monospace; color: var(--faint); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* each app's picture, drawn: the record, the pads, the keys, the clips */
-  .disc { position: absolute; inset: 2px; border-radius: 50%; background: repeating-radial-gradient(circle, #111 0 3px, #17171d 3px 4px); box-shadow: 0 0 0 1px #000; }
-  .disc::before { content: ''; position: absolute; inset: 13px; border-radius: 50%; border: 4px solid var(--a); border-right-color: transparent; }
-  .disc::after { content: ''; position: absolute; inset: 27px; border-radius: 50%; background: var(--b); }
-  .app:hover .disc { animation: spin 2.4s linear infinite; }
-  .pads { position: absolute; inset: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-  .pads b { border-radius: 2px; background: #22222b; }
-  .pads b:nth-child(3n+1) { background: var(--c); }
-  .keys { position: absolute; inset: 10px 2px; display: flex; gap: 2px; }
-  .keys b { flex: 1; background: #d9d8e3; border-radius: 0 0 2px 2px; position: relative; }
-  .keys b:nth-child(-n+5):not(:nth-child(3))::after { content: ''; position: absolute; right: -5px; top: 0; width: 8px; height: 58%; background: #111; border-radius: 0 0 2px 2px; z-index: 1; }
-  .keys b:nth-child(2) { background: var(--c); }
-  .clips { position: absolute; inset: 8px 0; display: flex; flex-direction: column; justify-content: space-between; }
-  .clips b { height: 9px; border-radius: 2px; background: var(--c); opacity: .85; }
-  .clips b:nth-child(1) { width: 70%; } .clips b:nth-child(2) { width: 45%; margin-left: 30%; opacity: .6; } .clips b:nth-child(3) { width: 85%; margin-left: 10%; } .clips b:nth-child(4) { width: 40%; opacity: .5; }
+  /* each app's picture: its own icon, the favicon of its page (apps/web/public/index.html, apps/drums|synth|daw/public/index.html),
+     drawn here larger. On hover each one plays: the record shines as it turns, the meter jumps, the wave runs, the playhead
+     crosses the clips. At rest each is the icon as the app draws it. */
+  .art svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .sheen { opacity: 0; transform-origin: 16px 16px; }
+  .app:hover .sheen { opacity: 1; animation: spin 1.8s linear infinite; }
+  .meter rect + rect { transform-box: fill-box; transform-origin: bottom; animation: none .9s ease-in-out infinite alternate; }
+  .app:hover .meter rect + rect { animation-name: jump; }
+  .meter rect:nth-child(3) { animation-delay: -.3s; } .meter rect:nth-child(4) { animation-delay: -.6s; }
+  @keyframes jump { 0% { transform: scaleY(1); } 50% { transform: scaleY(.45); } 100% { transform: scaleY(1.1); } }
+  .app:hover .wave path { animation: run 1s linear infinite; }
+  @keyframes run { to { transform: translateX(-6px); } }
+  .playhead { opacity: 0; }
+  .app:hover .playhead { animation: playhead 2.4s linear infinite; }
+  @keyframes playhead { 0% { transform: translateX(0); opacity: 1; } 96% { opacity: 1; } 100% { transform: translateX(12px); opacity: 0; } }
 
   .foot { margin-top: auto; padding-top: 22px; color: var(--faint); font-size: 11px; text-align: center; }
-  @media (prefers-reduced-motion: reduce) { .app, .app:hover .disc, .app[data-state=starting] .state::before { animation: none; transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .app, .app:hover .sheen, .app:hover .meter rect, .app:hover .wave path, .app:hover .playhead, .app[data-state=starting] .state::before { animation: none; transition: none; } }
 </style>
 </head>
 <body>
@@ -69,7 +69,14 @@
 <div class="foot">Each app opens in a window of its own. The Apps menu has them all, from any window.</div>
 <script>
   // filled by main.mjs before the page shows (the list is apps.mjs's); one card per app
-  const ART = { dj: '<div class="disc"></div>', drums: `<div class="pads">${'<b></b>'.repeat(16)}</div>`, synth: `<div class="keys">${'<b></b>'.repeat(7)}</div>`, daw: `<div class="clips">${'<b></b>'.repeat(4)}</div>` };
+  // each app's icon, as its page draws it (the favicons), with the parts that move on hover
+  const svg = (box, body) => `<svg viewBox="0 0 ${box} ${box}" aria-hidden="true">${body}</svg>`;
+  const ART = {
+    dj: svg(32, `<circle cx="16" cy="16" r="14" fill="#111"/><path class="sheen" d="M7 9 A11.5 11.5 0 0 1 13 4.8 M25 23 A11.5 11.5 0 0 1 19 27.2" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="9" fill="none" stroke="#ff7a45" stroke-width="2"/><circle cx="16" cy="16" r="2.5" fill="#36d6e7"/>`),
+    drums: svg(16, `<g class="meter"><rect width="16" height="16" rx="3" fill="#09090c"/><rect x="2" y="9" width="3" height="5" fill="#ff7a45"/><rect x="7" y="4" width="3" height="10" fill="#36d6e7"/><rect x="12" y="7" width="3" height="7" fill="#9be564"/></g>`),
+    synth: svg(16, `<defs><clipPath id="wave-in"><rect x="2" y="0" width="12" height="16"/></clipPath></defs><rect width="16" height="16" rx="3" fill="#09090c"/><g class="wave" clip-path="url(#wave-in)"><path d="M2 11 L5 4 L8 11 L11 4 L14 11 L17 4 L20 11" fill="none" stroke="#ff7a45" stroke-width="1.8" stroke-linejoin="round"/></g>`),
+    daw: svg(16, `<rect width="16" height="16" rx="3" fill="#09090c"/><rect x="2" y="3" width="8" height="3" rx="1" fill="#ff7a45"/><rect x="6" y="7" width="8" height="3" rx="1" fill="#36d6e7"/><rect x="2" y="11" width="5" height="3" rx="1" fill="#9be564"/><rect class="playhead" x="1.6" y="1.5" width=".6" height="13" rx=".3" fill="#ecebf2"/>`),
+  };
   const WORD = { off: 'not running', starting: 'starting…', open: 'open', failed: 'could not start' };
   function setApps(list) {
     const nav = document.getElementById('apps');

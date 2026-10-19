@@ -13,9 +13,9 @@ const APPS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 // server where to keep its things (data/<id>/ in the project folder). page: where its window opens.
 export const APPS = [
   { id: 'dj', name: 'DJ Claude', what: 'Four decks, a library, stems and Claude in the booth', server: 'server/server.mjs', port: 4747, portEnv: 'DJ_PORT', page: '/?desktop', color: '#ff7a45' },
-  { id: 'drums', name: 'Claude-808', what: 'A drum machine: write a beat, give it a feel', server: 'drums/server.mjs', port: 4748, portEnv: 'CL808_PORT', home: 'CL808_HOME', page: '/', color: '#ffb347' },
-  { id: 'synth', name: 'MiniClaude', what: 'A synthesizer: design a sound, play a riff', server: 'synth/server.mjs', port: 4749, portEnv: 'MINICLAUDE_PORT', home: 'MINICLAUDE_HOME', page: '/', color: '#36d6e7' },
-  { id: 'daw', name: 'Claudebase', what: 'A small DAW: tracks, clips and a song', server: 'daw/server.mjs', port: 4750, portEnv: 'CLAUDEBASE_PORT', home: 'CLAUDEBASE_HOME', page: '/', color: '#9be564' },
+  { id: 'drums', name: 'Claude-808', what: 'A drum machine: write a beat, give it a feel', server: 'drums/server.mjs', port: 4748, portEnv: 'CL808_PORT', home: 'CL808_HOME', page: '/?desktop', color: '#ffb347' },
+  { id: 'synth', name: 'MiniClaude', what: 'A synthesizer: design a sound, play a riff', server: 'synth/server.mjs', port: 4749, portEnv: 'MINICLAUDE_PORT', home: 'MINICLAUDE_HOME', page: '/?desktop', color: '#36d6e7' },
+  { id: 'daw', name: 'Claudebase', what: 'A small DAW: tracks, clips and a song', server: 'daw/server.mjs', port: 4750, portEnv: 'CLAUDEBASE_PORT', home: 'CLAUDEBASE_HOME', page: '/?desktop', color: '#9be564' },
 ];
 
 export const appById = (id) => APPS.find((a) => a.id === id) || null;

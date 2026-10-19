@@ -9,7 +9,7 @@
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>%NAME%</div>
+    <div class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 11 L5 4 L8 11 L11 4 L14 11"/></svg></span>%NAME%</div>
     <span class="audio" id="soundLight" role="status" title="Whether the browser lets this page play sound"><i class="led"></i><span id="soundText">sound off</span></span>
     <button id="play" class="play" aria-pressed="false" title="Play / stop the sequence (Space)">Play</button>
     <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
@@ -129,7 +129,7 @@
        forgets the click with the page) and goes for good once the sound is on (app.js). -->
   <div class="start" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle" aria-describedby="startMsg">
     <div class="start-card">
-      <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 11 L5 4 L8 11 L11 4 L14 11"/></svg></span>
       <h1 id="startTitle">%NAME%</h1>
       <p id="startMsg">A browser needs one click before it can play sound.<br>This tab is the synth: what you and Claude play is heard here.</p>
       <button id="startBtn" autofocus title="Let this page play sound (Enter)">Start sound</button>

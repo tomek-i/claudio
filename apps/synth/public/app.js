@@ -22,6 +22,7 @@ const el = (tag, props = {}, ...children) => {
 };
 
 let state = null;             // what the server last said
+let autoStart = new URLSearchParams(location.search).has('desktop');   // start the sound with the first state (the desktop suite)
 let gestureCount = 0;
 const dragging = new Set();   // controls being moved by hand: the state does not write over them
 const current = () => state.slots[state.slot];
@@ -56,6 +57,7 @@ function take(next) {
   state = next;
   engine.setPatch(current());
   render();
+  if (autoStart) { autoStart = false; startSound(); }
 }
 
 async function send(op) {
@@ -799,7 +801,7 @@ function startSound() {
   try {
     engine.wake();
     engine.onChange();                                 // a context made in a click may be running at once, with no change to hear of
-  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; }
+  } catch (err) { $('startMsg').textContent = `The sound could not be started: ${err.message}`; $('startOverlay').hidden = false; }
 }
 $('startBtn').addEventListener('click', startSound);
 // While the card is up the keys are its own: Enter and Space start the sound, Tab stays on the one button, and the
@@ -811,6 +813,9 @@ $('startOverlay').addEventListener('keydown', (e) => {
 });
 $('startOverlay').addEventListener('mousedown', (e) => { if (e.target !== $('startBtn')) e.preventDefault(); });
 $('startBtn').focus();
+// The desktop suite (apps/desktop) loads the page with ?desktop: it may play sound without a click, so the card is
+// never shown there and the sound starts by itself, as soon as there is a patch to play.
+if (autoStart) $('startOverlay').hidden = true;
 
 // ---- the bars
 

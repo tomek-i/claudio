@@ -8,7 +8,7 @@
 //                                                                page says of itself (data-engine: live | held)
 //   { ev: 'answered', page }                                     DRIVE_ANSWER=1: the page after its start button was pressed
 //   { ev: 'home', cards: { <id>: <state> } }                      the home window's cards changed
-//   { ev: 'app', url, title }                                    another app's window is on screen
+//   { ev: 'app', url, title, page: { sound, card } }             another app's window is on screen: its sound light, its start card up
 // DRIVE_OPEN=<id>: once the home window is up, its card for that app is clicked. Then it ends the run the way a user
 // would: it closes the DJ page or the other app's window once that is shown (and then the home window, once its card
 // says so), or presses Close on the start-up window when the start failed. DRIVE_USERDATA keeps Electron's own
@@ -25,7 +25,7 @@ async function look() {
   for (const w of BrowserWindow.getAllWindows()) {
     if (w.isDestroyed()) continue;
     const url = w.webContents.getURL();
-    if (!url) continue;
+    if (!url || url.startsWith('data:')) continue; // the suite's hidden window that draws an app's icon
     const kind = url.startsWith('file:') ? (url.includes('home.html') ? 'home' : 'splash') : new URL(url).port === process.env.DJ_PORT ? 'main' : 'app';
     const now = { ev: 'win', kind, visible: w.isVisible(), maximized: w.isMaximized(), bounds: w.getNormalBounds() };
     if (!last.has(w.id)) w.once('closed', () => say({ ev: 'gone', kind }));
@@ -36,7 +36,15 @@ async function look() {
       if (process.env.DRIVE_OPEN && !clicked && now.visible && cards?.[process.env.DRIVE_OPEN]) { clicked = true; w.webContents.executeJavaScript(`document.querySelector('.app[data-id="${process.env.DRIVE_OPEN}"]').click()`).catch(() => {}); }
       if (appClosed && cards?.[process.env.DRIVE_OPEN] === 'off') w.close(); // the app's card says it is closed: the run is over
     } else if (kind === 'app') {
-      if (now.visible && !appClosed && !w.webContents.isLoading()) { appClosed = true; say({ ev: 'app', url, title: w.getTitle() }); w.close(); }
+      // closed once its sound is on, or after 5 s: the report says whether it started by itself and the card stayed away
+      if (now.visible && !appClosed && !w.webContents.isLoading()) {
+        appClosed = true;
+        const look = () => w.webContents.executeJavaScript(`({ sound: document.getElementById('soundText')?.textContent || '', card: !document.getElementById('startOverlay')?.hidden })`).catch(() => null);
+        let page = await look();
+        for (let i = 0; i < 50 && page?.sound !== 'sound on'; i++) { await new Promise((r) => setTimeout(r, 100)); page = await look(); }
+        say({ ev: 'app', url, title: w.getTitle(), page });
+        w.close();
+      }
     } else if (kind === 'splash') {
       const s = await w.webContents.executeJavaScript(`({ steps: Object.fromEntries([...document.querySelectorAll('#steps li')].map((li) => [li.dataset.id, li.dataset.state])), failed: document.body.classList.contains('failed') })`).catch(() => null);
       if (s && JSON.stringify(s) !== lastSplash) { lastSplash = JSON.stringify(s); say({ ev: 'splash', ...s }); }
