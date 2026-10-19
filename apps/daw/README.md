@@ -72,6 +72,9 @@ with a velocity of 70 out of 127).
 - `lib/project.mjs`: the project, its validation (`normalizeProject`) and its edits (`applyOp`); the name shown to
   people is `APP_NAME` there. `lib/kit.mjs`: the drum voices and levels. `lib/presets.mjs`: the synth sounds.
 - `lib/notes.mjs`: pitch names and MIDI numbers, notes as text.
+- `lib/pattern.mjs`: the pattern language, Strudel's mini-notation and its core functions (`parse`, `query`: the
+  events between two cycles, a cycle a bar), for live coding (#90). What it supports, with an example each:
+  [PATTERNS.md](PATTERNS.md). No page in it; `test/pattern.test.mjs`.
 - `lib/song.mjs`: which events sound in a stretch of the song (`eventsInWindow`: playback, WAV and MIDI all use
   it) and the `Playhead` that walks the song for live playback (the loop, the tempo, the end).
 - `lib/midi.mjs`: the MIDI file. `lib/text.mjs`: the arrangement and a clip as text. `lib/templates.mjs`.

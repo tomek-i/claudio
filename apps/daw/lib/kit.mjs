@@ -17,7 +17,7 @@ export const VOICE_IDS = VOICES.map((v) => v.id);
 // other names a row can be written under (`claudebase drums c1 "hihat x.x.x.x.x.x.x.x."`)
 const ALIASES = {
   bd: 'kick', sd: 'snare', sn: 'snare', cp: 'clap', hh: 'hat', hihat: 'hat', hats: 'hat', ch: 'hat',
-  oh: 'open', ohat: 'open', openhat: 'open', toms: 'tom', rimshot: 'rim', rs: 'rim', cowbell: 'bell', cb: 'bell',
+  oh: 'open', ohat: 'open', openhat: 'open', toms: 'tom', lt: 'tom', mt: 'tom', ht: 'tom', rimshot: 'rim', rs: 'rim', cowbell: 'bell', cb: 'bell',
 };
 
 export function voiceId(name) {
