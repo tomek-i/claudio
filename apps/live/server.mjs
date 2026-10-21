@@ -3,11 +3,15 @@
 // is kept by the page, in the browser. No dependencies. Local only: it listens on 127.0.0.1.
 //
 //   GET  /api/ping             which app this is, for the other apps' Apps menus
+//
+//   node apps/live/server.mjs                     start it (pnpm live), with the startup banner
+//   node apps/live/server.mjs banner [name|--list]  preview the banner's animations (CLAUDEL_BANNER=<name> picks one)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME, DEFAULT_PORT } from './lib/app.mjs';
+import { ANIMATIONS, animate, banner } from './lib/banner.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export { DEFAULT_PORT };
@@ -46,7 +50,24 @@ export function createServer() {
   });
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// every animation in turn, or the one named, without starting the server
+async function previewBanner(name) {
+  const names = Object.keys(ANIMATIONS);
+  if (name === '--list') return console.log(names.join('\n'));
+  if (name && !ANIMATIONS[name]) throw new Error(`no animation "${name}": ${names.join(', ')}`);
+  if (!process.stdout.isTTY) throw new Error('the banner draws in place, so it needs a terminal (not a pipe or a file)');
+  const play = name ? [name] : names;
+  for (const [i, n] of play.entries()) {
+    console.log(`\n  ${n}${play.length > 1 ? `  (${i + 1}/${play.length})` : ''}   CLAUDEL_BANNER=${n} starts the server with this one`);
+    await animate(ANIMATIONS[n]);
+    if (i < play.length - 1) await new Promise((r) => setTimeout(r, 700));
+  }
+}
+
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain && process.argv[2] === 'banner') {
+  previewBanner(process.argv[3]).catch((err) => { console.error(err.message); process.exit(1); });
+} else if (isMain) {
   const port = Number(process.env.CLAUDEL_PORT) || DEFAULT_PORT;
   const server = createServer();
   server.on('error', (err) => {
@@ -54,7 +75,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exit(1);
   });
   server.listen(port, '127.0.0.1', () => {
-    console.log(`\n  ${APP_NAME}  →  http://localhost:${port}\n  code that loops: Ctrl+Enter plays it, Ctrl+. stops\n`);
+    banner({
+      url: `http://localhost:${port}`,
+      keys: 'Ctrl+Enter plays the code, and your changes from the next bar · Ctrl+. stops',
+      language: path.relative(process.cwd(), path.join(HERE, 'PATTERNS.md')).replaceAll('\\', '/'),
+    });
   });
   process.on('SIGINT', () => process.exit(0));
   process.on('SIGTERM', () => process.exit(0));

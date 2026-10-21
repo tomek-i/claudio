@@ -16,6 +16,7 @@ test('the page, with its name, its script, the theme and the Apps menu', async (
   assert.match(page, new RegExp(`<title>${APP_NAME}</title>`));
   assert.match(page, /<textarea id="code"[^]*src="app.js"/);
   assert.match(page, /id="appsBtn"/);
+  assert.match(page, /<select id="examples"/);
   assert.match(await (await fetch(BASE + '/app.js')).text(), /parseBlocks/);
   assert.match(await (await fetch(BASE + '/engine.js')).text(), /export class Rig/);
   assert.match(await (await fetch(BASE + '/theme/theme.css')).text(), /--mono/);
@@ -25,7 +26,7 @@ test('the page, with its name, its script, the theme and the Apps menu', async (
 test('the libraries the page imports', async () => {
   assert.match(await (await fetch(BASE + '/lib/pattern.mjs')).text(), /export function parseBlocks/);
   assert.match(await (await fetch(BASE + '/lib/live.mjs')).text(), /export class Loop/);
-  for (const lib of ['kit', 'presets', 'notes']) assert.equal((await fetch(`${BASE}/lib/${lib}.mjs`)).status, 200, lib);
+  for (const lib of ['kit', 'presets', 'notes', 'examples']) assert.equal((await fetch(`${BASE}/lib/${lib}.mjs`)).status, 200, lib);
 });
 
 test('it says which app it is, to the other apps', async () => {
