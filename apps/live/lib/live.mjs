@@ -1,6 +1,6 @@
-// The live loop of the /live page: the blocks of code (lib/pattern.mjs) playing bar after bar, new code coming in on
+// The loop of Claudel's page: the blocks of code (lib/pattern.mjs) playing bar after bar, new code coming in on
 // a bar line, never inside a bar, and the blocks that are heard (muted, soloed). Also the code as a link. No page in
-// here, so test/live.test.mjs tests it in plain Node; public/live.js plays what it gives.
+// here, so test/live.test.mjs tests it in plain Node; public/app.js plays what it gives.
 import { query } from './pattern.mjs';
 
 // the blocks heard: those soloed if any are, else those not muted (in the code with _, or by hand)

@@ -1,7 +1,7 @@
 // The apps of Claudio, the desktop suite: what main.mjs needs to start each one's server and open its window.
 // No Electron in here, so test/desktop-apps.test.mjs tests it in plain Node.
 //
-// The other three apps are separate projects (they will move to their own repositories): nothing is imported from
+// The other four apps are separate projects (they will move to their own repositories): nothing is imported from
 // them. The suite only runs their server file, and so their ports are written down here as well as in their own
 // code; each one's port can be changed with its own variable, as when it runs by itself.
 import path from 'node:path';
@@ -10,12 +10,14 @@ import { fileURLToPath } from 'node:url';
 const APPS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // id: the name in --app <id>, the Apps menu and the window state file. home: the variable that tells the app's
-// server where to keep its things (data/<id>/ in the project folder). page: where its window opens.
+// server where to keep its things (data/<id>/ in the project folder; Claudel keeps nothing on its server, so has
+// none). page: where its window opens.
 export const APPS = [
   { id: 'dj', name: 'DJ Claude', what: 'Four decks, a library, stems and Claude in the booth', server: 'server/server.mjs', port: 4747, portEnv: 'DJ_PORT', page: '/?desktop', color: '#ff7a45' },
   { id: 'drums', name: 'Claude-808', what: 'A drum machine: write a beat, give it a feel', server: 'drums/server.mjs', port: 4748, portEnv: 'CL808_PORT', home: 'CL808_HOME', page: '/?desktop', color: '#ffb347' },
   { id: 'synth', name: 'MiniClaude', what: 'A synthesizer: design a sound, play a riff', server: 'synth/server.mjs', port: 4749, portEnv: 'MINICLAUDE_PORT', home: 'MINICLAUDE_HOME', page: '/?desktop', color: '#36d6e7' },
   { id: 'daw', name: 'Claudebase', what: 'A small DAW: tracks, clips and a song', server: 'daw/server.mjs', port: 4750, portEnv: 'CLAUDEBASE_PORT', home: 'CLAUDEBASE_HOME', page: '/?desktop', color: '#9be564' },
+  { id: 'live', name: 'Claudel', what: 'Live coding: code that loops, as on strudel.cc', server: 'live/server.mjs', port: 4751, portEnv: 'CLAUDEL_PORT', page: '/?desktop', color: '#c792ea' },
 ];
 
 export const appById = (id) => APPS.find((a) => a.id === id) || null;

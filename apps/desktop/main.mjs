@@ -1,7 +1,7 @@
-// Claudio, the desktop suite: DJ Claude, Claude-808, MiniClaude and Claudebase, each in a window of its own, on the
+// Claudio, the desktop suite: DJ Claude, Claude-808, MiniClaude, Claudebase and Claudel, each in a window of its own, on the
 // same servers and pages as in a browser.
 //   pnpm --filter dj-claude-desktop start      (or: pnpm desktop, from the project folder)
-//   … -- --app <id>                           one app at once, without the home window (dj, drums, synth, daw)
+//   … -- --app <id>                           one app at once, without the home window (dj, drums, synth, daw, live)
 //
 // It starts on the home window (home.html), one card per app (apps.mjs). Opening an app starts its server, if none
 // is running on its port, and opens its window; the Apps menu, in every window, opens any of them. Each app has one
@@ -340,7 +340,7 @@ function wearIcon(win, a) {
   });
 }
 
-// ---- the menu, in every window: the apps first. Ctrl+1 to 4 are free in all four pages (they leave a key with
+// ---- the menu, in every window: the apps first. Ctrl+1 to 5 are free in all five pages (they leave a key with
 // Ctrl to the browser).
 function setMenu() {
   const mac = process.platform === 'darwin';

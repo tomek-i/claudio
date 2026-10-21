@@ -42,9 +42,6 @@ function readJson(req) {
   });
 }
 
-// the pages by their addresses: the arrangement, and the live page (code that loops, #88)
-const PAGES = { '/': 'index.html', '/live': 'live.html' };
-
 function serveFile(res, root, rel) {
   const file = path.join(root, rel);
   const type = TYPES[path.extname(file)];
@@ -111,7 +108,7 @@ export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOM
       }
       if (req.method === 'GET') {
         const rel = decodeURIComponent(url.pathname);
-        if (rel.startsWith('/lib/') ? serveFile(res, path.join(HERE, 'lib'), rel.slice(5)) : serveFile(res, path.join(HERE, 'public'), PAGES[rel] ?? rel.slice(1))) return;
+        if (rel.startsWith('/lib/') ? serveFile(res, path.join(HERE, 'lib'), rel.slice(5)) : serveFile(res, path.join(HERE, 'public'), rel === '/' ? 'index.html' : rel.slice(1))) return;
       }
       send(res, 404, { error: `nothing at ${route}` });
     } catch (err) {

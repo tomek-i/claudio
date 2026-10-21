@@ -1,14 +1,14 @@
 // Patterns: a short line of code that describes a loop, in the mini-notation of TidalCycles and Strudel, so a beat
 // from a Strudel stream can be pasted in. Our own code, not Strudel's (which is AGPL-3 and brings its own sound
-// engine): the same syntax, playing on Claudebase's kit and synth sounds. No page in here, so the code view of a clip,
-// the live page and the CLI all use this one.
+// engine): the same syntax, playing on a drum kit and synth sounds of our own (lib/kit.mjs, lib/presets.mjs). No page
+// in here, so test/pattern.test.mjs tests it in plain Node.
 //
 //   s("bd*4, [~ sd]*2, hh*8")             kick on every beat, snare on 2 and 4, eighth hats
 //   note("<c3 eb3 g3 bb3>*2").s("bass")   a different note each half bar
 //   s("bd sd").every(4, fast(2))          every fourth bar twice as fast
 //
 // parse(code) → a pattern; query(pattern, from, to) → the events that start between two cycles. One cycle is one bar.
-// What is supported, with an example each, is in apps/daw/PATTERNS.md.
+// What is supported, with an example each, is in apps/live/PATTERNS.md.
 //
 // Time follows Tidal: a pattern answers "what starts in [from, to)", each event with its whole length. In a sequence
 // each step plays its own cycle squeezed into its slot; in an alternation <a b> each item counts the cycles it has
@@ -181,7 +181,7 @@ function pitchOf(text) {
   return LETTER[m[1].toLowerCase()] + acc + ((m[3] === undefined ? 3 : Number(m[3])) + 1) * 12;
 }
 
-// a sound name: Claudebase's kit (bd, sd, hh, … and its own names) or a synth sound (bass, lead, pad, …)
+// a sound name: the kit's (bd, sd, hh, … and its own names) or a synth sound (bass, lead, pad, …)
 export function soundOf(name) {
   try { return { kind: 'drum', id: voiceId(name) }; } catch {}
   try { return { kind: 'synth', id: presetId(name) }; } catch {}

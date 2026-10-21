@@ -2,16 +2,16 @@
 
 [← Back to the README](../README.md)
 
-**Claudio** is the desktop suite: DJ Claude, Claude-808 (drums), MiniClaude (synth) and Claudebase (DAW), each in a
+**Claudio** is the desktop suite: DJ Claude, Claude-808 (drums), MiniClaude (synth), Claudebase (DAW) and Claudel (live coding), each in a
 window of its own, on the same servers and pages as in a browser:
 ```bash
 pnpm install                  # once: Electron, for the desktop app only (it fetches its own binary, about 370 MB, on first run)
 pnpm desktop                  # the home window: one card per app
-pnpm desktop -- --app synth   # one app at once, without the home window (dj, drums, synth, daw)
+pnpm desktop -- --app synth   # one app at once, without the home window (dj, drums, synth, daw, live)
 ```
-- **A home window**: a card per app. A card (or its number key, 1 to 4) opens that app; the card says whether it is
+- **A home window**: a card per app. A card (or its number key, 1 to 5) opens that app; the card says whether it is
   starting, open, or could not start. Nothing is started before you ask for it.
-- **An Apps menu in every window**: Home (Ctrl+Shift+H) and the four apps (Ctrl+1 to Ctrl+4). Each app has one
+- **An Apps menu in every window**: Home (Ctrl+Shift+H) and the five apps (Ctrl+1 to Ctrl+5). Each app has one
   window: opening it again brings that window forward. A link from one app's page to another's opens that app.
 - **Each app's server starts when it is opened**, and stops when its window closes. If one is already running on
   its port (`node dj.mjs start`, `pnpm synth`), the suite uses that one and leaves it running. The other apps'
@@ -40,9 +40,9 @@ Each [release](https://github.com/tomek-i/dj-claude/releases) has the Windows in
 asks before running it.
 
 The installed app is the same suite, started from the Start menu, and it brings the whole project with it. On the
-first start it makes **Documents/Claudio**: a project folder like this repository, with `dj.mjs`, the four apps,
+first start it makes **Documents/Claudio**: a project folder like this repository, with `dj.mjs`, the five apps,
 the skills (`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json` and `data/` (the music and
-everything else the apps make, a folder per app). Open Claude Code in that folder and it plays all four exactly as it
+everything else the apps make, a folder per app). Open Claude Code in that folder and it plays all five exactly as it
 does here. The start-up window shows where the folder is, and the
 Settings page has it too, with **Open folder** and **Open Claude Code here** (a terminal in that folder, running `claude`). What the
 machine needs besides the app: Node 20+ (for `node dj.mjs …`, which is how Claude Code drives it), Claude Code, and

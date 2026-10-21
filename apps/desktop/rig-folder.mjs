@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const APP_OWNED = ['apps/server', 'apps/cli', 'apps/web', 'apps/drums', 'apps/synth', 'apps/daw', 'tools', 'dj.mjs', 'CLAUDE.md'];
+const APP_OWNED = ['apps/server', 'apps/cli', 'apps/web', 'apps/drums', 'apps/synth', 'apps/daw', 'apps/live', 'tools', 'dj.mjs', 'CLAUDE.md'];
 const DROPPED = ['starter']; // now apps/server/demo-tracks
 const USER_OWNED = ['config.json', '.claude/settings.json'];
 const STAMP = 'data/claudio/app-build'; // which build of the app last wrote its files here

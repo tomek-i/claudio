@@ -18,6 +18,7 @@ on:
       - apps/drums/**
       - apps/synth/**
       - apps/daw/**
+      - apps/live/**
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs
@@ -39,6 +40,7 @@ on:
       - apps/drums/**
       - apps/synth/**
       - apps/daw/**
+      - apps/live/**
       - test/desktop*
       - test/server-harness.mjs
       - test/fixtures.mjs

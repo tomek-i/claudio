@@ -15,7 +15,8 @@ No install is needed for them: the code has no dependencies. They need ffmpeg an
   touch `data/`.
 - **The desktop test** (`test/desktop.test.mjs`, ports 4859–4860, 4862 and 4869–4871) starts the real desktop app in Electron on
   a scratch project folder and a scratch profile. It is skipped when Electron is not installed (`pnpm install`).
-- **The three small apps** have their own tests in `apps/drums/test/`, `apps/synth/test/` and `apps/daw/test/`.
+- **The four small apps** have their own tests in `apps/drums/test/`, `apps/synth/test/`, `apps/daw/test/` and
+  `apps/live/test/` (port 4867).
 
 ## Benchmarks
 Benchmarks compare the working tree with the git ref in `tools/bench/baseline.json` (`BENCH_BASE=<ref>` overrides it) and check
