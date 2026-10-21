@@ -1,0 +1,93 @@
+/* The theme of Claude-808, MiniClaude and Claudebase: the colours, the two fonts and the rules the three pages share.
+   This is the one copy to change: `node tools/theme.mjs` copies this folder into each app's public/theme/, and
+   test/apps-theme.test.mjs fails when a copy differs. The apps stay separate projects, so each serves its own copy.
+   Each page loads it before its own style.css, which holds what is the app's alone. */
+
+/* the fonts, served by the app itself, so the page looks the same with no network (SIL Open Font License, beside them) */
+@font-face { font-family: 'Space Grotesk'; src: url('fonts/space-grotesk.woff2') format('woff2'); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('fonts/jetbrains-mono.woff2') format('woff2'); font-weight: 100 800; font-display: swap; }
+
+/* the palette: --low, --mid, --high and --perc are the accents each app gives its own meaning (voices, stages, tracks) */
+:root {
+  --bg: #09090c;
+  --panel: #121218;
+  --panel2: #181820;
+  --line: #262631;
+  --text: #ecebf2;
+  --dim: #a09fb0;
+  --faint: #7f7e92;
+  --low: #ff7a45;
+  --mid: #36d6e7;
+  --high: #9be564;
+  --perc: #c792ea;
+  --ok: #7ee787;
+  --bad: #ff5566;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --sans: 'Space Grotesk', system-ui, 'Segoe UI', sans-serif;
+  --h: 30px;
+  --gap: 3px;
+}
+
+/* ---------- the page ---------- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--mid); outline-offset: 2px; }
+
+/* ---------- scrollbars: slim, in the panel colours, as DJ Claude's ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border: 2px solid transparent; border-radius: 99px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--faint); }
+::-webkit-scrollbar-thumb:active { background-color: var(--dim); }
+::-webkit-scrollbar-button { display: none; }
+/* Firefox (setting these in Chromium would switch the rules above off) */
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+}
+
+/* ---------- controls ---------- */
+button:disabled { opacity: 0.4; cursor: default; border-color: var(--line); color: var(--dim); }
+button.primary { color: var(--text); border-color: #3a3a4a; background: #20202b; }
+button.primary:hover { border-color: var(--low); }
+input[type="number"], input:not([type]), input[type="text"] {
+  height: var(--h); background: #0d0d12; border: 1px solid var(--line); border-radius: 7px; padding: 0 9px; min-width: 0;
+}
+input[type="range"] { accent-color: var(--low); min-width: 0; flex: 1; height: 18px; cursor: pointer; }
+.spacer { flex: 1; }
+kbd { font: 600 11px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 8px; color: var(--dim); }
+
+/* ---------- top bar ---------- */
+.play { min-width: 84px; height: 34px; font-size: 13px; color: var(--text); border-color: #3a3a4a; }
+.play::before { content: ''; border-left: 9px solid currentColor; border-block: 6px solid transparent; margin-right: 8px; }
+.play[aria-pressed="true"] { background: var(--low); border-color: var(--low); color: #1b0d06; }
+.play[aria-pressed="true"]::before { border: 0; width: 10px; height: 10px; background: currentColor; }
+.field { display: flex; align-items: center; gap: 8px; font: 600 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.status #statusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.led { width: 8px; height: 8px; border-radius: 50%; background: #444; flex: none; }
+.status.on .led { background: var(--ok); }
+.status.bad { color: var(--bad); }
+.status.bad .led { background: var(--bad); }
+/* the sound light: amber until the page has been given its click, green once it may play */
+.audio { display: flex; align-items: center; gap: 7px; font: 12px var(--mono); color: var(--faint); white-space: nowrap; }
+.audio .led { background: #f2cc60; }
+.audio.on .led { background: var(--ok); }
+
+/* ---------- the pattern ---------- */
+.name { font-weight: 600; font-size: 16px; background: transparent !important; border-color: transparent !important; width: min(340px, 50%); padding-left: 4px !important; }
+.name:hover, .name:focus { border-color: var(--line) !important; background: #0d0d12 !important; }
+
+/* ---------- groove tools ---------- */
+.line { display: flex; align-items: center; gap: 8px; }
+.line input:not([type="range"]) { flex: 1; }
+.mini { font: 600 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.log { display: flex; flex-direction: column; gap: 6px; max-height: 150px; min-height: 40px; overflow-y: auto; font-size: 13px; }
+.log div { padding: 5px 9px; border-radius: 8px; background: var(--panel2); align-self: flex-end; max-width: 92%; overflow-wrap: anywhere; }
+.log div.claude { align-self: flex-start; background: #241a16; color: #f1cdbb; }
+
+/* ---------- the start card: over the whole page until the browser has had its click ---------- */
+.start-card { text-align: center; width: min(440px, 100%); padding: 36px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+.start-card .mark { transform: scale(3); margin: 20px 0 26px; }   /* the mark of the top bar, three times the size */
+.start-card p { margin: 0 0 22px; color: var(--dim); line-height: 1.6; }
+.start-card button { height: 46px; padding: 0 30px; font-size: 15px; background: var(--low); border-color: var(--low); color: #1b0d06; }
+.start-card button:hover { border-color: var(--text); color: #1b0d06; }

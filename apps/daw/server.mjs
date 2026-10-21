@@ -21,7 +21,7 @@ import { banner, lanesOf } from './lib/banner.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_PORT = 4750;
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' };
 const MAX_BODY = 2 * 1024 * 1024;                    // a whole project can come in (the `replace` edit)
 const MAX_WAIT_MS = 60_000;
 
@@ -49,7 +49,7 @@ function serveFile(res, root, rel) {
   let body;
   try { body = fs.readFileSync(file); } catch { return false; }
   if (type === 'text/html') body = body.toString('utf8').replaceAll('%NAME%', APP_NAME);   // the page's title and header
-  res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache' });
+  res.writeHead(200, { 'Content-Type': type.startsWith('font/') ? type : `${type}; charset=utf-8`, 'Cache-Control': 'no-cache' });   // a font is not text
   res.end(body);
   return true;
 }
