@@ -21,3 +21,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 .narrate/
+docs/*.mp4
+docs/*.vtt
+docs/*.scene.json
+docs/*.tasks.md
+docs/screenshots/
+docs/ux-review/
