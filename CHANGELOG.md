@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.8.0](https://github.com/tomek-i/dj-claude/compare/v0.7.0...v0.8.0) (2026-10-21)
+
+
+### Features
+
+* **apps:** one shared theme for Claude-808, MiniClaude and Claudebase, and their fonts served by each app ([2df0d05](https://github.com/tomek-i/dj-claude/commit/2df0d053ebc805d729194c0cc534406121e4a40e))
+* **apps:** one shared theme for Claude-808, MiniClaude and Claudebase, and their fonts served by each app ([89112f8](https://github.com/tomek-i/dj-claude/commit/89112f87bb48ed9b834d8a4f7b5c5c143815758a)), closes [#35](https://github.com/tomek-i/dj-claude/issues/35)
+* **daw:** a live page, code that loops as on strudel.cc ([6eb758f](https://github.com/tomek-i/dj-claude/commit/6eb758ffefb5af897ca6ed0bd285bc6d90ae026c))
+* **daw:** a live page, code that loops as on strudel.cc ([8b6041f](https://github.com/tomek-i/dj-claude/commit/8b6041f04c6e4e2a0fcac50e1d27c4956a1ad2db))
+* **daw:** a pattern language, compatible with Strudel's mini-notation ([9f0e819](https://github.com/tomek-i/dj-claude/commit/9f0e8192a122c8ec821f4c0df4bf0a5165c17275))
+* **desktop:** each app with its own icon, and no Start sound click in the suite ([5fa9a1d](https://github.com/tomek-i/dj-claude/commit/5fa9a1dd95eb1aca4dc0cd3368621fdc8046a70f))
+* **desktop:** each app's window wears that app's own icon ([4e5f6da](https://github.com/tomek-i/dj-claude/commit/4e5f6dac75c53b227f9f74bc8273e1e97e85bb5e))
+* **desktop:** the home window's cards show each app's own icon, and play it on hover ([140b8e9](https://github.com/tomek-i/dj-claude/commit/140b8e97df7e8b8d84816b43f7c944f0abf21178))
+
+
+### Bug fixes
+
+* **desktop:** a pinned taskbar button opens its app, with that app's icon ([2f8f68d](https://github.com/tomek-i/dj-claude/commit/2f8f68d77fce0838871bd981dc58f2da4546a2e1))
+* **desktop:** a pinned taskbar button opens its app, with that app's icon ([ec65429](https://github.com/tomek-i/dj-claude/commit/ec654294b6156822c4054ed66f018a7517f77569))
+* **desktop:** Claude-808, MiniClaude and Claudebase play without a Start sound click in the suite ([ff9de4f](https://github.com/tomek-i/dj-claude/commit/ff9de4f1e935b35d55dedb5b89201c103dbc2f41))
+* **drums,synth,daw:** slim scrollbars in the panel colours, as DJ Claude's ([6fd66cb](https://github.com/tomek-i/dj-claude/commit/6fd66cb84b09134be050a699db930e63c422a2aa))
+* **synth:** a mark of its own, the wave of its icon, not the drum machine's three bars ([877b112](https://github.com/tomek-i/dj-claude/commit/877b112ea0affc6b97b1503becea3da8759e3351))
+
 ## [0.7.0](https://github.com/tomek-i/dj-claude/compare/v0.6.0...v0.7.0) (2026-10-18)
 
 

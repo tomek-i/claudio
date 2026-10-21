@@ -1,6 +1,6 @@
 {
   "name": "dj-claude-desktop",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Claudio, the desktop suite: DJ Claude, Claude-808, MiniClaude and Claudebase, each in a window on the same server and page as in a browser.",
   "private": true,
   "type": "module",
