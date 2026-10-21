@@ -3,7 +3,8 @@
 # changelog, and the version in package.json and apps/desktop/package.json. Merging that pull request tags the
 # version and publishes the GitHub release. Configuration: release-please-config.json.
 # When that makes a release, the installer job builds the desktop app's Windows installer (`pnpm dist`) from the
-# released commit and attaches it to the release. Run by hand (Actions → release-please → Run workflow, with a tag)
+# released commit and attaches it to the release, with the latest.yml and .blockmap that the installed app's updater
+# reads (apps/desktop/updates.mjs). Run by hand (Actions → release-please → Run workflow, with a tag)
 # it builds that tag and attaches the installer to its release, for a release that has none.
 name: release-please
 
@@ -55,6 +56,6 @@ jobs:
       - name: Build the installer
         run: pnpm dist
       - name: Attach it to the release
-        run: gh release upload $env:TAG (Get-ChildItem dist/*.exe).FullName --clobber
+        run: gh release upload $env:TAG (Get-ChildItem dist/*.exe, dist/*.blockmap, dist/latest.yml).FullName --clobber
         env:
           GH_TOKEN: ${{ github.token }}
