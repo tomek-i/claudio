@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>%NAME% live</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2309090c'/%3E%3Crect x='2' y='3' width='8' height='3' rx='1' fill='%23ff7a45'/%3E%3Crect x='6' y='7' width='8' height='3' rx='1' fill='%2336d6e7'/%3E%3Crect x='2' y='11' width='5' height='3' rx='1' fill='%239be564'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="live.css">
+</head>
+<!-- The live page (#88): code that loops, as on strudel.cc. The code is lib/pattern.mjs's language (PATTERNS.md),
+     the loop lib/live.mjs, the sound the kit and synths of engine.js; live.js puts them together. -->
+<body class="live">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>%NAME% <span class="sub">live</span></div>
+    <button id="play" class="play" aria-pressed="false" title="Play the code (Ctrl+Enter), stop (Ctrl+.)">Play</button>
+    <output id="bar" class="pos" title="The bar playing" aria-label="Bar">–</output>
+    <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
+    <span class="spacer"></span>
+    <span id="status" class="say" role="status"></span>
+    <button id="share" title="Copy a link that opens this code">Share</button>
+    <a class="btn" href="/" title="The arrangement">Arrangement</a>
+  </header>
+
+  <main class="stage">
+    <div class="editor" id="editor">
+      <pre class="paint" id="paint" aria-hidden="true"></pre>
+      <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="The code" wrap="off"></textarea>
+    </div>
+    <div class="blocks" id="blocks" aria-label="The blocks of the code: mute and solo"></div>
+    <div class="views">
+      <canvas id="roll" class="strip" aria-label="The notes of the bar playing and the next"></canvas>
+      <canvas id="scope" class="scope" aria-label="The sound"></canvas>
+    </div>
+    <p class="live-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> plays the code, and your changes from the next bar · <kbd>Ctrl</kbd>+<kbd>.</kbd> stops · the language: <a href="https://github.com/tomek-i/dj-claude/blob/main/apps/daw/PATTERNS.md" target="_blank" rel="noopener">PATTERNS.md</a></p>
+  </main>
+  <script type="module" src="live.js"></script>
+</body>
+</html>

@@ -51,6 +51,15 @@ test('it starts on a template and serves the page and the shared code', async ()
   assert.equal((await fetch(BASE + '/nothing.js')).status, 404);
 });
 
+test('the live page is at /live, with its script and the pattern language', async () => {
+  const page = await (await fetch(BASE + '/live')).text();
+  assert.match(page, new RegExp(`<title>${APP_NAME} live</title>`));
+  assert.match(page, /<textarea id="code"[^]*src="live.js"/);
+  assert.match(await (await fetch(BASE + '/live.js')).text(), /parseBlocks/);
+  assert.match(await (await fetch(BASE + '/lib/pattern.mjs')).text(), /export function parseBlocks/);
+  assert.match(await (await fetch(BASE + '/lib/live.mjs')).text(), /export class Loop/);
+});
+
 test('an edit changes the song, and a drag is one undo step', async () => {
   await edit({ op: 'template', name: 'blank' });
   await edit({ op: 'clip.add', track: 't1', bar: 0, bars: 2 });
