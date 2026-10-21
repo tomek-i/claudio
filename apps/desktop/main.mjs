@@ -15,7 +15,9 @@
 //  - nothing to start by hand: an app's server starts when it is opened, and stops when its window closes;
 //  - DJ Claude's start-up window (splash.html): on screen at once, it lists each step as it happens (server, checks,
 //    audio engine) and gives way to the DJ page when the engine plays;
-//  - each app's window opens where it was last closed (window-state.mjs): same screen, same size, maximised or not.
+//  - each app's window opens where it was last closed (window-state.mjs): same screen, same size, maximised or not;
+//  - updates, installed (updates.mjs): a check at start-up and from the Apps menu or the home window's footer, the
+//    download in the background, and the new version on the next start.
 //
 // `pnpm dist` builds it into an installer (electron-builder.config.cjs). Installed, the suite keeps its things in the
 // user's Documents (root.mjs), since there is no project folder around it.
@@ -29,10 +31,12 @@ import { app, BrowserWindow, dialog, Menu, nativeTheme, screen, shell, utilityPr
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import electronUpdater from 'electron-updater';
 import { CONFIG_FILE, DATA_DIR, DESKTOP_DIR, ROOT } from '../server/lib/paths.mjs';
 import { banner } from '../server/lib/banner.mjs';
 import { loadWindow, placement, saveWindow } from './window-state.mjs';
 import { icoOf, relaunchCommand } from './taskbar.mjs';
+import { describe, watchUpdates } from './updates.mjs';
 import { APPS, appById, appFromArgs, appOfUrl, originOf, portOf, serverEnv, serverFile } from './apps.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
@@ -103,11 +107,12 @@ function openHome() {
     return home?.webContents.executeJavaScript(`setApps(${JSON.stringify(list)})`);
   }).catch(() => {});
   for (const a of APPS) tellHome(a.id, apps.get(a.id).win ? 'open' : 'off');
+  updateHome();
   home.webContents.on('did-navigate-in-page', (e, url) => {
     const id = /#open\/(\w+)$/.exec(url)?.[1];
-    if (!id) return;
+    if (!id && !url.endsWith('#update')) return;
     home.webContents.executeJavaScript(`history.replaceState(null, '', location.pathname)`).catch(() => {}); // the same card again is a change again
-    openApp(id);
+    if (id) openApp(id); else updateAction();
   });
   home.webContents.on('will-navigate', (e) => e.preventDefault());
   home.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -117,6 +122,46 @@ async function tellHome(id, state, detail = '') {
   await homeLoaded;
   if (home && !home.isDestroyed()) await home.webContents.executeJavaScript(`state(${JSON.stringify(id)}, ${JSON.stringify(state)}, ${JSON.stringify(detail)})`).catch(() => {});
 }
+
+// ---- updates (updates.mjs): only the installed app has them; run from the source tree, it is git pull
+let updates = null, updateState = { status: 'dev', current: app.getVersion() }, askedForUpdate = false;
+function watchForUpdates() {
+  if (!app.isPackaged) return;
+  updates = watchUpdates(electronUpdater.autoUpdater, { version: app.getVersion(), onChange: updateChanged });
+  updateState = updates.state;
+  setTimeout(() => updates.check(), 5000); // quietly: what it finds shows in the footer and the menu, without a dialog
+}
+function updateChanged(s) {
+  const was = describe(updateState);
+  updateState = s;
+  updateHome();
+  const now = describe(s);
+  if (now.text !== was.text || now.action !== was.action) setMenu();
+  // asked for from the menu or the footer: the answer in a dialog (a found update says so once it is in)
+  if (!askedForUpdate) return;
+  if (s.status === 'latest') { askedForUpdate = false; message('info', now.text); }
+  if (s.status === 'failed') { askedForUpdate = false; message('warning', 'Could not check for updates', s.error); }
+  if (s.status === 'ready') { askedForUpdate = false; askToRestart(s.next); }
+}
+async function updateHome() {
+  await homeLoaded;
+  if (home && !home.isDestroyed()) await home.webContents.executeJavaScript(`update(${JSON.stringify(describe(updateState))})`).catch(() => {});
+}
+// the menu item and the footer's link: check, or restart into the update that is in
+function updateAction() {
+  if (!updates) return message('info', 'Updates come to the installed app', 'This one runs from the source tree: git pull brings it up to date.');
+  if (updates.state.status === 'ready') return updates.install();
+  askedForUpdate = true;
+  updates.check();
+}
+async function askToRestart(version) {
+  const { response } = await dialog.showMessageBox(BrowserWindow.getFocusedWindow() ?? undefined, {
+    type: 'info', buttons: ['Restart now', 'Later'], defaultId: 0, cancelId: 1, title: 'Claudio',
+    message: `Claudio ${version} is ready`, detail: 'Restart now to update: every app closes and the suite starts again. Later, it installs when you quit.',
+  });
+  if (response === 0) updates.install();
+}
+const message = (type, text, detail = '') => dialog.showMessageBox(BrowserWindow.getFocusedWindow() ?? undefined, { type, title: 'Claudio', message: text, detail });
 
 // ---- opening an app: its window if it has one, else its server and then its window
 function openApp(id) {
@@ -352,6 +397,8 @@ function setMenu() {
         { label: 'Home', accelerator: 'CmdOrCtrl+Shift+H', click: openHome },
         { type: 'separator' },
         ...APPS.map((a, i) => ({ label: a.name, accelerator: `CmdOrCtrl+${i + 1}`, click: () => openApp(a.id) })),
+        { type: 'separator' },
+        updateItem(),
         ...(mac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
       ],
     },
@@ -362,11 +409,18 @@ function setMenu() {
   ]));
 }
 
+// what the updates are doing: the action to take, or while there is none, the state greyed out
+function updateItem() {
+  const { text, action } = describe(updateState);
+  if (!updates) return { label: 'Check for updates…', click: updateAction };
+  return action ? { label: action === 'Restart to update' ? action : `${action}…`, click: updateAction } : { label: text, enabled: false };
+}
+
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   // started again (a second shortcut, say): the app it names, or the home window
   app.on('second-instance', (e, argv) => { const id = appFromArgs(argv); if (id) openApp(id); else openHome(); });
-  app.whenReady().then(() => { setMenu(); if (ONLY) openApp(ONLY); else openHome(); });
+  app.whenReady().then(() => { watchForUpdates(); setMenu(); if (ONLY) openApp(ONLY); else openHome(); });
   app.on('window-all-closed', () => app.quit());
   // the servers this app started stop with it; ones it attached to are left alone
   app.on('quit', () => { for (const a of APPS) stopServer(a); });
