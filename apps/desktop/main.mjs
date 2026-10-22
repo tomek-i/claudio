@@ -37,7 +37,7 @@ import { banner } from '../server/lib/banner.mjs';
 import { loadWindow, placement, saveWindow } from './window-state.mjs';
 import { icoOf, relaunchCommand } from './taskbar.mjs';
 import { describe, watchUpdates } from './updates.mjs';
-import { APPS, appById, appFromArgs, appOfUrl, originOf, portOf, serverEnv, serverFile } from './apps.mjs';
+import { APPS, appById, appFromArgs, appOfUrl, originOf, pingUrl, portOf, serverEnv, serverFile } from './apps.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const OPTS = { config };
@@ -68,7 +68,7 @@ let djStarting = false, failed = false;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const getJson = async (p, ms = 2000) => (await fetch(ORIGIN + p, { signal: AbortSignal.timeout(ms) })).json();
-const up = async (a) => { try { return (await fetch(`${originOf(a, OPTS)}/api/state`, { signal: AbortSignal.timeout(1500) })).ok; } catch { return false; } };
+const up = async (a) => { try { return (await fetch(pingUrl(a, OPTS), { signal: AbortSignal.timeout(1500) })).ok; } catch { return false; } };
 
 // an app's server: the one on its port, or one started here. DJ Claude's output goes to this process's own (its
 // banner is drawn by showBanner below); the others' is passed on a line at a time, with the app's name before it.

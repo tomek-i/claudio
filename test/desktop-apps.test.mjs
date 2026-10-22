@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { APPS, appById, appFromArgs, appOfUrl, originOf, portOf, serverEnv, serverFile } from '../apps/desktop/apps.mjs';
+import { spawn } from 'node:child_process';
+import { APPS, appById, appFromArgs, appOfUrl, originOf, pingUrl, portOf, serverEnv, serverFile } from '../apps/desktop/apps.mjs';
 import { moveToClaudio } from '../tools/move-to-claudio.mjs';
 
 test('APPS: the four, each with a server file that is there', () => {
@@ -30,6 +31,31 @@ test('serverEnv: the port, and for the other apps where to keep their things (da
   const synth = serverEnv(appById('synth'), { env: {}, dataDir: data });
   assert.equal(synth.MINICLAUDE_PORT, '4749'); assert.equal(synth.MINICLAUDE_HOME, path.join(data, 'synth'));
   assert.equal(serverEnv(appById('synth'), { env: { MINICLAUDE_HOME: '/mine' }, dataDir: data }).MINICLAUDE_HOME, '/mine');
+});
+
+// main.mjs waits on pingUrl after starting a server; Claudel once never answered it, so its window never opened.
+// DJ Claude's server is left out: it is slow to start, and the desktop start-up test opens it.
+test('pingUrl: every other app\'s server answers it once started (ports 4872-4875)', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-ping-'));
+  const others = APPS.filter((a) => a.id !== 'dj');
+  const kids = [];
+  try {
+    for (const [i, a] of others.entries()) {
+      const env = serverEnv(a, { env: { ...process.env, [a.portEnv]: String(4872 + i) }, dataDir: tmp });
+      const opts = { env };
+      kids.push(spawn(process.execPath, [serverFile(a)], { env, stdio: 'ignore' }));
+      let ok = false;
+      for (let t = 0; t < 50 && !ok; t++) {
+        await new Promise((r) => setTimeout(r, 100));
+        try { ok = (await fetch(pingUrl(a, opts))).ok; } catch { /* not up yet */ }
+      }
+      assert.ok(ok, `${a.name} answers ${pingUrl(a, opts)}`);
+      assert.equal((await (await fetch(pingUrl(a, opts))).json()).app, a.id);
+    }
+  } finally {
+    for (const k of kids) k.kill();
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 });
 
 test('appOfUrl: a page of one of the apps, by its origin; anything else is none of them', () => {

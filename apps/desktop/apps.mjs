@@ -28,6 +28,8 @@ export function portOf(app, { env = process.env, config = {} } = {}) {
 }
 export const originOf = (app, opts) => `http://localhost:${portOf(app, opts)}`;
 export const serverFile = (app) => path.join(APPS_DIR, app.server);
+// what says an app's server is up: /api/ping, the one route all five answer (Claudel has no /api/state)
+export const pingUrl = (app, opts) => `${originOf(app, opts)}/api/ping`;
 
 // the environment its server is started with: its port, and for the other apps where they keep their things
 export function serverEnv(app, { env = process.env, config = {}, dataDir }) {
