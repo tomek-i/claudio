@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from '../server.mjs';
+import { dataCheck } from '../lib/health.mjs';
 import { APP_NAME } from '../lib/app.mjs';
 import { rowText } from '../lib/seq.mjs';
 
@@ -285,4 +286,17 @@ test('GET /api/ping says which app this is, open to the pages of the other apps 
   const res = await fetch(BASE + '/api/ping');
   assert.equal(res.headers.get('access-control-allow-origin'), '*');
   assert.deepEqual(await res.json(), { app: 'synth', name: 'MiniClaude' });
+});
+
+test('its health: the server and the data folder, ok; a folder that cannot be made is a fail', async () => {
+  const { checks } = await get('/api/health');
+  assert.deepEqual(checks.map((c) => [c.id, c.status, c.required]), [['server', 'ok', true], ['data', 'ok', true]]);
+  assert.match(checks[0].detail, new RegExp(`port ${PORT}`));
+  assert.equal(checks[1].detail, home);
+  const file = path.join(home, 'a-file');
+  fs.writeFileSync(file, '');
+  const bad = dataCheck(path.join(file, 'inside'));
+  assert.equal(bad.status, 'fail');
+  assert.equal(bad.ok, false);
+  assert.match(bad.detail, /cannot write there/);
 });

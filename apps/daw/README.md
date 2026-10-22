@@ -82,6 +82,8 @@ with a velocity of 70 out of 127).
   `node claudebase.mjs banner [name]`.
 - `lib/store.mjs`: the project on the server, undo, saving, notes. `server.mjs`: the HTTP API and static files
   (the API is listed at its top).
+- `lib/health.mjs`: `GET /api/health`, what the app needs (the server, the data folder), each ok or not. The desktop
+  suite's start-up window lists it; a new dependency gets a check there.
 - `public/`: the page. `engine.js` is the mixer, the kit, the synth voice, the scheduler and the WAV render;
   `link.js` the state and the link to the server; `arrange.js` the tracks and the timeline; `editor.js` the step
   grid and the piano roll; `app.js` the top bar, the transport and the Claude box. The page imports `lib/` as

@@ -17,7 +17,7 @@ module.exports = {
   asar: false,
   npmRebuild: false,
   files: [
-    'package.json', 'apps/desktop/*.{mjs,html,png,md}',
+    'package.json', 'apps/desktop/*.{mjs,js,html,png,md}',
     // the project, as the repository has it: the app runs it from here, and copies it into the user's folder so
     // Claude Code, the CLI and the skills work there (rig-folder.mjs)
     'dj.mjs', 'CLAUDE.md', 'config.json',

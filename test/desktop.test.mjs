@@ -141,13 +141,22 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   // the home window, with a card per app, and no DJ start-up: nothing is started before it is asked for
   // (the first report can come before the cards are drawn: the first one with cards in it)
   assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home' && Object.keys(e.cards).length).cards), ['dj', 'drums', 'synth', 'daw', 'live'], r.out);
-  assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
+  assert.ok(!ev.some((e) => (e.kind === 'splash' && e.app === 'dj') || e.kind === 'main'), 'DJ Claude is not started');
   // the card says it is starting, then the drum machine's own page is in a window of its own
   // (the order is checked from the click: the driver can see a window before the card says "starting", as the DJ test below says)
   const clicked = at((e) => e.ev === 'home'), shown = at((e) => e.ev === 'app');
   assert.ok(ev.some((e) => e.ev === 'home' && e.cards.drums === 'starting'), r.out);
   assert.ok(clicked >= 0 && shown > clicked, r.out);
   assert.equal(ev[shown].url, drums + '/?desktop');
+  // its own start-up window came first, listed the server and its checks from /api/health, and gave way to the window
+  const splashShown = at((e) => e.ev === 'win' && e.kind === 'splash' && e.app === 'drums' && e.visible);
+  assert.ok(splashShown > clicked && splashShown < shown, r.out);
+  // (the page's line turns to ok as the window closes, too briefly to be read from here, as DJ Claude's engine line)
+  const { steps, failed, brand, art } = ev.filter((e) => e.ev === 'splash' && e.app === 'drums').at(-1);
+  assert.deepEqual([steps.server, steps.data, failed], ['ok', 'ok', false], r.out);
+  assert.deepEqual([brand, art], ['CLAUDE-808', true], 'its own name, and its own icon playing');
+  assert.ok(steps.page, r.out);
+  assert.ok(at((e) => e.ev === 'gone' && e.kind === 'splash' && e.app === 'drums') > splashShown, r.out);
   // the app may play without a click: no "Start sound" card, the sound is on by itself
   assert.deepEqual(ev[shown].page, { sound: 'sound on', card: false }, r.out);
   assert.match(ev[shown].title, /808/);

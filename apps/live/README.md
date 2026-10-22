@@ -50,4 +50,6 @@ top of the repository keeps the copies the same). The look is the theme the apps
 - `lib/app.mjs`: the name and the port.
 - `public/index.html`, `app.js`, `style.css`: the page. `public/engine.js`: the sound (a `Rig`: a strip per instrument,
   reverb and delay sends, a limiter), which began as a copy of Claudebase's.
-- `server.mjs`: serves the page and the libraries, and `GET /api/ping`. The code is kept by the page, not here.
+- `server.mjs`: serves the page and the libraries, `GET /api/ping` and `GET /api/health`. The code is kept by the page, not here.
+- `lib/health.mjs`: what `GET /api/health` lists (the server, the page files), each ok or not. The desktop suite's
+  start-up window shows it; a new dependency gets a check there.

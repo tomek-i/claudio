@@ -14,12 +14,18 @@ pnpm desktop -- --app synth   # one app at once, without the home window (dj, dr
 - **An Apps menu in every window**: Home (Ctrl+Shift+H) and the five apps (Ctrl+1 to Ctrl+5). Each app has one
   window: opening it again brings that window forward. A link from one app's page to another's opens that app.
 - **Each app's server starts when it is opened**, and stops when its window closes. If one is already running on
-  its port (`node dj.mjs start`, `pnpm synth`), the suite uses that one and leaves it running. The other apps'
-  output shows in the terminal with their name before each line.
+  its port (`node dj.mjs start`, `pnpm synth`), the suite uses that one and leaves it running.
+- **Claudio's banner in the terminal**: the suite's name comes in with one of DJ Claude's banner animations, once,
+  with each app's address under it (`CLAUDIO_BANNER=<name>` picks the animation, `CLAUDIO_NO_BANNER=1` gives plain
+  lines). The apps' output follows it, with their name before each line. An app's own animated banner plays only
+  when it is started by itself (`node dj.mjs start`, `pnpm synth`, …).
+- **A start-up window for each app**: it opens at once with the app's own icon and lists each step as it happens:
+  the server, the app's own checks (its `/api/health`: DJ Claude's library, ffmpeg and ffprobe; the other apps' data
+  folder, or Claudel's page files), then DJ Claude's audio engine or the other apps' page. It gives way to the app's
+  window once that is ready. If the server cannot start, it says why. An app that comes to need something new adds a
+  check to its `/api/health`, and its start-up window shows it.
 
-DJ Claude's window adds:
-- **A start-up window**: it opens at once and lists each step as it happens (the server, the health checks, the
-  audio engine), then gives way to the DJ page when the engine is live. If the server cannot start, it says why.
+Each app's window adds:
 - **The window where you left it** (every app's): it opens on the same screen, at the same size, maximised or not
   (maximised the first time).
 - **No Start engine or Start sound click**: the app may play sound without one, so each app's window plays as soon as it opens.

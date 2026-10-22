@@ -7,17 +7,17 @@ import { ANIMATIONS, frame, logoRows, banner } from '../apps/server/lib/banner.m
 const strip = (s) => s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
 const info = { url: 'http://localhost:4747', dirs: ['/music', '/more'], tracks: 12, queued: 0 };
 
-test('every animation: 7 full-width lines throughout, and the same final frame', () => {
-  for (const wide of [false, true]) {
-    const rows = logoRows('DJ CLAUDE', wide), w = rows[0].length;
+test('every animation: 7 full-width lines throughout, and the same final frame (DJ CLAUDE, and the suite\'s CLAUDIO)', () => {
+  for (const [text, wide] of [['DJ CLAUDE', false], ['DJ CLAUDE', true], ['CLAUDIO', false], ['CLAUDIO', true]]) {
+    const rows = logoRows(text, wide), w = rows[0].length;
     const finals = new Set();
     for (const [name, anim] of Object.entries(ANIMATIONS)) {
       for (let p = 0; p <= 1.0001; p += 0.05) {
-        const lines = frame(rows, anim, Math.min(1, p)).map(strip);
+        const lines = frame(rows, anim, Math.min(1, p), text).map(strip);
         assert.equal(lines.length, 7, name);
         for (const l of lines) assert.equal([...l].length, w + 2, `${name} at ${p.toFixed(2)}`);
       }
-      const end = frame(rows, anim, 1);
+      const end = frame(rows, anim, 1, text);
       assert.deepEqual(end.slice(0, 5).map(strip), rows.map((r) => '  ' + r), `${name} ends on the whole logo`);
       finals.add(end.join('\n'));
     }
