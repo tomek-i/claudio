@@ -1,4 +1,5 @@
-# Browser mode needs no install. Only the desktop app has dependencies (Electron), as its own package.
+# Browser mode needs no install. Only the desktop app has dependencies: Electron, as its own package, and its updater
+# (electron-updater), in the project's package.json because electron-builder packs the app directory's dependencies.
 # Electron fetches its own binary the first time it is run (about 370 MB).
 packages:
   - apps/desktop

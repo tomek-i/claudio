@@ -97,4 +97,6 @@ jobs:
           name: installer
           path: dist/*.exe
           if-no-files-found: error
-          retention-days: 7
+          # a day: each push to main builds one (about 110 MB), and the account's artifact storage is small; the
+          # releases keep their own installer
+          retention-days: 1

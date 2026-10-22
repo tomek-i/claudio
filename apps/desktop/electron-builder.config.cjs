@@ -1,7 +1,8 @@
 // The installer: `pnpm dist` (from the project folder) writes it to dist/.
 // The packaged app is the project itself, laid out as in the repository (main.mjs reaches the server by a relative
-// path), so the project folder is electron-builder's app directory and this file only picks what goes in. The code
-// has no dependencies, so no node_modules are packed. Not an asar archive: the server starts ffmpeg and python on
+// path), so the project folder is electron-builder's app directory and this file only picks what goes in. Its one
+// dependency is the updater (electron-updater, in the project's package.json because electron-builder packs the app
+// directory's dependencies); the apps' own node_modules are not packed. Not an asar archive: the server starts ffmpeg and python on
 // its own files, which have to be real files.
 const path = require('node:path');
 
@@ -25,8 +26,10 @@ module.exports = {
     'apps/drums/**', 'apps/synth/**', 'apps/daw/**', 'apps/live/**', '!apps/{drums,synth,daw,live}/test/**',
     '.claude/settings.json', '.claude/skills/**',
     '!apps/web/public/samples/src/**',
-    '!**/node_modules/**',
+    '!apps/**/node_modules/**',
   ],
+  // where the updater looks (main.mjs): the GitHub releases, which get the installer and its latest.yml (release-please.yml)
+  publish: { provider: 'github', owner: 'tomek-i', repo: 'dj-claude' },
   artifactName: 'Claudio-Setup-${version}.${ext}', // no spaces: it is a download link on the release page
   win: { target: 'nsis', icon: 'apps/desktop/icon.png' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, shortcutName: 'Claudio' },
