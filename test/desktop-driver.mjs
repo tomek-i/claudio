@@ -1,9 +1,11 @@
 // Runs inside Electron for desktop.test.mjs (no tests in here): `electron test/desktop-driver.mjs <main.mjs>`.
 // It loads the real desktop app and reports what its windows do as lines of `@@<json>` on stdout:
-//   { ev: 'win', kind: 'home' | 'splash' | 'main' | 'app', visible, maximized, bounds }   a window appeared or changed
+//   { ev: 'win', kind: 'home' | 'splash' | 'main' | 'app', visible, maximized, bounds, app? }   a window appeared or changed
+//                                                                (app: which app a start-up window is for)
 //                                                                (main: the DJ page; app: another app's page)
-//   { ev: 'gone', kind }                                         a window closed
-//   { ev: 'splash', steps: { <id>: <state> }, failed }           the start-up window's lines changed
+//   { ev: 'gone', kind, app? }                                   a window closed
+//   { ev: 'splash', app, steps: { <id>: <state> }, failed, brand, art }   a start-up window's lines changed (brand: the
+//                                                                name it shows; art: it shows the app's own icon)
 //   { ev: 'state', engine, page }                                /api/state once the DJ page is on screen, and what the
 //                                                                page says of itself (data-engine: live | held)
 //   { ev: 'answered', page }                                     DRIVE_ANSWER=1: the page after its start button was pressed
@@ -18,8 +20,11 @@ import { pathToFileURL } from 'node:url';
 
 app.setPath('userData', process.env.DRIVE_USERDATA);
 const say = (o) => console.log('@@' + JSON.stringify(o));
+// a question to a page that may be closing: one destroyed while asked never answers, and the next look would wait for it
+const ask = (w, js) => Promise.race([w.webContents.executeJavaScript(js).catch(() => null), new Promise((r) => setTimeout(() => r(null), 1000))]);
 const last = new Map(); // window id -> what was last reported about it
-let lastSplash = '', lastHome = '', ending = false, clicked = false, appClosed = false;
+const lastSplash = new Map(); // app → its start-up window's last report
+let lastHome = '', ending = false, clicked = false, appClosed = false;
 
 async function look() {
   for (const w of BrowserWindow.getAllWindows()) {
@@ -27,8 +32,9 @@ async function look() {
     const url = w.webContents.getURL();
     if (!url || url.startsWith('data:')) continue; // the suite's hidden window that draws an app's icon
     const kind = url.startsWith('file:') ? (url.includes('home.html') ? 'home' : 'splash') : new URL(url).port === process.env.DJ_PORT ? 'main' : 'app';
-    const now = { ev: 'win', kind, visible: w.isVisible(), maximized: w.isMaximized(), bounds: w.getNormalBounds() };
-    if (!last.has(w.id)) w.once('closed', () => say({ ev: 'gone', kind }));
+    const app = kind === 'splash' ? new URL(url).searchParams.get('app') : undefined;
+    const now = { ev: 'win', kind, visible: w.isVisible(), maximized: w.isMaximized(), bounds: w.getNormalBounds(), app };
+    if (!last.has(w.id)) w.once('closed', () => say({ ev: 'gone', kind, app }));
     if (last.get(w.id) !== JSON.stringify(now)) { last.set(w.id, JSON.stringify(now)); say(now); }
     if (kind === 'home') {
       const cards = await w.webContents.executeJavaScript(`Object.fromEntries([...document.querySelectorAll('.app')].map((a) => [a.dataset.id, a.dataset.state]))`).catch(() => null);
@@ -46,8 +52,8 @@ async function look() {
         w.close();
       }
     } else if (kind === 'splash') {
-      const s = await w.webContents.executeJavaScript(`({ steps: Object.fromEntries([...document.querySelectorAll('#steps li')].map((li) => [li.dataset.id, li.dataset.state])), failed: document.body.classList.contains('failed') })`).catch(() => null);
-      if (s && JSON.stringify(s) !== lastSplash) { lastSplash = JSON.stringify(s); say({ ev: 'splash', ...s }); }
+      const s = await ask(w, `({ steps: Object.fromEntries([...document.querySelectorAll('#steps li')].map((li) => [li.dataset.id, li.dataset.state])), failed: document.body.classList.contains('failed'), brand: document.getElementById('brand').textContent, art: !!document.querySelector('.art.play svg') })`);
+      if (s && JSON.stringify(s) !== lastSplash.get(app)) { lastSplash.set(app, JSON.stringify(s)); say({ ev: 'splash', app, ...s }); }
       if (s?.failed && !ending) { ending = true; w.webContents.executeJavaScript(`document.getElementById('close').click()`).catch(() => {}); }
     } else if (now.visible && !ending) {
       ending = true;

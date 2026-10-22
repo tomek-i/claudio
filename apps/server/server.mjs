@@ -1115,8 +1115,8 @@ server.listen(PORT, () => {
   const s = library.scan();
   // the banner's equaliser follows the live deck: how far into its current beat it is (0..1), or null when nothing plays
   const beat = () => { const st = liveState(), d = st.decks?.[st.live]; return d?.playing && d.bpm && d.firstBeat != null ? ((((d.position - d.firstBeat) / (60 / d.bpm)) % 1) + 1) % 1 : null; };
-  // the desktop app draws the banner itself: this process's output is a pipe there, not the terminal
-  if (!process.env.DJ_EMBEDDED) banner({ url: `http://localhost:${PORT}`, visuals: visualsUrl(), dirs: library.dirs, tracks: s.total, queued: s.queued, live: config.banner?.loop === false ? null : beat });
+  // under the desktop suite this process's output is a pipe, so the banner is its plain lines there
+  banner({ url: `http://localhost:${PORT}`, visuals: visualsUrl(), dirs: library.dirs, tracks: s.total, queued: s.queued, live: config.banner?.loop === false ? null : beat });
   addLog('system', `Server started. ${s.total} tracks in library, ${s.queued} to analyse.`);
   if (stemCfg.auto !== false) {
     if (!stems.available) addLog('system', '⚠ Stem separation is not set up: run `node dj.mjs stems setup` (it installs the separator into .venv)');

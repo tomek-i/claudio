@@ -34,7 +34,6 @@ export const pingUrl = (app, opts) => `${originOf(app, opts)}/api/ping`;
 // the environment its server is started with: its port, and for the other apps where they keep their things
 export function serverEnv(app, { env = process.env, config = {}, dataDir }) {
   const out = { ...env, [app.portEnv]: String(portOf(app, { env, config })) };
-  if (app.id === 'dj') out.DJ_EMBEDDED = '1';
   if (app.home && !env[app.home]) out[app.home] = path.join(dataDir, app.id);
   return out;
 }

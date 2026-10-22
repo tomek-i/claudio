@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
 <title>DJ Claude</title>
-<!-- The desktop app's start-up window (main.mjs). It is a local file with nothing to fetch, so it is on screen before
-     the server exists. main.mjs reports each start-up step by calling step() / done() / failed() below. -->
+<!-- An app's start-up window (main.mjs), one per app while it starts. It is a local file with nothing to fetch, so it is
+     on screen before the server exists. Which app is in its address (?app=<id>&name=&color=). main.mjs reports each
+     start-up step by calling step() / done() / failed() below. -->
 <style>
   :root { --bg: #09090c; --line: #262631; --text: #ecebf2; --dim: #a09fb0; --faint: #7f7e92; --a: #ff7a45; --b: #36d6e7; --ok: #7ee787; --warn: #f2cc60; --fail: #ff6b6b; }
   * { box-sizing: border-box; }
@@ -24,6 +25,8 @@
   .disc::before { content: ''; position: absolute; inset: 21px; border-radius: 50%; border: 5px solid var(--a); border-right-color: transparent; }
   .disc::after { content: ''; position: absolute; inset: 45px; border-radius: 50%; background: var(--b); }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* the other apps: their own icon (icons.js), playing */
+  .art { width: 108px; height: 108px; flex: none; }
 
   .brand { margin-top: 20px; font-size: 21px; font-weight: 700; letter-spacing: .26em; padding-left: .26em; }
   .brand i { font-style: normal; color: var(--a); }
@@ -50,7 +53,7 @@
   .foot button:hover { border-color: var(--faint); }
 
   /* nothing is loading any more: started, or stopped on an error */
-  body.still .disc, body.still .eq b { animation-play-state: paused; }
+  body.still .disc, body.still .eq b, body.still .art * { animation-play-state: paused; }
   body.failed .foot #msg { color: var(--fail); }
   body.failed .foot button { display: block; }
   @media (prefers-reduced-motion: reduce) { .disc, .eq b, .steps li { animation: none; } .eq b { transform: scaleY(.6); } }
@@ -58,11 +61,22 @@
 </head>
 <body>
 <div class="disc" aria-hidden="true"></div>
-<div class="brand">DJ<i>·</i>CLAUDE</div>
+<div class="brand" id="brand">DJ<i>·</i>CLAUDE</div>
 <div class="eq" id="eq" aria-hidden="true"></div>
 <ul class="steps" id="steps" aria-live="polite"></ul>
 <div class="foot"><span id="msg">Starting…</span><button id="close">Close</button></div>
+<script src="icons.js"></script>
 <script>
+  // which app is starting: DJ Claude keeps its record and its name as its page writes it; the others show their icon
+  const q = new URLSearchParams(location.search), app = q.get('app') || 'dj';
+  if (q.get('color')) document.documentElement.style.setProperty('--a', q.get('color'));
+  if (app !== 'dj') {
+    document.title = q.get('name') || app;
+    document.getElementById('brand').textContent = document.title.toUpperCase();
+    const art = document.querySelector('.disc');
+    art.className = 'art play';
+    art.innerHTML = ART[app] || '';
+  }
   const MARK = { run: '', ok: '✓', warn: '!', fail: '✕' };
   const eq = document.getElementById('eq'), steps = document.getElementById('steps'), msg = document.getElementById('msg');
   for (let i = 0; i < 14; i++) {

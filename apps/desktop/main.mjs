@@ -13,8 +13,10 @@
 //  - no background throttling: a window keeps running at full speed when it is hidden or minimised, so the engine
 //    does not go stale;
 //  - nothing to start by hand: an app's server starts when it is opened, and stops when its window closes;
-//  - DJ Claude's start-up window (splash.html): on screen at once, it lists each step as it happens (server, checks,
-//    audio engine) and gives way to the DJ page when the engine plays;
+//  - a start-up window for each app (splash.html): on screen at once, it lists each step as it happens (server, the
+//    app's checks from its /api/health, DJ Claude's audio engine, the page) and gives way to the app's window;
+//  - Claudio's banner in the terminal it was started from (banner.mjs); the servers' output follows it, a line at a
+//    time with the app's name before it;
 //  - each app's window opens where it was last closed (window-state.mjs): same screen, same size, maximised or not;
 //  - updates, installed (updates.mjs): a check at start-up and from the Apps menu or the home window's footer, the
 //    download in the background, and the new version on the next start.
@@ -33,17 +35,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import electronUpdater from 'electron-updater';
 import { CONFIG_FILE, DATA_DIR, DESKTOP_DIR, ROOT } from '../server/lib/paths.mjs';
-import { banner } from '../server/lib/banner.mjs';
 import { loadWindow, placement, saveWindow } from './window-state.mjs';
 import { icoOf, relaunchCommand } from './taskbar.mjs';
 import { describe, watchUpdates } from './updates.mjs';
+import { claudioBanner } from './banner.mjs';
+import { pendingSteps, stepsOf } from './startup.mjs';
 import { APPS, appById, appFromArgs, appOfUrl, originOf, pingUrl, portOf, serverEnv, serverFile } from './apps.mjs';
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 const OPTS = { config };
-const DJ = appById('dj');
-const PORT = portOf(DJ, OPTS);
-const ORIGIN = originOf(DJ, OPTS);
 const windowFile = (a) => path.join(DESKTOP_DIR, `window-${a.id}.json`);
 // --app <id>: that app alone, as a standalone app would be (the home window only from the Apps menu)
 const ONLY = appFromArgs(process.argv);
@@ -60,24 +60,27 @@ const ICON = fileURLToPath(new URL('./icon.png', import.meta.url));
 app.setName('Claudio');
 app.setAppUserModelId('com.claudio.desktop');
 
-// per app: the utility process when the suite started its server, its window, and the opening under way
-const apps = new Map(APPS.map((a) => [a.id, { server: null, win: null, opening: null }]));
+// per app: the utility process when the suite started its server, its window, and the opening under way; while it
+// starts, its start-up window, that page being ready to be told things, and whether the start failed
+const apps = new Map(APPS.map((a) => [a.id, { server: null, win: null, opening: null, splash: null, splashLoaded: null, starting: false, failed: false }]));
 let home = null, homeLoaded = null;
-let splash = null, splashLoaded = null; // DJ Claude's start-up window, and its page being ready to be told things
-let djStarting = false, failed = false;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const getJson = async (p, ms = 2000) => (await fetch(ORIGIN + p, { signal: AbortSignal.timeout(ms) })).json();
+const getJson = async (a, p, ms = 2000) => (await fetch(originOf(a, OPTS) + p, { signal: AbortSignal.timeout(ms) })).json();
+// Claudio's banner, once, as the app starts; what is printed after it waits for it, as the banner draws in place
+let bannerDone = Promise.resolve();
+const log = (line, err = false) => bannerDone.then(() => (err ? console.error : console.log)(line));
 const up = async (a) => { try { return (await fetch(pingUrl(a, OPTS), { signal: AbortSignal.timeout(1500) })).ok; } catch { return false; } };
 
-// an app's server: the one on its port, or one started here. DJ Claude's output goes to this process's own (its
-// banner is drawn by showBanner below); the others' is passed on a line at a time, with the app's name before it.
+// an app's server: the one on its port, or one started here. Its output is passed on a line at a time, with the
+// app's name before it. Being a pipe, it gets the app's own banner as plain lines: the animated one is for an app
+// started by itself.
 async function ensureServer(a) {
   if (await up(a)) return 'attached';
   const s = apps.get(a.id);
   const env = serverEnv(a, { env: process.env, config, dataDir: DATA_DIR });
-  s.server = utilityProcess.fork(serverFile(a), [], { cwd: ROOT, env, stdio: a.id === 'dj' ? 'inherit' : 'pipe', serviceName: `${a.name} server` });
-  if (a.id !== 'dj') for (const out of [s.server.stdout, s.server.stderr]) out?.on('data', (d) => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) console.log(`[${a.name}] ${l}`); });
+  s.server = utilityProcess.fork(serverFile(a), [], { cwd: ROOT, env, stdio: 'pipe', serviceName: `${a.name} server` });
+  for (const out of [s.server.stdout, s.server.stderr]) out?.on('data', (d) => { for (const l of String(d).split(/\r?\n/)) if (l.trim()) log(`[${a.name}] ${l}`); });
   const child = s.server;
   child.once('exit', () => { if (s.server === child) s.server = null; });
   for (let i = 0; i < 100; i++) {
@@ -168,9 +171,9 @@ function openApp(id) {
   const a = appById(id), s = a && apps.get(id);
   if (!a) return null;
   if (s.win && !s.win.isDestroyed()) { if (s.win.isMinimized()) s.win.restore(); s.win.focus(); return s.opening; }
-  if (id === 'dj' && splash) { splash.focus(); return s.opening; }
+  if (s.splash) { s.splash.focus(); return s.opening; }
   if (s.opening) return s.opening;
-  s.opening = (id === 'dj' ? startDj() : startApp(a)).finally(() => { s.opening = null; });
+  s.opening = startApp(a).finally(() => { s.opening = null; });
   return s.opening;
 }
 
@@ -184,82 +187,50 @@ function appWindow(a, show) {
   return { win, place };
 }
 
-async function startApp(a) {
-  tellHome(a.id, 'starting');
-  try { await ensureServer(a); } catch (e) {
-    console.error(`${a.name}: ${e.message}`);
-    tellHome(a.id, 'failed', e.message);
-    if (!home && BrowserWindow.getAllWindows().length === 0) { dialog.showErrorBox(`${a.name} could not start`, e.message); app.exit(1); }
-    return;
-  }
-  const { win, place } = appWindow(a, false);
-  win.once('ready-to-show', () => { if (place.maximized) win.maximize(); else win.show(); });
-  tellHome(a.id, 'open');
-}
-
-// ---- DJ Claude: the start-up window, the server, the checks, then the DJ page once its engine plays
-
-// The start-up banner, drawn here: the server's own output is a pipe when it runs under the app, so it could only
-// print the plain lines. The equaliser follows the live deck's beat, read from the server a few times a second.
-async function showBanner() {
-  const get = getJson;
-  try {
-    const [lib, vis] = await Promise.all([get('/api/library?limit=1'), get('/api/visuals')]);
-    let deck = null, at = 0;
-    const poll = setInterval(async () => {
-      try { const s = await get('/api/state'), d = s.decks?.[s.live]; deck = d?.playing && d.bpm && d.firstBeat != null ? d : null; at = Date.now(); } catch { deck = null; }
-    }, 300);
-    poll.unref();
-    const beat = () => (deck ? ((((deck.position + ((Date.now() - at) / 1000) * (deck.rate || 1) - deck.firstBeat) / (60 / deck.bpm)) % 1) + 1) % 1 : null);
-    await banner({ url: ORIGIN, visuals: vis.url, dirs: lib.dirs, tracks: lib.status.tracks, queued: lib.status.queued, live: config.banner?.loop === false ? null : beat });
-  } catch { console.log(`DJ Claude: server started on ${ORIGIN}`); }
-}
+// ---- starting an app: its start-up window, the server, its checks, then its window once the page is ready (DJ
+// Claude's once its engine plays)
 
 // The start-up window. A local file with nothing to fetch, so it shows before the server exists. It has no preload:
 // the steps are reported by calling the page's own functions (step / done / failed in splash.html).
-function openSplash() {
-  splash = new BrowserWindow({
+function openSplash(a) {
+  const s = apps.get(a.id);
+  const splash = s.splash = new BrowserWindow({
     width: 440, height: 520, frame: false, resizable: false, maximizable: false, fullscreenable: false, center: true,
-    backgroundColor: '#09090c', title: 'DJ Claude', icon: ICON, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+    backgroundColor: '#09090c', title: a.name, icon: ICON, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
-  splashLoaded = splash.loadFile(fileURLToPath(new URL('./splash.html', import.meta.url))).catch(() => {});
-  // closed before the DJ page is up (Alt+F4, or Close after an error): DJ Claude is not opened. With no other window
-  // (--app dj), there is nothing left to quit from.
+  s.splashLoaded = splash.loadFile(fileURLToPath(new URL('./splash.html', import.meta.url)), { query: { app: a.id, name: a.name, color: a.color } }).catch(() => {});
+  // closed before the app's window is up (Alt+F4, or Close after an error): the app is not opened. With no other
+  // window (--app <id>), there is nothing left to quit from.
   splash.on('closed', () => {
-    splash = null;
-    if (!djStarting) return;
-    djStarting = false;
-    const s = apps.get('dj');
+    s.splash = null;
+    if (!s.starting) return;
+    s.starting = false;
     if (s.win && !s.win.isDestroyed()) s.win.destroy();
-    stopServer(DJ);
-    tellHome('dj', failed ? 'failed' : 'off', failed ? 'see the start-up window' : '');
-    if (!home) app.exit(failed ? 1 : 0);
+    stopServer(a);
+    tellHome(a.id, s.failed ? 'failed' : 'off', s.failed ? 'see the start-up window' : '');
+    if (!home && ![...apps.values()].some((o) => o.win || o.splash)) app.exit(s.failed ? 1 : 0);
   });
 }
-const tell = async (fn, ...args) => {
-  await splashLoaded;
-  if (splash) await splash.webContents.executeJavaScript(`${fn}(${args.map((a) => JSON.stringify(a)).join(',')})`).catch(() => {});
+const tell = async (a, fn, ...args) => {
+  const s = apps.get(a.id);
+  await s.splashLoaded;
+  if (s.splash) await s.splash.webContents.executeJavaScript(`${fn}(${args.map((v) => JSON.stringify(v)).join(',')})`).catch(() => {});
 };
-const step = (id, name, state, detail = '') => tell('step', id, name, state, detail);
+const step = (a, id, name, state, detail = '') => tell(a, 'step', id, name, state, detail);
 
-// The rig's own health checks (/api/health), as lines of the start-up window: the library and the two required
-// tools always, the optional systems only when they have a fault. Returns true when a required one is down.
-// The engine is not judged here: it has not started yet, and has a line of its own.
-async function checkRig() {
-  const always = { library: 'Library', ffmpeg: 'ffmpeg', ffprobe: 'ffprobe' };
-  for (const [id, name] of Object.entries(always)) step(id, name, 'run');
+// The app's own health checks (/api/health), as lines of the start-up window (which ones: startup.mjs). Returns true
+// when a required one is down.
+async function checkApp(a) {
+  const pending = pendingSteps(a);
+  for (const p of pending) step(a, p.id, p.name, 'run');
   let checks;
-  try { checks = (await getJson('/api/health', 15000)).checks; } catch {
-    for (const [id, name] of Object.entries(always)) step(id, name, 'warn', 'not checked: no answer from the server');
+  try { checks = (await getJson(a, '/api/health', 15000)).checks; } catch {
+    const unknown = pending.length ? pending : [{ id: 'checks', name: 'Checks' }];
+    for (const p of unknown) step(a, p.id, p.name, 'warn', 'not checked: no answer from the server');
     return false;
   }
-  let down = false;
-  for (const c of checks) {
-    if (c.id === 'server' || c.id === 'engine' || (!always[c.id] && c.status !== 'warn' && c.status !== 'fail')) continue;
-    const version = c.status === 'ok' && /^\S+ version ([^\s-]+)/.exec(c.detail);
-    step(c.id, c.name, c.status === 'off' ? 'ok' : c.status, version ? version[1] : c.detail);
-    down ||= c.status === 'fail';
-  }
+  const { steps, down } = stepsOf(a, checks);
+  for (const x of steps) step(a, x.id, x.name, x.state, x.detail);
   return down;
 }
 
@@ -280,44 +251,64 @@ async function engineLive(win) {
     const said = await win.webContents.executeJavaScript('document.documentElement.dataset.engine || ""').catch(() => '');
     if (said === 'held') return 'held';
     if (said !== 'live') continue;
-    try { const e = (await getJson('/api/state')).engine; if (e?.connected && e.started && !e.stale) return 'live'; } catch { /* ask again */ }
+    try { const e = (await getJson(appById('dj'), '/api/state')).engine; if (e?.connected && e.started && !e.stale) return 'live'; } catch { /* ask again */ }
   }
   return false;
 }
 
-async function startDj() {
-  djStarting = true; failed = false;
-  tellHome('dj', 'starting');
-  openSplash();
-  // installed, the project folder is one the app made (root.mjs): say where, it is where Claude Code is opened
-  if (app.isPackaged) step('folder', 'Project folder', 'ok', ROOT);
-  step('server', 'Server', 'run', `port ${PORT}`);
-  let how;
-  try { how = await ensureServer(DJ); } catch (e) {
-    failed = true;
-    console.error(`DJ Claude: ${e.message}`);
-    step('server', 'Server', 'fail', e.message);
-    tellHome('dj', 'failed', e.message);
-    return tell('failed', 'DJ Claude could not start.');
-  }
-  if (!djStarting) return; // the start-up window was closed meanwhile
-  step('server', 'Server', 'ok', how === 'started' ? `started on port ${PORT}` : `already running on port ${PORT}`);
-  if (how === 'started') showBanner(); else console.log(`DJ Claude: using the server already running on ${ORIGIN}`);
+// The other apps' pages load hidden too, and are ready once they have painted: true, or false when the page did not
+// load in time.
+function pageReady(win) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), 15000);
+    win.once('ready-to-show', () => { clearTimeout(timer); resolve(true); });
+    win.webContents.once('did-fail-load', (e, code, desc, url, isMain) => { if (isMain) { clearTimeout(timer); resolve(false); } });
+  });
+}
 
-  const down = await checkRig();
-  step('engine', 'Audio engine', 'run', 'starting');
+async function startApp(a) {
+  const s = apps.get(a.id), port = portOf(a, OPTS);
+  s.starting = true; s.failed = false;
+  tellHome(a.id, 'starting');
+  openSplash(a);
+  // installed, the project folder is one the app made (root.mjs): say where, it is where Claude Code is opened
+  if (a.id === 'dj' && app.isPackaged) step(a, 'folder', 'Project folder', 'ok', ROOT);
+  step(a, 'server', 'Server', 'run', `port ${port}`);
+  let how;
+  try { how = await ensureServer(a); } catch (e) {
+    s.failed = true;
+    log(`${a.name}: ${e.message}`, true);
+    step(a, 'server', 'Server', 'fail', e.message);
+    tellHome(a.id, 'failed', e.message);
+    return tell(a, 'failed', `${a.name} could not start.`);
+  }
+  if (!s.starting) return; // the start-up window was closed meanwhile
+  step(a, 'server', 'Server', 'ok', how === 'started' ? `started on port ${port}` : `already running on port ${port}`);
+  if (how === 'attached') log(`${a.name}: using the server already running on ${originOf(a, OPTS)}`);
+
+  const down = await checkApp(a);
+  if (!s.starting) return;
   // where it was last closed, when that place is still on a screen; maximised on the first start
-  const { win, place } = appWindow(DJ, false);
-  const engine = await engineLive(win), live = engine === 'live';
-  // not live: the page says why (its start dialog is up, with the error or the question), so it is shown all the same
-  step('engine', 'Audio engine', live ? 'ok' : 'warn', live ? 'live' : engine === 'held' ? 'another window is the sound system: take over on the page' : 'not started: see the page');
-  tell('done', down || !live ? 'Started, with problems.' : 'Ready.');
-  if (down || !live) await sleep(2500); // long enough to read what is wrong; the page's status light has the rest
-  if (win.isDestroyed() || !splash) return;
-  djStarting = false;
+  const { win, place } = appWindow(a, false);
+  let ready;
+  if (a.id === 'dj') {
+    step(a, 'engine', 'Audio engine', 'run', 'starting');
+    const engine = await engineLive(win);
+    ready = engine === 'live';
+    // not live: the page says why (its start dialog is up, with the error or the question), so it is shown all the same
+    step(a, 'engine', 'Audio engine', ready ? 'ok' : 'warn', ready ? 'live' : engine === 'held' ? 'another window is the sound system: take over on the page' : 'not started: see the page');
+  } else {
+    step(a, 'page', 'Page', 'run', 'loading');
+    ready = await pageReady(win);
+    step(a, 'page', 'Page', ready ? 'ok' : 'warn', ready ? 'loaded' : 'did not load in time: see the window');
+  }
+  tell(a, 'done', down || !ready ? 'Started, with problems.' : 'Ready.');
+  if (down || !ready) await sleep(2500); // long enough to read what is wrong
+  if (win.isDestroyed() || !s.splash) return;
+  s.starting = false;
   if (place.maximized) win.maximize(); else win.show(); // maximize() shows it too
-  splash.close();
-  tellHome('dj', 'open');
+  s.splash.close();
+  tellHome(a.id, 'open');
 }
 
 // ---- windows on the apps' pages
@@ -420,7 +411,10 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   // started again (a second shortcut, say): the app it names, or the home window
   app.on('second-instance', (e, argv) => { const id = appFromArgs(argv); if (id) openApp(id); else openHome(); });
-  app.whenReady().then(() => { watchForUpdates(); setMenu(); if (ONLY) openApp(ONLY); else openHome(); });
+  app.whenReady().then(() => {
+    bannerDone = claudioBanner({ version: app.getVersion(), apps: APPS.map((a) => ({ name: a.name, url: originOf(a, OPTS) })) }).catch(() => {});
+    watchForUpdates(); setMenu(); if (ONLY) openApp(ONLY); else openHome();
+  });
   app.on('window-all-closed', () => app.quit());
   // the servers this app started stop with it; ones it attached to are left alone
   app.on('quit', () => { for (const a of APPS) stopServer(a); });

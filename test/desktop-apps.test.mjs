@@ -27,7 +27,7 @@ test('portOf: the app\'s own variable, then (DJ Claude only) config.json, then i
 test('serverEnv: the port, and for the other apps where to keep their things (data/<id>), unless already set', () => {
   const data = path.join('x', 'data');
   const dj = serverEnv(appById('dj'), { env: { PATH: 'p' }, config: { port: 4800 }, dataDir: data });
-  assert.equal(dj.DJ_PORT, '4800'); assert.equal(dj.DJ_EMBEDDED, '1'); assert.equal(dj.PATH, 'p');
+  assert.equal(dj.DJ_PORT, '4800'); assert.equal(dj.PATH, 'p');
   const synth = serverEnv(appById('synth'), { env: {}, dataDir: data });
   assert.equal(synth.MINICLAUDE_PORT, '4749'); assert.equal(synth.MINICLAUDE_HOME, path.join(data, 'synth'));
   assert.equal(serverEnv(appById('synth'), { env: { MINICLAUDE_HOME: '/mine' }, dataDir: data }).MINICLAUDE_HOME, '/mine');
