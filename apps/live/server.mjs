@@ -3,6 +3,7 @@
 // is kept by the page, in the browser. No dependencies. Local only: it listens on 127.0.0.1.
 //
 //   GET  /api/ping             which app this is, for the other apps' Apps menus
+//   GET  /api/health           what it needs, each ok or not (lib/health.mjs), for the desktop suite's start-up window
 //
 //   node apps/live/server.mjs                     start it (pnpm live), with the startup banner
 //   node apps/live/server.mjs banner [name|--list]  preview the banner's animations (CLAUDEL_BANNER=<name> picks one)
@@ -12,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME, DEFAULT_PORT } from './lib/app.mjs';
 import { ANIMATIONS, animate, banner } from './lib/banner.mjs';
+import { healthOf } from './lib/health.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export { DEFAULT_PORT };
@@ -36,11 +38,13 @@ export function createServer() {
     res.end(JSON.stringify(body));
   };
 
-  return http.createServer((req, res) => {
+  const since = Date.now();
+  const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const route = `${req.method} ${url.pathname}`;
     // which app this is, for the other apps' Apps menus (their pages are on other ports, so it is open to them)
     if (route === 'GET /api/ping') { res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, { app: 'live', name: APP_NAME }); }
+    if (route === 'GET /api/health') return send(res, 200, healthOf({ port: server.address()?.port, since, root: HERE }));
     if (req.method === 'GET') {
       let rel;
       try { rel = decodeURIComponent(url.pathname); } catch { return send(res, 400, { error: 'that is not a path' }); }
@@ -48,6 +52,7 @@ export function createServer() {
     }
     send(res, 404, { error: `nothing at ${route}` });
   });
+  return server;
 }
 
 // every animation in turn, or the one named, without starting the server

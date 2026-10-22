@@ -1,7 +1,9 @@
 // Claudel's server on its own port: the page, its script and libraries, the theme, and nothing outside them.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import os from 'node:os';
 import { createServer } from '../server.mjs';
+import { healthOf } from '../lib/health.mjs';
 import { APP_NAME } from '../lib/app.mjs';
 
 const PORT = 4867;
@@ -40,4 +42,13 @@ test('nothing outside the page and the libraries', async () => {
   assert.equal((await fetch(BASE + '/nothing.js')).status, 404);
   assert.equal((await fetch(BASE + '/%E0%A4%A')).status, 400);
   assert.equal((await fetch(BASE + '/api/ping', { method: 'POST' })).status, 404);
+});
+
+test('its health: the server and the page files, ok; a folder without them is a fail', async () => {
+  const { checks } = await (await fetch(BASE + '/api/health')).json();
+  assert.deepEqual(checks.map((c) => [c.id, c.status, c.required]), [['server', 'ok', true], ['page', 'ok', true]]);
+  assert.match(checks[0].detail, new RegExp(`port ${PORT}`));
+  const bad = healthOf({ port: PORT, since: Date.now(), root: os.tmpdir() }).checks[1];
+  assert.equal(bad.status, 'fail');
+  assert.match(bad.detail, /missing: public\/index.html, lib\/pattern.mjs/);
 });

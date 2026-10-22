@@ -3,6 +3,7 @@
 // the page and from the CLI on one small JSON API. No dependencies. Local only: it listens on 127.0.0.1.
 //
 //   GET  /api/state            the whole state           GET  /api/events        the same, as server-sent events
+//   GET  /api/health           what it needs, each ok or not (lib/health.mjs), for the desktop suite's start-up window
 //   POST /api/op               one edit (see Store.apply and applySeqOp)         → the new state
 //                              (savepreset / deletepreset: the player's presets, kept in <home>/presets.json)
 //   POST /api/play             ask the open pages to sound now: the sequence, some notes, a preset heard
@@ -15,6 +16,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { healthOf } from './lib/health.mjs';
 import { Store } from './lib/store.mjs';
 import { APP_NAME, DEFAULT_PORT } from './lib/app.mjs';
 import { banner, lanesOf } from './lib/banner.mjs';
@@ -60,6 +62,7 @@ function serveFile(res, root, rel) {
 export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'synth');
 
 export function createServer({ home = process.env.MINICLAUDE_HOME || DEFAULT_HOME } = {}) {
+  const since = Date.now();
   const store = new Store({ file: path.join(home, 'state.json'), presetsFile: path.join(home, 'presets.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -73,6 +76,8 @@ export function createServer({ home = process.env.MINICLAUDE_HOME || DEFAULT_HOM
       switch (route) {
         // which app this is, for the other apps' Apps menus (their pages are on other ports, so it is open to them)
         case 'GET /api/ping': res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, { app: 'synth', name: APP_NAME });
+        // what it needs, each ok or not (lib/health.mjs): the desktop suite's start-up window lists them
+        case 'GET /api/health': return send(res, 200, healthOf({ port: server.address()?.port, since, home }));
         case 'GET /api/state': return send(res, 200, store.state());
         case 'GET /api/events': {
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });

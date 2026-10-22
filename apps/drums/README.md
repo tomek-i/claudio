@@ -53,6 +53,8 @@ rules with a seeded random number generator (`lib/groove.mjs`), so they work wit
 - `lib/pattern.mjs`: the pattern, its edits (`applyOp`), rows as text. `lib/kit.mjs`: the voices and levels.
 - `lib/groove.mjs`: humanize, variations, continue, morph. `lib/presets.mjs`. `lib/midi.mjs`.
 - `lib/store.mjs`: slots, undo, saving, notes. `server.mjs`: the HTTP API and static files (the API is listed at its top).
+- `lib/health.mjs`: `GET /api/health`, what the app needs (the server, the data folder), each ok or not. The desktop
+  suite's start-up window lists it; a new dependency gets a check there.
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` the grid and controls.
   The page imports `lib/` as `/lib/*.mjs`.
 - `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from

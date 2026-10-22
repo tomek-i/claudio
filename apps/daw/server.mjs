@@ -3,6 +3,7 @@
 // the CLI on one small JSON API. No dependencies. Local only: it listens on 127.0.0.1.
 //
 //   GET  /api/state            the whole state           GET  /api/events        the same, as server-sent events
+//   GET  /api/health           what it needs, each ok or not (lib/health.mjs), for the desktop suite's start-up window
 //   POST /api/op               one edit (see Store.apply and applyOp), or several as { op: 'batch', ops }   → the new state
 //   GET  /api/export.mid       the song as a MIDI file, a track per track
 //   POST /api/transport        { action: 'play', bar } or { action: 'stop' }: passed on to the open pages
@@ -13,6 +14,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { healthOf } from './lib/health.mjs';
 import { Store } from './lib/store.mjs';
 import { toMidi } from './lib/midi.mjs';
 import { APP_NAME } from './lib/project.mjs';
@@ -58,6 +60,7 @@ function serveFile(res, root, rel) {
 export const DEFAULT_HOME = path.join(HERE, '..', '..', 'data', 'daw');
 
 export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOME } = {}) {
+  const since = Date.now();
   const store = new Store({ file: path.join(home, 'project.json') });
   const send = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -71,6 +74,8 @@ export function createServer({ home = process.env.CLAUDEBASE_HOME || DEFAULT_HOM
       switch (route) {
         // which app this is, for the other apps' Apps menus (their pages are on other ports, so it is open to them)
         case 'GET /api/ping': res.setHeader('Access-Control-Allow-Origin', '*'); return send(res, 200, { app: 'daw', name: APP_NAME });
+        // what it needs, each ok or not (lib/health.mjs): the desktop suite's start-up window lists them
+        case 'GET /api/health': return send(res, 200, healthOf({ port: server.address()?.port, since, home }));
         case 'GET /api/state': return send(res, 200, store.state());
         case 'GET /api/events': {
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });

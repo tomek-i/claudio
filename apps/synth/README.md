@@ -101,6 +101,8 @@ instead of pretending.
   `node miniclaude.mjs banner [name]`.
 - `lib/store.mjs`: slots, undo, saving, the saved presets, play requests, notes. `server.mjs`: the HTTP API and static files (the
   API is listed at its top).
+- `lib/health.mjs`: `GET /api/health`, what the app needs (the server, the data folder), each ok or not. The desktop
+  suite's start-up window lists it; a new dependency gets a check there.
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` builds the
   panel from the schema and handles the keys and the sequence; `browser.js` is the preset browser. The page imports `lib/` as `/lib/*.mjs`.
 - `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
