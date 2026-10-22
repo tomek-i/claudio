@@ -1,4 +1,5 @@
-// DJ Claude — synthesised one-shots for the sampler: the fallback when samples/manifest.json is missing, and the tempo-fitted riser.
+// DJ Claude — the sampler's one-shots, synthesised here (no recorded sounds ship), and the tempo-fitted riser. Your own
+// one-shots replace them when samples/manifest.json is there (build-samples.mjs makes it, and it is never committed).
 // Pure functions: synth(kind, sr, opts) -> { L: Float32Array, R: Float32Array }.
 // Runs on the main thread when the engine starts and in the Node tests.
 

@@ -2,7 +2,10 @@
 data/
 bin/
 .venv/
+# your own sampler one-shots (build-samples.mjs): they stay on this machine, the pads ship synthesised (samples.js)
 apps/web/public/samples/src/
+apps/web/public/samples/*.wav
+apps/web/public/samples/manifest.json
 *.log
 # the layout before data/, until node tools/move-to-data.mjs moves it
 .dj/

@@ -25,7 +25,7 @@ module.exports = {
     // the other four apps of the suite, without their tests
     'apps/drums/**', 'apps/synth/**', 'apps/daw/**', 'apps/live/**', '!apps/{drums,synth,daw,live}/test/**',
     '.claude/settings.json', '.claude/skills/**',
-    '!apps/web/public/samples/src/**',
+    '!apps/web/public/samples/{src/**,*.wav,manifest.json}', // your own one-shots stay yours
     '!apps/**/node_modules/**',
   ],
   // where the updater looks (main.mjs): the GitHub releases, which get the installer and its latest.yml (release-please.yml)
