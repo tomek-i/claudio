@@ -14,11 +14,14 @@
 // DRIVE_OPEN=<id>: once the home window is up, its card for that app is clicked. Then it ends the run the way a user
 // would: it closes the DJ page or the other app's window once that is shown (and then the home window, once its card
 // says so), or presses Close on the start-up window when the start failed. DRIVE_USERDATA keeps Electron's own
-// profile out of the user's.
+// profile out of the user's. The windows are there but not seen (Electron has no headless mode): fully transparent,
+// off the taskbar and never taking the focus, so a run does not get in the way of the desk it runs on. They still
+// load, paint, show and maximise as usual. DRIVE_VISIBLE=1 shows them, to watch a run.
 import { app, BrowserWindow } from 'electron';
 import { pathToFileURL } from 'node:url';
 
 app.setPath('userData', process.env.DRIVE_USERDATA);
+if (!process.env.DRIVE_VISIBLE) app.on('browser-window-created', (e, w) => { w.setOpacity(0); w.setSkipTaskbar(true); w.setFocusable(false); });
 const say = (o) => console.log('@@' + JSON.stringify(o));
 // a question to a page that may be closing: one destroyed while asked never answers, and the next look would wait for it
 const ask = (w, js) => Promise.race([w.webContents.executeJavaScript(js).catch(() => null), new Promise((r) => setTimeout(() => r(null), 1000))]);

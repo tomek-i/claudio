@@ -14,7 +14,9 @@ No install is needed for them: the code has no dependencies. They need ffmpeg an
   generated library (synthetic tracks run through the real analyser), so they need no music on the machine and never
   touch `data/`.
 - **The desktop test** (`test/desktop.test.mjs`, ports 4859–4860, 4862 and 4869–4871) starts the real desktop app in Electron on
-  a scratch project folder and a scratch profile. It is skipped when Electron is not installed (`pnpm install`).
+  a scratch project folder and a scratch profile. It is skipped when Electron is not installed (`pnpm install`). Its
+  windows are invisible (transparent, off the taskbar, never focused) so they do not pop up while you work;
+  `DRIVE_VISIBLE=1` shows them, to watch a run.
 - **The four small apps** have their own tests in `apps/drums/test/`, `apps/synth/test/`, `apps/daw/test/` and
   `apps/live/test/` (port 4867).
 
