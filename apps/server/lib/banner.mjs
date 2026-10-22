@@ -11,6 +11,8 @@ const GLYPHS = {
   A: [' ███ ', '█   █', '█████', '█   █', '█   █'],
   U: ['█   █', '█   █', '█   █', '█   █', ' ███ '],
   E: ['█████', '█    ', '████ ', '█    ', '█████'],
+  I: ['█████', '  █  ', '  █  ', '  █  ', '█████'],
+  O: [' ███ ', '█   █', '█   █', '█   █', ' ███ '],
   ' ': ['   ', '   ', '   ', '   ', '   '],
 };
 const TEXT = 'DJ CLAUDE', ROWS = 5;
@@ -62,9 +64,9 @@ export const ANIMATIONS = {
       const landed = p - (k * 0.075 + 0.3); // seconds-ish since this letter hit the floor: flash white, then cool down
       return ['█', off ? blend(grad(x / w), WHITE, 0.5) : blend(WHITE, grad(x / w), clamp(landed / 0.08))];
     },
-    bars(u, i, p) {
+    bars(u, i, p, { n }) {
       let kick = 0;
-      for (let k = 0; k < TEXT.length; k++) { const t = p - (k * 0.075 + 0.3), c = (k + 0.5) / TEXT.length; if (t >= 0) kick = Math.max(kick, Math.exp(-t * 16) * Math.exp(-((u - c) ** 2) / 0.006)); }
+      for (let k = 0; k < n; k++) { const t = p - (k * 0.075 + 0.3), c = (k + 0.5) / n; if (t >= 0) kick = Math.max(kick, Math.exp(-t * 16) * Math.exp(-((u - c) ** 2) / 0.006)); }
       return settle(Math.min(1, rest(u, i) * 0.6 + kick), u, i, p);
     },
   },
@@ -236,12 +238,12 @@ export const ANIMATIONS = {
     },
     bars: (u, i, p) => settle(Math.exp(-Math.abs(u - p / 0.6) * 7) * (0.6 + 0.4 * noise(i, 6, Math.floor(p * 40))) + 0.12 * Math.abs(Math.sin(p * 40)), u, i, p),
   },
-  // disco: the lights are off; a mirror ball comes down between DJ and CLAUDE, spins, throws coloured spots across the
+  // disco: the lights are off; a mirror ball comes down between DJ and CLAUDE (in the middle of a single word), spins, throws coloured spots across the
   // wall and the letters, the lights come up, and it lifts away
   disco: {
     ms: 3800,
-    scene(p, { w }) {
-      const gw = w / (TEXT.length * 6 - 1), r = 2.5 * gw, bx = 13 * gw + (gw - 1) / 2, rot = p * 9; // the gap after "DJ" is 5 columns wide
+    scene(p, { w, gw, gap }) {
+      const r = 2.5 * gw, bx = gap ?? (w - 1) / 2, rot = p * 9;
       const by = p < 0.15 ? -r - 1 + (5.5 + r) * out3(p / 0.15) : p > 0.82 ? 4.5 - (6.5 + r) * ((p - 0.82) / 0.18) ** 2 : 4.5;
       const fade = 1 - clamp((p - 0.75) / 0.2), spots = [];
       if (p > 0.12 && fade > 0) for (let k = 0; k < 16; k++) { const a = rot * 1.3 + (k * Math.PI) / 8; spots.push({ x: bx + Math.cos(a) * w * 0.62, y: 4.5 + Math.sin(a * 2 + k) * 4.5, col: hue(k / 16) }); }
@@ -261,9 +263,12 @@ export const ANIMATIONS = {
   },
 };
 
-export function frame(rows, anim, p) {
-  const w = rows[0].length, gw = w / (TEXT.length * 6 - 1); // gw = 1, or 2 when the logo is double width
-  const logo = { w, on: (x, y) => rows[y]?.[x] === '█', onPx: (x, y) => rows[y >> 1]?.[x] === '█', letter: (x) => Math.floor(x / (6 * gw)) };
+// text: the word the rows spell (logoRows), for the animations that place things by letter
+export function frame(rows, anim, p, text = TEXT) {
+  const w = rows[0].length, gw = w / (text.length * 6 - 1); // gw = 1, or 2 when the logo is double width
+  // gap: the middle of the space between two words (the gap after "DJ" is 5 columns wide), if there is one
+  const space = text.indexOf(' '), gap = space < 0 ? null : (6 * space + 1) * gw + (gw - 1) / 2;
+  const logo = { w, gw, gap, n: text.length, on: (x, y) => rows[y]?.[x] === '█', onPx: (x, y) => rows[y >> 1]?.[x] === '█', letter: (x) => Math.floor(x / (6 * gw)) };
   const lines = [], scene = anim.scene?.(p, logo);
   for (let y = 0; y < ROWS; y++) {
     let s = '  ';
@@ -275,7 +280,7 @@ export function frame(rows, anim, p) {
     }
     lines.push(s + `${ESC}0m`);
   }
-  return [...lines, ...barLines(w, (u, i) => anim.bars(u, i, p))];
+  return [...lines, ...barLines(w, (u, i) => anim.bars(u, i, p, logo))];
 }
 
 function barLines(w, level) {
@@ -322,18 +327,21 @@ export async function banner(info, out = process.stdout, env = process.env) {
   dirs.forEach((d, i) => out.write(`  ${label(i ? '' : 'folders')}${d}\n`));
   if (visuals) out.write(`  ${label('visuals')}${visuals}\n`);
   out.write('\n');
-  if (live && env.DJ_BANNER_LOOP !== '0') loopBars(out, logoRows(TEXT, (out.columns || 80) >= 108)[0].length, 5 + dirs.length + (visuals ? 1 : 0), live);
+  if (live && env.DJ_BANNER_LOOP !== '0') loopBars(out, logoRows(TEXT, wideFits(TEXT, out))[0].length, 5 + dirs.length + (visuals ? 1 : 0), live);
 }
 
-export async function animate(anim, out = process.stdout) {
-  const rows = logoRows(TEXT, (out.columns || 80) >= 108), MS = anim.ms || 1500, lines = ROWS + 2;
+// the logo doubles in width when the terminal has room for it (108 columns for DJ CLAUDE)
+export const wideFits = (text, out) => (out.columns || 80) >= logoRows(text)[0].length * 2 + 6;
+
+export async function animate(anim, out = process.stdout, text = TEXT) {
+  const rows = logoRows(text, wideFits(text, out)), MS = anim.ms || 1500, lines = ROWS + 2;
   const showCursor = () => out.write(`${ESC}?25h`);
   process.once('exit', showCursor); // Ctrl+C mid-animation must not leave the cursor hidden
   out.write(`\n${ESC}?25l`);
   for (let t0 = Date.now(), first = true; ; first = false) { // paced by the clock: timers are coarse on Windows
     const p = Math.min(1, (Date.now() - t0) / MS);
     if (!first) out.write(`${ESC}${lines}A`);
-    out.write(frame(rows, anim, p).map((l) => `${ESC}2K${l}`).join('\n') + '\n');
+    out.write(frame(rows, anim, p, text).map((l) => `${ESC}2K${l}`).join('\n') + '\n');
     if (p >= 1) break;
     await new Promise((r) => setTimeout(r, 33));
   }
