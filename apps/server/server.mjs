@@ -1067,6 +1067,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { presets });
     }
 
+    // the sampler's own one-shots (samples/build-samples.mjs, never committed): without them, which is the usual case,
+    // no pads to load, rather than a 404 the page logs as an error on every start (the pads are synthesised, samples.js)
+    if (p === '/samples/manifest.json' && !fs.existsSync(path.join(PUBLIC_DIR, 'samples', 'manifest.json'))) return send(res, 200, { pads: [] });
+
     // --- static UI
     const file = path.join(PUBLIC_DIR, p === '/' ? 'index.html' : p);
     if (file.startsWith(PUBLIC_DIR) && fs.existsSync(file) && fs.statSync(file).isFile()) return serveFile(req, res, file);

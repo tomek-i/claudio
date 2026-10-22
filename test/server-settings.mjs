@@ -62,3 +62,13 @@ test('GET /api/ping says which app this is, open to the pages of the other apps 
   assert.equal(res.headers.get('access-control-allow-origin'), '*');
   assert.deepEqual(await res.json(), { app: 'dj', name: 'DJ Claude' });
 });
+
+test('the sampler\'s manifest: no pads when there are no one-shots of your own (no 404 for the page to log), yours when there are', async () => {
+  const res = await fetch(sc.base + '/samples/manifest.json');
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { pads: [] });
+  const own = { pads: [{ pad: 1, kind: 'horn', name: 'MY HORN', file: 'samples/horn.wav' }] };
+  fs.mkdirSync(path.join(sc.dir, 'apps', 'web', 'public', 'samples'), { recursive: true });
+  fs.writeFileSync(path.join(sc.dir, 'apps', 'web', 'public', 'samples', 'manifest.json'), JSON.stringify(own));
+  assert.deepEqual(await (await fetch(sc.base + '/samples/manifest.json')).json(), own);
+});
