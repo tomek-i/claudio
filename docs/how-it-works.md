@@ -16,7 +16,7 @@ Claude never touches audio. It runs `node dj.mjs …` commands; the server relay
 |---|---|
 | `apps/server/server.mjs` | Holds the library and analysis cache, relays commands to the browser engine, long-polls (`dj wait`), booth log, crowd inbox, recorder, auto-DJ. |
 | `dj.mjs` + `apps/cli/cli-ext/` | The CLI Claude drives: `node dj.mjs help` and `node dj.mjs help-engine`. |
-| `apps/web/public/engine.js`, `apps/web/public/worklets/` | Web Audio engine: four decks (A/B + C/D), 3-band kill EQ, filter, beat-synced echo, loops, key lock + key shift (WSOLA), per-stem playback, deck FX, 8-pad sampler, scratching, sample-accurate transitions. |
+| `apps/web/public/engine.js`, `apps/web/public/worklets/` | Web Audio engine: four decks (A/B + C/D), 3-band kill EQ, filter, beat-synced echo, loops, key lock + key shift (WSOLA), per-stem playback, deck FX, 8-pad sampler (its sounds synthesised in `samples.js`: air horn, riser, boom, siren, laser, "hey!"; pads 7 and 8 take slices you capture; your own one-shots through `samples/build-samples.mjs`, kept out of git), scratching, sample-accurate transitions. |
 | `apps/web/public/app.js`, `apps/web/public/ui/`, `apps/web/public/css/` | The DJ-table UI and the booth feed: plain ES modules and per-component stylesheets, no build step. |
 | `apps/server/lib/analyze.mjs` | BPM and beat grid, downbeat, key (Camelot), loudness, energy 1–10, intro/breakdowns/drops/outro, section labels, auto hot cues. |
 | `apps/server/lib/library.mjs` | Cache, search, harmonic/tempo/energy suggestions, mashup pairing. |

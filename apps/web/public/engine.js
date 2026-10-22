@@ -676,7 +676,7 @@ class Sampler {
     this.riserBpm = 128;
     this.lastHit = new Array(8).fill(0);
     this.noteSeq = 0;
-    this.loadManifest(); // real recorded one-shots override the synth fallbacks when present
+    this.loadManifest(); // your own one-shots (build-samples.mjs, never committed) override the synthesised pads when present
   }
   async loadManifest(url = 'samples/manifest.json') {
     try {

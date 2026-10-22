@@ -1,4 +1,6 @@
-// Trim + level the downloaded one-shots in ./src into pad-ready WAVs + manifest.json.
+// Your own one-shots on the pads: trim + level the sounds in ./src into pad-ready WAVs + manifest.json, which the
+// engine then loads instead of the synthesised pads (samples.js). Only sounds you may use: src/, the WAVs and the
+// manifest are git-ignored and left out of the installer, so they stay on this machine.
 // Run: node apps/web/public/samples/build-samples.mjs
 import fs from 'node:fs';
 import path from 'node:path';
