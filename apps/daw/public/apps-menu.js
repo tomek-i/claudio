@@ -1,6 +1,6 @@
-// The Apps menu in the header: the four apps of the suite (DJ Claude, Claude-808, MiniClaude, Claudebase), with a
-// dot for each one that is running. The same file is in each app (apps/web/public/ui, apps/drums/public,
-// apps/synth/public, apps/daw/public): the apps import nothing from each other, so each has its own copy, and
+// The Apps menu in the header: the five apps of the suite (DJ Claude, Claude-808, MiniClaude, Claudebase, Claudel),
+// with a dot for each one that is running. The same file is in each app (apps/web/public/ui, apps/drums/public,
+// apps/synth/public, apps/daw/public, apps/live/public): the apps import nothing from each other, so each has its own copy, and
 // test/apps-menu.test.mjs keeps the copies the same. It brings its own styles, on each page's colour tokens, under
 // class names of its own (apps-, am-) that no page uses.
 //
@@ -17,6 +17,7 @@ export const APPS = [
   { id: 'drums', name: 'Claude-808', what: 'drums', port: 4748, start: 'pnpm drums', color: '#ffb347' },
   { id: 'synth', name: 'MiniClaude', what: 'synth', port: 4749, start: 'pnpm synth', color: '#36d6e7' },
   { id: 'daw', name: 'Claudebase', what: 'DAW', port: 4750, start: 'pnpm daw', color: '#9be564' },
+  { id: 'live', name: 'Claudel', what: 'live code', port: 4751, start: 'pnpm live', color: '#c792ea' },
 ];
 
 const IN_SUITE = /\bElectron\//.test(navigator.userAgent); // Claudio's windows: it starts an app when it is opened

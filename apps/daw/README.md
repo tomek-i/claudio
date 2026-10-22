@@ -40,11 +40,7 @@ top of the repository keeps the copies the same).
 - Export: WAV of the whole song (rendered in the browser by the same code that plays it) and a MIDI file with a
   track per track (drums on channel 10, a channel and a program per synth track; muted tracks are in it too).
 - Three templates to start from: Night drive, Slow tape, Blank.
-- **Live** (`/live`, the Live button in the header): code that loops, as on strudel.cc. Write a pattern in
-  Strudel's mini-notation ([PATTERNS.md](PATTERNS.md)), Ctrl+Enter plays it, and code played while it loops comes in
-  on the next bar; Ctrl+. stops. An error leaves the loop playing and marks its line. Blocks (`$drums: …`) can be
-  muted and soloed; the words that sound light up in the code; a strip of the notes and a scope under it. The code
-  is kept between visits and Share copies a link that opens it. It plays on the kit and the synths above.
+- Live coding, code that loops as on strudel.cc, is an app of its own: Claudel ([apps/live](../live/README.md)).
 
 ## Where the AI is
 
@@ -77,12 +73,6 @@ with a velocity of 70 out of 127).
 - `lib/project.mjs`: the project, its validation (`normalizeProject`) and its edits (`applyOp`); the name shown to
   people is `APP_NAME` there. `lib/kit.mjs`: the drum voices and levels. `lib/presets.mjs`: the synth sounds.
 - `lib/notes.mjs`: pitch names and MIDI numbers, notes as text.
-- `lib/pattern.mjs`: the pattern language, Strudel's mini-notation and its core functions (`parse`, `query`: the
-  events between two cycles, a cycle a bar), for live coding (#90). What it supports, with an example each:
-  [PATTERNS.md](PATTERNS.md). No page in it; `test/pattern.test.mjs`.
-- `lib/live.mjs`: the loop of the live page: blocks bar after bar, new code on a bar line, mute and solo, the code
-  as a link. No page in it; `test/live.test.mjs`. `public/live.html`, `live.js`, `live.css`: the page, which plays it
-  on the engine's `Rig`.
 - `lib/song.mjs`: which events sound in a stretch of the song (`eventsInWindow`: playback, WAV and MIDI all use
   it) and the `Playhead` that walks the song for live playback (the loop, the tempo, the end).
 - `lib/midi.mjs`: the MIDI file. `lib/text.mjs`: the arrangement and a clip as text. `lib/templates.mjs`.

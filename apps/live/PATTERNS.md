@@ -1,6 +1,6 @@
 # Patterns
 
-A pattern is a short line of code that describes a loop, in the **mini-notation** of [TidalCycles](https://tidalcycles.org) and [Strudel](https://strudel.cc), so a beat from a Strudel stream can be pasted in. It is the language of live coding in Claudebase (#90). This page lists what it understands.
+A pattern is a short line of code that describes a loop, in the **mini-notation** of [TidalCycles](https://tidalcycles.org) and [Strudel](https://strudel.cc), so a beat from a Strudel stream can be pasted in. It is the language of Claudel, the live-coding app (#90). This page lists what it understands.
 
 ```js
 s("bd*4, [~ sd]*2, hh*8")             // kick on every beat, snare on 2 and 4, eighth hats
@@ -8,7 +8,7 @@ note("<c3 eb3 g3 bb3>*2").s("bass")   // a different note each half bar
 s("bd sd").every(4, fast(2))          // every fourth bar twice as fast
 ```
 
-One **cycle is one bar**. The code is `lib/pattern.mjs`: `parse(code)` reads it, and `query(pattern, from, to)` gives the events that start between two cycles (`{ start, len, sound, kind, pitch, vel }`, in cycles). It is our own code with Strudel's syntax, not Strudel. It plays on Claudebase's kit and synth sounds.
+One **cycle is one bar**. The code is `lib/pattern.mjs`: `parse(code)` reads it, and `query(pattern, from, to)` gives the events that start between two cycles (`{ start, len, sound, kind, pitch, vel }`, in cycles). It is our own code with Strudel's syntax, not Strudel. It plays on Claudel's kit and synth sounds (the same as Claudebase's).
 
 ## Sounds
 
@@ -73,7 +73,7 @@ Numbers can be worked out (`1/8`, `3/4 + 1/16`). `silence` is a pattern with not
 ## The code around them
 
 - **Several patterns**, each on its own line, play together. A line may start with `$:`, as in Strudel, or name its
-  block: `$drums:` (or `drums:`). `_` before either mutes it. On the live page each block can be muted and soloed.
+  block: `$drums:` (or `drums:`). `_` before either mutes it. On Claudel's page each block can be muted and soloed.
 - **A chain can go on over lines:** `s("bd sd")` then `.fast(2)` on the next line.
 - **Comments** are `//` and `/* */`.
 - **Strings** take `"`, `'` or `` ` ``.

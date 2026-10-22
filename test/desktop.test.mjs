@@ -140,7 +140,7 @@ test('home: Claudio opens on its home window; a card starts that app\'s server a
   const ev = r.events, at = (f) => ev.findIndex(f);
   // the home window, with a card per app, and no DJ start-up: nothing is started before it is asked for
   // (the first report can come before the cards are drawn: the first one with cards in it)
-  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home' && Object.keys(e.cards).length).cards), ['dj', 'drums', 'synth', 'daw'], r.out);
+  assert.deepEqual(Object.keys(ev.find((e) => e.ev === 'home' && Object.keys(e.cards).length).cards), ['dj', 'drums', 'synth', 'daw', 'live'], r.out);
   assert.ok(!ev.some((e) => e.kind === 'splash' || e.kind === 'main'), 'DJ Claude is not started');
   // the card says it is starting, then the drum machine's own page is in a window of its own
   // (the order is checked from the click: the driver can see a window before the card says "starting", as the DJ test below says)

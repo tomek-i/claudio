@@ -66,19 +66,20 @@ More in [The desktop app](docs/desktop-app.md).
 `node dj.mjs help` lists every command. `CLAUDE.md` is the map of the code, written for Claude.
 
 ## Also in this repository
-Three small instruments that Claude plays the same way: each has its own server, page, CLI and skill, and shares no
-code with the DJ rig or with the others. They live here for now.
+Four small instruments, each with its own server and page (three of them with a CLI and a skill that Claude plays
+them with), sharing no code with the DJ rig or with each other. They live here for now.
 
 | | Start it | What it is |
 |---|---|---|
 | **Claude-808** | `pnpm drums` → http://localhost:4748 | A drum machine where every hit also has an offset in milliseconds, so a beat keeps its groove. [apps/drums](apps/drums/README.md) |
 | **MiniClaude** | `pnpm synth` → http://localhost:4749 | A polyphonic synthesizer with four patch slots and a sixteen-step sequencer. [apps/synth](apps/synth/README.md) |
 | **Claudebase** | `pnpm daw` → http://localhost:4750 | A small DAW: drum and synth tracks, clips on a bar timeline, MIDI export. [apps/daw](apps/daw/README.md) |
+| **Claudel** | `pnpm live` → http://localhost:4751 | Live coding: code that loops, as on strudel.cc, in Strudel's mini-notation; change it while it plays. [apps/live](apps/live/README.md) |
 
 Ask Claude for "a boom bap beat", "a fat detuned bass" or "a house track" and it uses the right one.
 
-`pnpm all` starts all four servers (the DJ rig too) in one terminal, each line marked with its app; one Ctrl+C stops
-them. Every page has an **Apps** menu in its header with the four, a dot for each one running: a click opens one in a
+`pnpm all` starts all five servers (the DJ rig too) in one terminal, each line marked with its app; one Ctrl+C stops
+them. Every page has an **Apps** menu in its header with the five, a dot for each one running: a click opens one in a
 new tab, and one that is not running shows the command that starts it. In the desktop app, Claudio, the menu opens the
 app's window and starts it.
 

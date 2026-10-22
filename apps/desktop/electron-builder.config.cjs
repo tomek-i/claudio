@@ -22,8 +22,8 @@ module.exports = {
     // Claude Code, the CLI and the skills work there (rig-folder.mjs)
     'dj.mjs', 'CLAUDE.md', 'config.json',
     'apps/server/**', 'apps/cli/**', 'apps/web/public/**', 'tools/produce/**',
-    // the other three apps of the suite, without their tests
-    'apps/drums/**', 'apps/synth/**', 'apps/daw/**', '!apps/{drums,synth,daw}/test/**',
+    // the other four apps of the suite, without their tests
+    'apps/drums/**', 'apps/synth/**', 'apps/daw/**', 'apps/live/**', '!apps/{drums,synth,daw,live}/test/**',
     '.claude/settings.json', '.claude/skills/**',
     '!apps/web/public/samples/src/**',
     '!apps/**/node_modules/**',

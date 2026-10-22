@@ -1,29 +1,25 @@
-// The live page (#88): code that loops, as on strudel.cc. Ctrl+Enter plays the code, and code played while the loop
+// Claudel's page: code that loops, as on strudel.cc. Ctrl+Enter plays the code, and code played while the loop
 // runs comes in on the next bar line; an error leaves the loop playing what it played. The language is
 // lib/pattern.mjs, the loop lib/live.mjs, the sound the kit and synth voices of engine.js (a Rig with one kit and a
-// track per synth sound). The events are scheduled ahead on the audio clock, as the arrangement's are, so typing
-// never moves the beat.
+// strip per synth sound). The events are scheduled ahead on the audio clock, so typing never moves the beat.
 import { PatternError, parseBlocks } from '/lib/pattern.mjs';
 import { Loop, codeToHash, hashToCode, heardBlocks, nextBar } from '/lib/live.mjs';
 import { PRESET_IDS } from '/lib/presets.mjs';
+import { EXAMPLES } from '/lib/examples.mjs';
 import { VOICE_IDS } from '/lib/kit.mjs';
-import { stepSeconds } from '/lib/song.mjs';
-import { Rig } from './engine.js';
+import { Rig, stepSeconds } from './engine.js';
+import { mountAppsMenu } from './apps-menu.js';
 
 const $ = (id) => document.getElementById(id);
+mountAppsMenu($('appsBtn'), 'live');
 const LOOKAHEAD = 0.12;           // seconds of events scheduled ahead of the clock
 const LOOKAHEAD_HIDDEN = 1.5;     // a hidden tab's timers run as seldom as once a second
 const TICK_MS = 25;
-const STORE = 'claudebase.live';  // the code and the tempo, kept between visits
+const STORE = 'claudel';          // the code and the tempo, kept between visits
 const SYNTH = 'keys';             // the sound of a note that names none
 const COLORS = ['#ff7a45', '#36d6e7', '#9be564', '#c792ea', '#f2cc60', '#ff5c8a'];
-const EXAMPLE = `// Ctrl+Enter plays, and plays your changes from the next bar. Ctrl+. stops.
-$drums: s("bd*4, [~ sd]*2, hh*8?")
-$bass: n("0 0 3 <5 7>").scale("C2:minor").s("bass").every(4, rev)
-$chords: note("<[c3,eb3,g3] [ab2,c3,eb3]>").s("pad")
-`;
 
-// the instruments, as a project the engine's Rig plays: one kit, and a track for each synth sound
+// the instruments, as the engine's Rig has them: one kit, and a strip for each synth sound
 const instruments = (bpm) => ({
   bpm, master: 0.8,
   tracks: [
@@ -149,7 +145,7 @@ function load() {
   const linked = hashToCode(location.hash);
   if (linked) return { code: linked.code, bpm: linked.bpm ?? 120 };
   try { const kept = JSON.parse(localStorage.getItem(STORE)); if (kept?.code) return kept; } catch {}
-  return { code: EXAMPLE, bpm: 120 };
+  return { code: EXAMPLES[0].code, bpm: EXAMPLES[0].bpm };
 }
 
 // ---- the blocks: mute and solo
@@ -287,6 +283,22 @@ addEventListener('keydown', (e) => {
 });
 $('play').addEventListener('click', () => (playing() ? stop() : run()));
 $('bpm').addEventListener('change', (e) => setBpm(e.target.value));
+// the Examples menu: an example's code and tempo, played (from the next bar when something plays). Code of your own
+// that is not one of the examples is asked about first, as it would be lost.
+const examples = $('examples');
+for (const ex of EXAMPLES) examples.add(new Option(`${ex.name} · ${ex.bpm}`, ex.id));
+examples.addEventListener('change', () => {
+  const ex = EXAMPLES.find((e) => e.id === examples.value);
+  examples.value = '';
+  if (!ex || ex.code === code.value) return;
+  const yours = code.value.trim() && !EXAMPLES.some((e) => e.code === code.value);
+  if (yours && !confirm(`Replace your code with the ${ex.name} example?`)) return;
+  code.value = ex.code;
+  setBpm(ex.bpm);
+  run();
+  code.focus();
+});
+
 $('share').addEventListener('click', async () => {
   history.replaceState(null, '', codeToHash(code.value, state.bpm));
   try { await navigator.clipboard.writeText(location.href); say('link copied: it opens this code'); } catch { say('copy the address: it opens this code'); }

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>%NAME%</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2309090c'/%3E%3Cpath d='M12.7 9.7A5 5 0 1 1 12.1 5.13' fill='none' stroke='%2336d6e7' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M13 6.44 13.16 4.38 11.04 5.88Z' fill='%2336d6e7'/%3E%3Crect x='7.2' y='5' width='1.6' height='6' rx='.5' fill='%23ff7a45'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="theme/theme.css">   <!-- shared by the apps: tools/theme/, copied here -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<!-- Claudel: code that loops, as on strudel.cc. The code is lib/pattern.mjs's language (PATTERNS.md), the loop
+     lib/live.mjs, the sound the kit and synths of engine.js; app.js puts them together. -->
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M12.7 9.7A5 5 0 1 1 12.1 5.13" fill="none" stroke="var(--mid)" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M13 6.44 13.16 4.38 11.04 5.88Z" fill="var(--mid)"/>
+        <rect class="caret" x="7.2" y="5" width="1.6" height="6" rx=".5" fill="var(--low)"/>
+      </svg>%NAME%
+    </div>
+    <button id="play" class="play" aria-pressed="false" title="Play the code (Ctrl+Enter), stop (Ctrl+.)">Play</button>
+    <output id="bar" class="pos" title="The bar playing" aria-label="Bar">–</output>
+    <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
+    <select id="examples" aria-label="Load an example" title="A loop in a style: its code and tempo, played"><option value="">Examples…</option></select>
+    <span class="spacer"></span>
+    <span id="status" class="say" role="status"></span>
+    <button id="share" title="Copy a link that opens this code">Share</button>
+    <button id="appsBtn" title="Apps: DJ Claude, Claude-808, MiniClaude, Claudebase and Claudel · a dot for each one running"></button>
+  </header>
+
+  <main class="stage">
+    <div class="editor" id="editor">
+      <pre class="paint" id="paint" aria-hidden="true"></pre>
+      <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="The code" wrap="off"></textarea>
+    </div>
+    <div class="blocks" id="blocks" aria-label="The blocks of the code: mute and solo"></div>
+    <div class="views">
+      <canvas id="roll" class="strip" aria-label="The notes of the bar playing and the next"></canvas>
+      <canvas id="scope" class="scope" aria-label="The sound"></canvas>
+    </div>
+    <p class="keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> plays the code, and your changes from the next bar · <kbd>Ctrl</kbd>+<kbd>.</kbd> stops · the language: <a href="https://github.com/tomek-i/dj-claude/blob/main/apps/live/PATTERNS.md" target="_blank" rel="noopener">PATTERNS.md</a></p>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -8,7 +8,7 @@ import { APPS, appById, appFromArgs, appOfUrl, originOf, portOf, serverEnv, serv
 import { moveToClaudio } from '../tools/move-to-claudio.mjs';
 
 test('APPS: the four, each with a server file that is there', () => {
-  assert.deepEqual(APPS.map((a) => a.id), ['dj', 'drums', 'synth', 'daw']);
+  assert.deepEqual(APPS.map((a) => a.id), ['dj', 'drums', 'synth', 'daw', 'live']);
   for (const a of APPS) assert.ok(fs.existsSync(serverFile(a)), serverFile(a));
   assert.equal(appById('synth').name, 'MiniClaude');
   assert.equal(appById('nope'), null);
@@ -36,7 +36,8 @@ test('appOfUrl: a page of one of the apps, by its origin; anything else is none 
   const env = { env: {}, config: {} };
   assert.equal(appOfUrl('http://localhost:4747/settings', env).id, 'dj');
   assert.equal(appOfUrl('http://localhost:4750/', env).id, 'daw');
-  assert.equal(appOfUrl('http://localhost:4751/', env), null);
+  assert.equal(appOfUrl('http://localhost:4751/', env).id, 'live');
+  assert.equal(appOfUrl('http://localhost:4752/', env), null);
   assert.equal(appOfUrl('https://github.com', env), null);
   assert.equal(appOfUrl('not a url', env), null);
 });
