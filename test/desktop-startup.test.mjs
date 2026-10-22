@@ -24,7 +24,7 @@ test('another app: every check but the server, nothing pending; a failed one is 
   assert.deepEqual(pendingSteps(drums), []);
   const ok = stepsOf(drums, [check('server', 'ok'), check('data', 'ok', '/data/drums')]);
   assert.deepEqual(ok, { steps: [{ id: 'data', name: 'data', state: 'ok', detail: '/data/drums' }], down: false });
-  const bad = stepsOf(appById('live'), [check('server', 'ok'), check('page', 'fail', 'missing: public/index.html')]);
+  const bad = stepsOf(appById('live'), [check('server', 'ok'), check('files', 'fail', 'missing: public/index.html')]);
   assert.equal(bad.down, true);
   assert.equal(bad.steps[0].state, 'fail');
 });

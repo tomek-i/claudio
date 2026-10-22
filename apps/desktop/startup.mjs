@@ -5,6 +5,9 @@
 // ones only when they have a fault. The other apps have a few checks, all listed. The server has a line of its own
 // before the checks, and DJ Claude's engine one after them (it has not started yet), so neither is listed from here.
 const DJ_ALWAYS = { library: 'Library', ffmpeg: 'ffmpeg', ffprobe: 'ffprobe' };
+// the lines main.mjs writes itself: a check with one of these ids (but the server's, which is left out) would be
+// written over
+export const OWN_STEPS = ['folder', 'server', 'checks', 'engine', 'page'];
 
 // the lines shown while the checks run (DJ Claude's; the other apps' are not known before the answer)
 export const pendingSteps = (app) => (app.id === 'dj' ? Object.entries(DJ_ALWAYS).map(([id, name]) => ({ id, name })) : []);

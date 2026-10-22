@@ -46,7 +46,7 @@ test('nothing outside the page and the libraries', async () => {
 
 test('its health: the server and the page files, ok; a folder without them is a fail', async () => {
   const { checks } = await (await fetch(BASE + '/api/health')).json();
-  assert.deepEqual(checks.map((c) => [c.id, c.status, c.required]), [['server', 'ok', true], ['page', 'ok', true]]);
+  assert.deepEqual(checks.map((c) => [c.id, c.status, c.required]), [['server', 'ok', true], ['files', 'ok', true]]);
   assert.match(checks[0].detail, new RegExp(`port ${PORT}`));
   const bad = healthOf({ port: PORT, since: Date.now(), root: os.tmpdir() }).checks[1];
   assert.equal(bad.status, 'fail');

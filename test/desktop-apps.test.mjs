@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { APPS, appById, appFromArgs, appOfUrl, originOf, pingUrl, portOf, serverEnv, serverFile } from '../apps/desktop/apps.mjs';
 import { moveToClaudio } from '../tools/move-to-claudio.mjs';
+import { OWN_STEPS } from '../apps/desktop/startup.mjs';
 
 test('APPS: the four, each with a server file that is there', () => {
   assert.deepEqual(APPS.map((a) => a.id), ['dj', 'drums', 'synth', 'daw', 'live']);
@@ -34,8 +35,10 @@ test('serverEnv: the port, and for the other apps where to keep their things (da
 });
 
 // main.mjs waits on pingUrl after starting a server; Claudel once never answered it, so its window never opened.
-// DJ Claude's server is left out: it is slow to start, and the desktop start-up test opens it.
-test('pingUrl: every other app\'s server answers it once started (ports 4872-4875)', async () => {
+// Then it lists the server's /api/health on the start-up window, where a check named as one of its own lines would be
+// written over (Claudel's "Page files" once was, by "Page"). DJ Claude's server is left out: it is slow to start, and
+// the desktop start-up test opens it.
+test('pingUrl and /api/health: every other app\'s server answers both; no check is named as a line of the start-up window (ports 4872-4875)', async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dj-claude-ping-'));
   const others = APPS.filter((a) => a.id !== 'dj');
   const kids = [];
@@ -51,6 +54,8 @@ test('pingUrl: every other app\'s server answers it once started (ports 4872-487
       }
       assert.ok(ok, `${a.name} answers ${pingUrl(a, opts)}`);
       assert.equal((await (await fetch(pingUrl(a, opts))).json()).app, a.id);
+      const { checks } = await (await fetch(`${originOf(a, opts)}/api/health`)).json();
+      for (const c of checks) assert.ok(c.id === 'server' || !OWN_STEPS.includes(c.id), `${a.name}: check "${c.id}"`);
     }
   } finally {
     for (const k of kids) k.kill();

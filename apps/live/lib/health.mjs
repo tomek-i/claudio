@@ -12,7 +12,7 @@ export function healthOf({ port, since, root }) {
   return {
     checks: [
       check('server', 'Server', 'ok', `port ${port} · up ${Math.floor((Date.now() - since) / 60000)} min`),
-      check('page', 'Page files', missing.length ? 'fail' : 'ok', missing.length ? `missing: ${missing.join(', ')}` : 'the page and the pattern language'),
+      check('files', 'Page files', missing.length ? 'fail' : 'ok', missing.length ? `missing: ${missing.join(', ')}` : 'the page and the pattern language'),
     ],
   };
 }
