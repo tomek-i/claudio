@@ -6,7 +6,8 @@
 <title>Claudio</title>
 <!-- Claudio's home window (main.mjs): one card per app. A local file with nothing to fetch, and no preload: a card is
      a link to #open/<id>: the page stays where it is, main.mjs sees its address change and opens that app, and it says
-     how each app is doing by calling state() below. -->
+     how each app is doing by calling state() below, and how the updates are by calling update(); the footer's link to
+     #update checks for one, or restarts into it. -->
 <style>
   :root { --bg: #09090c; --card: #111117; --line: #262631; --text: #ecebf2; --dim: #a09fb0; --faint: #7f7e92; --ok: #7ee787; --fail: #ff6b6b; --a: #ff7a45; --b: #36d6e7; }
   * { box-sizing: border-box; }
@@ -59,6 +60,10 @@
   @keyframes playhead { 0% { transform: translateX(0); opacity: 1; } 96% { opacity: 1; } 100% { transform: translateX(12px); opacity: 0; } }
 
   .foot { margin-top: auto; padding-top: 22px; color: var(--faint); font-size: 11px; text-align: center; }
+  .update { margin-top: 6px; min-height: 15px; }
+  .update a { color: var(--dim); margin-left: 6px; text-decoration: underline; text-underline-offset: 2px; }
+  .update a:hover, .update a:focus-visible { color: var(--text); outline: none; }
+  .update a[hidden] { display: none; }
   @media (prefers-reduced-motion: reduce) { .app, .app:hover .sheen, .app:hover .meter rect, .app:hover .wave path, .app:hover .playhead, .app[data-state=starting] .state::before { animation: none; transition: none; } }
 </style>
 </head>
@@ -66,7 +71,8 @@
 <div class="brand">CLAUD<i>IO</i></div>
 <div class="tag">four instruments, one Claude</div>
 <nav class="apps" id="apps"></nav>
-<div class="foot">Each app opens in a window of its own. The Apps menu has them all, from any window.</div>
+<div class="foot">Each app opens in a window of its own. The Apps menu has them all, from any window.
+  <div class="update" id="update"><span></span><a href="#update" hidden></a></div></div>
 <script>
   // filled by main.mjs before the page shows (the list is apps.mjs's); one card per app
   // each app's icon, as its page draws it (the favicons), with the parts that move on hover
@@ -99,6 +105,12 @@
     el.dataset.state = st;
     el.querySelector('.state').textContent = detail ? `${WORD[st]}: ${detail}` : WORD[st];
     el.title = detail;
+  }
+  // what the updates are doing (updates.mjs describe()): a line, and the link for the action, when there is one
+  function update({ text, action }) {
+    const el = document.getElementById('update'), a = el.querySelector('a');
+    el.querySelector('span').textContent = text;
+    a.textContent = action || ''; a.hidden = !action;
   }
   // 1-4 open the apps, the arrow keys move between the cards
   addEventListener('keydown', (e) => {
