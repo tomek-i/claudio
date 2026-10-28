@@ -29,7 +29,7 @@ module.exports = {
     '!apps/**/node_modules/**',
   ],
   // where the updater looks (main.mjs): the GitHub releases, which get the installer and its latest.yml (release-please.yml)
-  publish: { provider: 'github', owner: 'tomek-i', repo: 'dj-claude' },
+  publish: { provider: 'github', owner: 'tomek-i', repo: 'claudio' },
   artifactName: 'Claudio-Setup-${version}.${ext}', // no spaces: it is a download link on the release page
   win: { target: 'nsis', icon: 'apps/desktop/icon.png' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, shortcutName: 'Claudio' },
