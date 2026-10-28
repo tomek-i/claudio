@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.9.0](https://github.com/tomek-i/claudio/compare/v0.8.0...v0.9.0) (2026-10-28)
+
+
+### Features
+
+* **apps:** a /api/health on the four other apps ([757e7c9](https://github.com/tomek-i/claudio/commit/757e7c9ad37258bd3dfe86d3f7da46c2e71601b4))
+* **desktop:** a start-up window for every app, and Claudio's banner ([309613a](https://github.com/tomek-i/claudio/commit/309613a86b03b4d123c6f04c82a5cc74d4669dda))
+* **desktop:** a start-up window for every app, and Claudio's banner ([5891d65](https://github.com/tomek-i/claudio/commit/5891d65db96fbfcefac94b526340b82c474762ad))
+* **desktop:** check for updates from the apps menu and home window ([8a72397](https://github.com/tomek-i/claudio/commit/8a72397bd514e7af16862179fd92899038ab776e))
+* **desktop:** check for updates in Claudio ([df5f4e1](https://github.com/tomek-i/claudio/commit/df5f4e1fa536264d890a93acba9fd7c314810668))
+* **live:** a startup banner and examples in five styles ([d1f5fd6](https://github.com/tomek-i/claudio/commit/d1f5fd69a3f5dfec8c684195265e4664162801a3))
+* **live:** Claudel, live coding as an app of its own ([9234579](https://github.com/tomek-i/claudio/commit/9234579b462b666e58afc11802dce8071af14822))
+* **live:** Claudel, live coding as an app of its own ([4789ac9](https://github.com/tomek-i/claudio/commit/4789ac98e2db192a82e584bde58ef2e3d94bb796))
+
+
+### Bug fixes
+
+* **desktop:** look for updates in the renamed repository, tomek-i/claudio ([a41d778](https://github.com/tomek-i/claudio/commit/a41d778cb38f84c02ea0f750aa9c3e9824fd3dc5))
+* **desktop:** slim scrollbar on the home window, as on the apps' pages ([bfcb6b7](https://github.com/tomek-i/claudio/commit/bfcb6b70798bb77f934fc1bbbe29e6864eb4bdf5))
+* **desktop:** wait on /api/ping so Claudel's window opens ([557d378](https://github.com/tomek-i/claudio/commit/557d37814425114b93d504a6eebb91eda834bfe4))
+* **live:** name the page files check so the start-up window keeps it ([c075270](https://github.com/tomek-i/claudio/commit/c075270a612dc986df2629f640e522deb345f6d0))
+* **sampler:** ship our own synthesised pads, not downloaded sounds ([0c69e6d](https://github.com/tomek-i/claudio/commit/0c69e6da76056f70e54f987ef55b7e296a994110))
+* **sampler:** ship our own synthesised pads, not downloaded sounds ([ebccaf7](https://github.com/tomek-i/claudio/commit/ebccaf7f673da59a90f9126712c4c79b87d8522e))
+* **server:** answer the sampler's manifest with no pads when there is none ([5371a60](https://github.com/tomek-i/claudio/commit/5371a60405f4bfe5ab96cae28b678d4bf575831f))
+
+
+### Restructuring
+
+* **banner:** let the banner's animations draw any word ([8f21d50](https://github.com/tomek-i/claudio/commit/8f21d50ba894669d0975ac808493f0639ec4d45f))
+
 ## [0.8.0](https://github.com/tomek-i/dj-claude/compare/v0.7.0...v0.8.0) (2026-10-21)
 
 
