@@ -41,7 +41,7 @@ Claude Code and `node dj.mjs …` work the same in both modes: they talk to the 
 only the desktop app has dependencies (Electron in `apps/desktop/`, and its updater).
 
 ## The installer
-Each [release](https://github.com/tomek-i/dj-claude/releases) has the Windows installer attached
+Each [release](https://github.com/tomek-i/claudio/releases) has the Windows installer attached
 (`Claudio-Setup-<version>.exe`); `pnpm dist` builds the same thing into `dist/`. It is not code-signed, so Windows
 asks before running it.
 
@@ -68,11 +68,10 @@ background (the footer and the menu show how far it has got). When it is in, **R
 and starts the suite again on the new version; if you leave it, it installs when you next quit. A check you asked for
 answers in a dialog. A check that fails says why in a line (no connection, or no update to be seen on GitHub).
 
-It reads the latest [release](https://github.com/tomek-i/dj-claude/releases): the installer, its `.blockmap` and
+It reads the latest [release](https://github.com/tomek-i/claudio/releases): the installer, its `.blockmap` and
 `latest.yml`, which the `installer` job attaches (electron-updater, `apps/desktop/updates.mjs`). Releases before
-0.9.0 have no `latest.yml`, and while the repository is private GitHub shows the app no release at all, so until
-then the check says there is no update to be seen. Run from the source tree (`pnpm desktop`), the app has no
-updates: `git pull` is how it gets them.
+0.9.0 have no `latest.yml`, so an app older than that cannot update itself: install 0.9.0 or later once by hand.
+Run from the source tree (`pnpm desktop`), the app has no updates: `git pull` is how it gets them.
 
 ## Building and testing it
 - `pnpm dist` builds the installer into `dist/` (electron-builder; the configuration is `apps/desktop/electron-builder.config.cjs`).

@@ -11,11 +11,11 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tomek-i/dj-claude.git"
+    "url": "git+https://github.com/tomek-i/claudio.git"
   },
-  "homepage": "https://github.com/tomek-i/dj-claude#readme",
+  "homepage": "https://github.com/tomek-i/claudio#readme",
   "bugs": {
-    "url": "https://github.com/tomek-i/dj-claude/issues"
+    "url": "https://github.com/tomek-i/claudio/issues"
   },
   "keywords": [
     "dj",
