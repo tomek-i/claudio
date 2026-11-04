@@ -19,9 +19,9 @@ function buildTrack(t) {
   const row = el('div', { className: 'track' },
     el('div', { className: 'head' },
       el('div', { className: 'l1' },
-        el('input', { className: 'tname', maxLength: 40, spellcheck: false }),
+        el('input', { className: 'tname', maxLength: 40, spellcheck: false, title: 'The name of the track' }),
         t.kind === 'synth'
-          ? el('select', { className: 'sound' }, ...PRESET_IDS.map((id) => el('option', { value: id }, PRESETS[id].name)))
+          ? el('select', { className: 'sound', title: 'The synth sound this track plays' }, ...PRESET_IDS.map((id) => el('option', { value: id }, PRESETS[id].name)))
           : el('span', { className: 'kind' }, 'Drum kit'),
         el('button', { className: 'ms m', title: 'Mute' }, 'M'),
         el('button', { className: 'ms s', title: 'Solo' }, 'S'),
@@ -60,7 +60,7 @@ function paintClips(lane, t) {
   for (const clip of t.clips) {
     let node = have.get(clip.id);
     if (!node) {
-      node = el('button', { className: 'clip' }, el('span', { className: 'label' }), el('span', { className: 'thumb' }), el('i', { className: 'grip' }));
+      node = el('button', { className: 'clip', title: 'Click to edit it · drag to move it, its right edge to make it longer (the content repeats) · ← → move, Shift+← → resize, Ctrl+D duplicate, Delete remove' }, el('span', { className: 'label' }), el('span', { className: 'thumb' }), el('i', { className: 'grip' }));
       node.dataset.clip = clip.id;
       lane.append(node);
     }

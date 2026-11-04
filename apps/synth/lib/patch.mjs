@@ -10,47 +10,47 @@ export const WAVES = ['sine', 'triangle', 'saw', 'square'];
 export const LFO_DESTS = ['pitch', 'filter', 'amp'];
 
 // curve: how a slider covers the range. lin: evenly. log: evenly in octaves (frequencies, times). sq: fine at
-// the low end, and it can reach 0.
-const num = (id, label, min, max, def, unit = '', step = 0.01, curve = 'lin') => ({ id, label, min, max, def, unit, step, curve });
-const pick = (id, label, options, def) => ({ id, label, options, def });
+// the low end, and it can reach 0. hint: what the control does, in a sentence: its tooltip on the page.
+const num = (id, label, hint, min, max, def, unit = '', step = 0.01, curve = 'lin') => ({ id, label, hint, min, max, def, unit, step, curve });
+const pick = (id, label, hint, options, def) => ({ id, label, hint, options, def });
 const osc = (n, level) => [
-  pick(`osc${n}.wave`, 'Wave', WAVES, 'saw'),
-  num(`osc${n}.octave`, 'Octave', -3, 3, 0, '', 1),
-  num(`osc${n}.semi`, 'Semitone', -12, 12, 0, 'st', 1),
-  num(`osc${n}.fine`, 'Fine', -50, 50, 0, 'ct', 1),
-  num(`osc${n}.level`, 'Level', 0, 1, level, '%'),
+  pick(`osc${n}.wave`, 'Wave', `The shape of oscillator ${n}'s wave: sine is pure, saw and square are bright`, WAVES, 'saw'),
+  num(`osc${n}.octave`, 'Octave', `Oscillator ${n} up or down by octaves`, -3, 3, 0, '', 1),
+  num(`osc${n}.semi`, 'Semitone', `Oscillator ${n} up or down by semitones`, -12, 12, 0, 'st', 1),
+  num(`osc${n}.fine`, 'Fine', `Oscillator ${n} detuned a little, in cents: against the other one it beats and sounds wider`, -50, 50, 0, 'ct', 1),
+  num(`osc${n}.level`, 'Level', `How loud oscillator ${n} is in the mix`, 0, 1, level, '%'),
 ];
-const adsr = (id, attack, decay, sustain, release) => [
-  num(`${id}.attack`, 'Attack', 0.001, 10, attack, 's', 0.001, 'log'),
-  num(`${id}.decay`, 'Decay', 0.001, 10, decay, 's', 0.001, 'log'),
-  num(`${id}.sustain`, 'Sustain', 0, 1, sustain, '%'),
-  num(`${id}.release`, 'Release', 0.001, 10, release, 's', 0.001, 'log'),
+const adsr = (id, what, attack, decay, sustain, release) => [
+  num(`${id}.attack`, 'Attack', `How long ${what} takes to rise when a note starts`, 0.001, 10, attack, 's', 0.001, 'log'),
+  num(`${id}.decay`, 'Decay', `How long ${what} takes to fall to the sustain level`, 0.001, 10, decay, 's', 0.001, 'log'),
+  num(`${id}.sustain`, 'Sustain', `Where ${what} stays while the note is held`, 0, 1, sustain, '%'),
+  num(`${id}.release`, 'Release', `How long ${what} takes to fade once the note is let go`, 0.001, 10, release, 's', 0.001, 'log'),
 ];
 
 export const PARAMS = [
   ...osc(1, 0.8),
   ...osc(2, 0),
-  num('mix.sub', 'Sub', 0, 1, 0, '%'),                       // a sine one octave below oscillator 1
-  num('mix.noise', 'Noise', 0, 1, 0, '%'),
-  num('filter.cutoff', 'Cutoff', 20, 18000, 2400, 'Hz', 1, 'log'),
-  num('filter.resonance', 'Resonance', 0, 1, 0.1, '%'),
-  num('filter.env', 'Envelope', -6, 6, 0, 'oct', 0.1),       // how far the filter envelope opens (or closes) it
-  num('filter.keytrack', 'Key track', 0, 1, 0.3, '%'),       // 100%: the cutoff follows the note, an octave for an octave
-  ...adsr('fenv', 0.005, 0.3, 0.3, 0.3),
-  ...adsr('aenv', 0.005, 0.3, 0.8, 0.3),
-  num('lfo.rate', 'Rate', 0.05, 30, 5, 'Hz', 0.01, 'log'),
-  pick('lfo.shape', 'Shape', WAVES, 'sine'),
-  num('lfo.depth', 'Depth', 0, 1, 0, '%'),
-  pick('lfo.dest', 'To', LFO_DESTS, 'pitch'),
-  num('voice.glide', 'Glide', 0, 2, 0, 's', 0.001, 'sq'),
-  num('voice.unison', 'Unison', 1, 4, 1, '', 1),             // copies of each oscillator per note
-  num('voice.detune', 'Detune', 0, 50, 12, 'ct', 1),         // how far the copies are spread
-  num('delay.time', 'Time', 0.02, 1.5, 0.375, 's', 0.001),
-  num('delay.feedback', 'Feedback', 0, 0.9, 0.35, '%'),
-  num('delay.mix', 'Send', 0, 1, 0, '%'),
-  num('reverb.size', 'Size', 0.3, 6, 2, 's', 0.1),
-  num('reverb.mix', 'Send', 0, 1, 0.1, '%'),
-  num('master.volume', 'Volume', 0, 1, 0.7, '%'),
+  num('mix.sub', 'Sub', 'A sine one octave below oscillator 1, for weight', 0, 1, 0, '%'),
+  num('mix.noise', 'Noise', 'White noise in the mix, for breath and hiss', 0, 1, 0, '%'),
+  num('filter.cutoff', 'Cutoff', 'Where the filter starts taking the highs off: lower is darker', 20, 18000, 2400, 'Hz', 1, 'log'),
+  num('filter.resonance', 'Resonance', 'A peak at the cutoff: higher rings and whistles', 0, 1, 0.1, '%'),
+  num('filter.env', 'Envelope', 'How far the filter envelope opens the filter (or closes it, below 0), in octaves', -6, 6, 0, 'oct', 0.1),
+  num('filter.keytrack', 'Key track', 'How much the cutoff follows the note: at 100% an octave up opens it an octave', 0, 1, 0.3, '%'),
+  ...adsr('fenv', 'the filter envelope', 0.005, 0.3, 0.3, 0.3),
+  ...adsr('aenv', 'the volume', 0.005, 0.3, 0.8, 0.3),
+  num('lfo.rate', 'Rate', 'How fast the LFO wobbles', 0.05, 30, 5, 'Hz', 0.01, 'log'),
+  pick('lfo.shape', 'Shape', 'The shape of the LFO\'s wobble', WAVES, 'sine'),
+  num('lfo.depth', 'Depth', 'How much the LFO moves what it is sent to', 0, 1, 0, '%'),
+  pick('lfo.dest', 'To', 'What the LFO moves: the pitch (vibrato), the filter (wah) or the volume (tremolo)', LFO_DESTS, 'pitch'),
+  num('voice.glide', 'Glide', 'How long a note takes to slide to the next one', 0, 2, 0, 's', 0.001, 'sq'),
+  num('voice.unison', 'Unison', 'Copies of each oscillator per note, spread by the detune: thicker', 1, 4, 1, '', 1),
+  num('voice.detune', 'Detune', 'How far the unison copies are spread, in cents', 0, 50, 12, 'ct', 1),
+  num('delay.time', 'Time', 'The time between the echoes', 0.02, 1.5, 0.375, 's', 0.001),
+  num('delay.feedback', 'Feedback', 'How much of each echo comes back: higher repeats longer', 0, 0.9, 0.35, '%'),
+  num('delay.mix', 'Send', 'How much of the sound goes to the echo', 0, 1, 0, '%'),
+  num('reverb.size', 'Size', 'How long the room rings', 0.3, 6, 2, 's', 0.1),
+  num('reverb.mix', 'Send', 'How much of the sound goes to the reverb', 0, 1, 0.1, '%'),
+  num('master.volume', 'Volume', 'The synth\'s output level', 0, 1, 0.7, '%'),
 ];
 
 // the sections of the panel, in the order they are shown and printed

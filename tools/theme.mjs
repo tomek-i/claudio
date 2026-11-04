@@ -1,4 +1,4 @@
-// Copies the shared theme (tools/theme/: theme.css and the two fonts with their licences) into each of the four
+// Copies the shared theme (tools/theme/: theme.css, the two fonts with their licences, and keys.js, the Keys dialog) into each of the four
 // apps, Claude-808, MiniClaude, Claudebase and Claudel, as their public/theme/. The apps import nothing from each other or
 // from here, so each serves its own copy; test/apps-theme.test.mjs fails when a copy is not the same as this one.
 //   node tools/theme.mjs          after changing anything in tools/theme/

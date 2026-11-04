@@ -40,6 +40,7 @@ top of the repository keeps the copies the same).
 - Export: WAV of the whole song (rendered in the browser by the same code that plays it) and a MIDI file with a
   track per track (drums on channel 10, a channel and a program per synth track; muted tracks are in it too).
 - Three templates to start from: Night drive, Slow tape, Blank.
+- **⌨ Keys** in the top bar lists the keyboard shortcuts and the mouse gestures; every control says what it does (and its key) in its tooltip.
 - Live coding, code that loops as on strudel.cc, is an app of its own: Claudel ([apps/live](../live/README.md)).
 
 ## Where the AI is
@@ -89,7 +90,7 @@ with a velocity of 70 out of 127).
   grid and the piano roll; `app.js` the top bar, the transport and the Claude box. The page imports `lib/` as
   `/lib/*.mjs`.
 - `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
-  here so the page looks right with no network, and the rules the pages have in common), loaded before `style.css`,
+  here so the page looks right with no network, the rules the pages have in common, and `keys.js`, the Keys dialog), loaded before `style.css`,
   which is this app's own. It is a copy: change `tools/theme/` at the top of the project and run `node tools/theme.mjs`
   (`test/apps-theme.test.mjs` fails when the copies differ).
 - `claudebase.mjs`: the CLI.

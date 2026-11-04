@@ -52,7 +52,7 @@ export function createBrowser({ state, current, send, hear }) {
   function buildList(list) {
     $('presetList').replaceChildren(...list.map((p) => el('li', { title: p.name },
       el('button', { type: 'button', className: 'hear', textContent: '▶', title: `Hear "${p.name}" without loading it`, ariaLabel: `Hear ${p.name}`, onclick: () => hear(p.name) }),
-      el('button', { type: 'button', className: 'pick', onclick: () => load(p.name) },
+      el('button', { type: 'button', className: 'pick', title: `Load "${p.name}" into the playing slot`, onclick: () => load(p.name) },
         el('span', { textContent: p.name }), kind === 'all' || kind === 'saved' ? el('small', { textContent: p.saved ? 'saved' : p.kind }) : ''),
       p.saved ? el('button', {
         type: 'button', className: 'del', textContent: '×', title: `Delete the saved preset "${p.name}"`, ariaLabel: `Delete ${p.name}`,
