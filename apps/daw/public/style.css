@@ -36,7 +36,6 @@ main { padding: 18px; display: grid; gap: 18px; max-width: 1700px; margin: 0 aut
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; min-width: 0; }
 .panel h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); margin: 0; font-weight: 500; }
 .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.hint { margin: 10px 0 0; color: var(--faint); font-size: 12px; line-height: 1.7; max-width: 120ch; }
 .empty { margin: 6px 0 4px; color: var(--faint); font-size: 13px; }
 .ms { width: 26px; padding: 0; font: 700 11px var(--mono); flex: none; }
 .ms.m[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #20060a; }

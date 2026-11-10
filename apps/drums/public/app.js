@@ -6,8 +6,32 @@ import { SLOTS } from '/lib/pattern.mjs';
 import { FEELS, morph } from '/lib/groove.mjs';
 import { Engine, renderWav } from './engine.js';
 import { mountAppsMenu } from './apps-menu.js';
+import { mountKeys } from './theme/keys.js';
 
 mountAppsMenu(document.getElementById('appsBtn'), 'drums');
+// what was a paragraph of help under the grid: the list behind the Keys button
+mountKeys(document.getElementById('keysBtn'), [
+  { title: 'Anywhere', rows: [
+    ['Play / stop', 'Space'],
+    ['Hear a voice', '1–8'],
+    ['Undo', 'Ctrl+Z'],
+    ['Redo', 'Ctrl+Shift+Z or Ctrl+Y'],
+  ] },
+  { title: 'On a focused step', rows: [
+    ['Write or clear it', 'Enter / Space'],
+    ['Ghost, soft, normal, accent', 'V'],
+    ['Play the hit early / late', '[ / ]'],
+    ['Move between steps', '← / → / ↑ / ↓'],
+  ] },
+  { title: 'Mouse', rows: [
+    ['Write steps', 'Click / drag'],
+    ['Ghost, soft, normal, accent', 'Shift-click'],
+    ['Play a hit early or late', 'Alt-drag sideways'],
+    ['Play from a beat', 'Click its number'],
+    ['Hear a variation', 'Hold it'],
+    ['Keep a variation', 'Click it'],
+  ] },
+]);
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...children) => {
@@ -415,7 +439,7 @@ $('candidates').addEventListener('click', (e) => {            // from the keyboa
 });
 
 // morph: the slider is heard as it moves and kept when it is let go
-$('morphTo').append(...SLOTS.map((s) => { const b = el('button', {}, s); b.dataset.slot = s; return b; }));
+$('morphTo').append(...SLOTS.map((s) => { const b = el('button', { title: `Morph towards the beat in slot ${s}` }, s); b.dataset.slot = s; return b; }));
 function pickMorphTarget(slot) {
   for (const b of $('morphTo').children) b.setAttribute('aria-pressed', b.dataset.slot === slot);
 }

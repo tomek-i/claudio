@@ -29,6 +29,7 @@ top of the repository keeps the copies the same).
 - Variations: four beats near yours; hold one to hear it, click to keep it.
 - Continue: a second bar with a fill. Morph: slide a beat towards the one in another slot.
 - Undo for everything, shared by the page and the CLI. Saved as you go.
+- **⌨ Keys** in the top bar lists the keyboard shortcuts and the mouse gestures; every control says what it does (and its key) in its tooltip.
 - Export: WAV (rendered in the browser by the same code that plays it) and MIDI (timing kept).
 - Eight presets.
 
@@ -58,7 +59,7 @@ rules with a seeded random number generator (`lib/groove.mjs`), so they work wit
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` the grid and controls.
   The page imports `lib/` as `/lib/*.mjs`.
 - `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
-  here so the page looks right with no network, and the rules the pages have in common), loaded before `style.css`,
+  here so the page looks right with no network, the rules the pages have in common, and `keys.js`, the Keys dialog), loaded before `style.css`,
   which is this app's own. It is a copy: change `tools/theme/` at the top of the project and run `node tools/theme.mjs`
   (`test/apps-theme.test.mjs` fails when the copies differ).
 - `cl808.mjs`: the CLI.

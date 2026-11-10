@@ -57,6 +57,7 @@ top of the repository keeps the copies the same).
   `preset delete <name>`) takes it off the list; `preset list --mine` lists only yours. They are kept in `presets.json` beside the state, so undo never
   takes one away.
 - Undo for everything, shared by the page and the CLI. Saved as you go.
+- **⌨ Keys** in the top bar lists the keyboard shortcuts and the mouse gestures; every control says what it does (and its key) in its tooltip.
 - Export: the sequence as a WAV, rendered in the browser by the same code that plays it.
 
 ## Where the AI is
@@ -106,7 +107,7 @@ instead of pretending.
 - `public/`: the page. `engine.js` is the synthesiser, the scheduler and the WAV render; `app.js` builds the
   panel from the schema and handles the keys and the sequence; `browser.js` is the preset browser. The page imports `lib/` as `/lib/*.mjs`.
 - `public/theme/`: the theme the three apps share (the colours, the fonts Space Grotesk and JetBrains Mono, served from
-  here so the page looks right with no network, and the rules the pages have in common), loaded before `style.css`,
+  here so the page looks right with no network, the rules the pages have in common, and `keys.js`, the Keys dialog), loaded before `style.css`,
   which is this app's own. It is a copy: change `tools/theme/` at the top of the project and run `node tools/theme.mjs`
   (`test/apps-theme.test.mjs` fails when the copies differ).
 - `miniclaude.mjs`: the CLI.

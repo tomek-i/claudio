@@ -7,8 +7,48 @@ import { BAR_W } from './arrange.js';
 import { editorFrame } from './editor.js';
 import { renderWav } from './engine.js';
 import { mountAppsMenu } from './apps-menu.js';
+import { mountKeys } from './theme/keys.js';
 
 mountAppsMenu(document.getElementById('appsBtn'), 'daw');
+// what were paragraphs of help under the arrangement and the editor: the list behind the Keys button
+mountKeys(document.getElementById('keysBtn'), [
+  { title: 'Anywhere', rows: [
+    ['Play / stop', 'Space'],
+    ['Loop on / off', 'L'],
+    ['Undo', 'Ctrl+Z'],
+    ['Redo', 'Ctrl+Shift+Z or Ctrl+Y'],
+  ] },
+  { title: 'On a focused clip', rows: [
+    ['Move it a bar', '← / →'],
+    ['Make it shorter / longer', 'Shift+← / →'],
+    ['Duplicate it', 'Ctrl+D'],
+    ['Remove it', 'Delete'],
+  ] },
+  { title: 'On a focused drum step', rows: [
+    ['Write or clear it', 'Enter'],
+    ['Ghost, soft, normal, accent', 'V'],
+    ['Move between steps', '← / → / ↑ / ↓'],
+  ] },
+  { title: 'On a focused note', rows: [
+    ['Move it', '← / →'],
+    ['Its length', 'Shift+← / →'],
+    ['A semitone up / down', '↑ / ↓'],
+    ['An octave up / down', 'Shift+↑ / ↓'],
+    ['Softer / louder', '[ / ]'],
+    ['Remove it', 'Delete'],
+  ] },
+  { title: 'Mouse', rows: [
+    ['Play from a bar', 'Click its number'],
+    ['Add a clip', 'Double-click an empty bar'],
+    ['Move a clip', 'Drag it'],
+    ['Make it longer (the content repeats)', 'Drag its right edge'],
+    ['Write drum steps', 'Click / drag'],
+    ['Ghost, soft, normal, accent', 'Shift-click'],
+    ['Add a note', 'Click the roll'],
+    ['Move a note / its length', 'Drag it / its right edge'],
+    ['Remove a note', 'Double-click it'],
+  ] },
+]);
 
 // ---- the top bar
 

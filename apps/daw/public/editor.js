@@ -257,8 +257,8 @@ onRender(() => {
   if (!found && ui.clip) return select(null);        // the selected clip is gone (deleted, or undone)
   const drums = found?.track.kind === 'drums';
   $('noClip').hidden = !!found;
-  $('steps').hidden = $('drumHint').hidden = !found || !drums;
-  $('rollWrap').hidden = $('rollHint').hidden = !found || drums;
+  $('steps').hidden = !found || !drums;
+  $('rollWrap').hidden = !found || drums;
   $('clipLenField').hidden = !found;
   for (const id of ['clipDup', 'clipClear', 'clipDel']) $(id).disabled = !found;
   if (!found) { $('clipTitle').textContent = 'Clip'; shownClip = null; return; }

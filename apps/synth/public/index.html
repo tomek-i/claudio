@@ -13,7 +13,7 @@
     <div class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 11 L5 4 L8 11 L11 4 L14 11"/></svg></span>%NAME%</div>
     <span class="audio" id="soundLight" role="status" title="Whether the browser lets this page play sound"><i class="led"></i><span id="soundText">sound off</span></span>
     <button id="play" class="play" aria-pressed="false" title="Play / stop the sequence (Space)">Play</button>
-    <label class="field">BPM <input id="bpm" type="number" min="40" max="240" step="1" inputmode="numeric"></label>
+    <label class="field">BPM <input id="bpm" type="number" title="Tempo of the sequence, in beats per minute" min="40" max="240" step="1" inputmode="numeric"></label>
     <div class="seg" id="slots" role="group" aria-label="Patch slot"></div>
     <span class="spacer"></span>
     <button id="browse" aria-expanded="true" aria-controls="browser" title="Show or hide the preset browser">Presets</button>
@@ -22,6 +22,7 @@
     <button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
     <button id="wav" title="Render the sequence with this patch to a WAV file">WAV</button>
     <span class="status" id="status" role="status"><i class="led"></i><span id="statusText">connecting</span></span>
+    <button id="keysBtn" title="Keys: the keyboard shortcuts and mouse gestures">⌨ Keys</button>
     <button id="appsBtn" title="Apps: DJ Claude, Claude-808, MiniClaude, Claudebase and Claudel · a dot for each one running"></button>
   </header>
 
@@ -35,11 +36,10 @@
       <button id="savePreset" class="primary" title="Save this sound as a preset of your own (Ctrl+S)">Save</button>
       <button id="closeBrowser" aria-label="Hide the preset browser" title="Hide the preset browser">×</button>
     </div>
-    <input id="presetSearch" placeholder="Search presets" aria-label="Search presets" spellcheck="false" autocomplete="off">
+    <input id="presetSearch" title="Search the presets by name (↓ goes to the list, Esc clears)" placeholder="Search presets" aria-label="Search presets" spellcheck="false" autocomplete="off">
     <div id="presetKinds" class="kinds" role="group" aria-label="Category"></div>
     <ul id="presetList" class="plist" aria-label="Presets"></ul>
     <p id="presetEmpty" class="faint" hidden>No preset matches.</p>
-    <p class="faint">A click loads a preset into the playing slot; ▶ hears it without loading it. ↑ ↓ walk the list.</p>
   </aside>
 
   <main>
@@ -49,7 +49,7 @@
           <button id="prevPreset" aria-label="Previous preset" title="Previous preset in the browser's list">◀</button>
           <button id="nextPreset" aria-label="Next preset" title="Next preset in the browser's list">▶</button>
         </div>
-        <input id="name" class="name" aria-label="Patch name" maxlength="40" spellcheck="false">
+        <input id="name" class="name" title="The patch's name" aria-label="Patch name" maxlength="40" spellcheck="false">
         <span class="spacer"></span>
         <button id="midi" title="Play from a MIDI keyboard">Connect MIDI</button>
       </div>
@@ -70,12 +70,12 @@
             <button type="button" data-bars="2" title="Two bars: making it longer repeats what is there">2</button>
             <button type="button" data-bars="4" title="Four bars: making it longer repeats what is there">4</button>
           </div>
-          <label class="field">Gate <input id="gate" type="range" min="5" max="100" step="1"> <output id="gateOut" for="gate"></output></label>
-          <label class="field">Swing <input id="swing" type="range" min="0" max="100" step="1"> <output id="swingOut" for="swing"></output></label>
+          <label class="field">Gate <input id="gate" type="range" title="Gate: how much of each step a note lasts" min="5" max="100" step="1"> <output id="gateOut" for="gate"></output></label>
+          <label class="field">Swing <input id="swing" type="range" title="Swing: every second step played later, for a shuffle" min="0" max="100" step="1"> <output id="swingOut" for="swing"></output></label>
           <span class="spacer"></span>
           <button id="rest" title="Empty the chosen step (Delete)">Rest</button>
           <button id="tie" title="Hold the note before through the chosen step (−)">Tie</button>
-          <button id="clearseq">Clear</button>
+          <button id="clearseq" title="Clear every step of the sequence">Clear</button>
         </div>
         <!-- the steps (the chosen one is where a key played is written) over the piano roll, which scrolls sideways
              on a narrow screen -->
@@ -84,23 +84,17 @@
           <canvas id="roll" class="roll" aria-label="Piano roll: click to add a note, drag its end for its length, click it to remove it; the lane under it is velocity"></canvas>
         </div>
         <form id="rowForm" class="line">
-          <input id="row" aria-label="The sequence as text" spellcheck="false" autocomplete="off">
-          <button class="primary">Write</button>
+          <input id="row" aria-label="The sequence as text" title="The sequence as text, a step per token: . rest, - tie, C3+G3 chord, C3! accent, || between bars" spellcheck="false" autocomplete="off">
+          <button class="primary" title="Write the text into the sequence (Enter)">Write</button>
         </form>
-        <p class="hint">
-          Click the roll to add a note, drag its end for its length, click it again to remove it; draw on the lane
-          under it for velocity, and turn the wheel over it for higher or lower notes. Or choose a step above it and
-          play a note or a chord to write it there. Or type it: a step per token, <kbd>.</kbd> rest, <kbd>-</kbd> tie,
-          <kbd>C3+G3</kbd> chord, <kbd>C3!</kbd> accent, <kbd>||</kbd> between bars.
-        </p>
       </section>
 
       <section class="card notes" aria-label="Notes for Claude">
         <h2>Claude</h2>
         <div id="notes" class="log" aria-live="polite"></div>
         <form id="ask" class="line">
-          <input id="askText" placeholder="make it darker, with a slower attack" aria-label="A note for Claude" maxlength="500" autocomplete="off">
-          <button class="primary">Send</button>
+          <input id="askText" title="A note for Claude, read in Claude Code" placeholder="make it darker, with a slower attack" aria-label="A note for Claude" maxlength="500" autocomplete="off">
+          <button class="primary" title="Send the note to Claude (Enter)">Send</button>
         </form>
         <p class="faint">Claude reads these in Claude Code while it is listening there (ask it to play the synth).</p>
       </section>
@@ -116,14 +110,10 @@
         <button id="octUp" title="An octave up (])" aria-label="Octave up">+</button>
       </div>
       <output id="octOut" class="mini" aria-live="polite"></output>
-      <p class="hint">
-        Keys <kbd>Z</kbd> <kbd>S</kbd> <kbd>X</kbd> … <kbd>/</kbd> play the lower octave and <kbd>Q</kbd> <kbd>2</kbd> <kbd>W</kbd> … <kbd>P</kbd> the one above ·
-        <kbd>[</kbd> <kbd>]</kbd> octave · <kbd>Space</kbd> play · lower on a key is louder.
-      </p>
       <span class="spacer"></span>
       <button id="fold" aria-expanded="true" aria-controls="keys" title="Fold the keyboard away: the page gets its room, the typing keys still play">Hide keys</button>
     </div>
-    <div id="keys" class="keys"></div>
+    <div id="keys" class="keys" title="Play with the mouse (lower on a key is louder) or the typing keys: Z S X … / and Q 2 W … P"></div>
   </section>
 
   <!-- A browser plays nothing before a click, so the page asks for one. The card is here on every load (the browser

@@ -11,8 +11,48 @@ import { ROWS, rollTop, pressCell, dragLength, removeNote, velocityAt } from '..
 import { Engine, renderWav } from './engine.js';
 import { mountAppsMenu } from './apps-menu.js';
 import { createBrowser } from './browser.js';
+import { mountKeys } from './theme/keys.js';
 
 mountAppsMenu(document.getElementById('appsBtn'), 'synth');
+// what were paragraphs of help under the roll, the keyboard and the browser: the list behind the Keys button
+mountKeys(document.getElementById('keysBtn'), [
+  { title: 'Anywhere', rows: [
+    ['Play / stop the sequence', 'Space'],
+    ['Play the lower octave', 'Z S X D C V … /'],
+    ['Play the octave above', 'Q 2 W 3 E R … P'],
+    ['Octave down / up', '[ / ]'],
+    ['Save the sound as a preset', 'Ctrl+S'],
+    ['Undo', 'Ctrl+Z'],
+    ['Redo', 'Ctrl+Shift+Z or Ctrl+Y'],
+  ] },
+  { title: 'On a chosen step', rows: [
+    ['Write a note or a chord there', 'Play it'],
+    ['Move between steps', '← / →'],
+    ['Rest', 'Delete'],
+    ['Tie', '-'],
+    ['Let the step go', 'Esc'],
+  ] },
+  { title: 'Preset browser', rows: [
+    ['From the search to the list', '↓'],
+    ['Walk the list', '↑ / ↓'],
+    ['Clear the search', 'Esc'],
+  ] },
+  { title: 'Mouse', rows: [
+    ['Add a note on the roll', 'Click'],
+    ['Its length', 'Drag its end'],
+    ['Remove it', 'Click it again'],
+    ['Velocity', 'Draw on the lane under the roll'],
+    ['Higher or lower notes', 'Wheel over the roll'],
+    ['Louder on a key', 'Click lower on it'],
+  ] },
+  { title: 'The sequence as text', rows: [
+    ['A rest', '.'],
+    ['A tie', '-'],
+    ['A chord', 'C3+G3'],
+    ['An accent', 'C3!'],
+    ['Between bars', '||'],
+  ] },
+]);
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...children) => {
@@ -116,7 +156,7 @@ function buildControl(def, groupName) {
     });
     const seg = el('div', { className: 'seg', role: 'group', ariaLabel: `${groupName} ${def.label.toLowerCase()}` }, ...buttons);
     controls.push({ def, buttons });
-    return el('div', { className: 'ctl' }, el('span', { className: 'label' }, def.label), seg);
+    return el('div', { className: 'ctl', title: def.hint }, el('span', { className: 'label' }, def.label), seg);
   }
   const linear = def.curve === 'lin';
   const input = el('input', { type: 'range', id, min: linear ? def.min : 0, max: linear ? def.max : SLIDER_STEPS, step: linear ? def.step : 1, ariaLabel: `${groupName} ${def.label.toLowerCase()}` });
@@ -128,7 +168,7 @@ function buildControl(def, groupName) {
   });
   input.addEventListener('change', () => letGo(input));
   controls.push({ def, input, output, linear });
-  return el('div', { className: 'ctl' }, el('label', { htmlFor: id }, def.label), input, output);
+  return el('div', { className: 'ctl', title: def.hint }, el('label', { htmlFor: id }, def.label), input, output);
 }
 
 // The panel is laid out as the sound travels (PANEL in lib/patch.mjs): four columns, each feeding the next
@@ -624,7 +664,7 @@ function buildKeys() {
   let white = 0;
   $('keys').replaceChildren(...notes.map((note) => {
     const black = isBlack(note);
-    const key = el('button', { type: 'button', className: `key ${black ? 'black' : 'white'}`, tabIndex: -1, ariaLabel: noteName(note) }, note % 12 === 0 ? noteName(note) : '');
+    const key = el('button', { type: 'button', className: `key ${black ? 'black' : 'white'}`, tabIndex: -1, ariaLabel: noteName(note), title: `${noteName(note)}: lower on the key is louder` }, note % 12 === 0 ? noteName(note) : '');
     key.dataset.note = note;
     if (black) { key.style.left = `${(white / whites) * 100}%`; key.style.width = `${(0.6 / whites) * 100}%`; } else white++;
     return key;
