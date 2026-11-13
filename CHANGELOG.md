@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://github.com/tomek-i/claudio/compare/v0.9.0...v0.10.0) (2026-11-13)
+
+
+### Features
+
+* **apps:** a keys list and a tooltip on every control ([f65f75a](https://github.com/tomek-i/claudio/commit/f65f75a6d243f83d7ddae3d93c273059f22e0af8))
+* **apps:** a keys list and a tooltip on every control ([6a774c6](https://github.com/tomek-i/claudio/commit/6a774c626617607a3dcf9ef8bb705bd786ad8df1)), closes [#40](https://github.com/tomek-i/claudio/issues/40)
+
 ## [0.9.0](https://github.com/tomek-i/claudio/compare/v0.8.0...v0.9.0) (2026-10-28)
 
 
