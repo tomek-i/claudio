@@ -34,6 +34,8 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # A personal token, so the release PRs get a CI run that can pass (PRs opened with GITHUB_TOKEN trigger none)
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
 
   installer:
     needs: release-please
