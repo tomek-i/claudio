@@ -47,11 +47,12 @@ asks before running it.
 
 The Mac app is attached too: `Claudio-<version>-arm64.dmg` for Apple Silicon, `Claudio-<version>-x64.dmg` for Intel.
 Open the `.dmg` and drag Claudio into Applications. It is not signed with an Apple certificate, so macOS blocks the
-first start: right-click Claudio in Applications and choose **Open**, or allow it under **System Settings → Privacy &
-Security → Open Anyway**. If macOS says the app "is damaged", it is the download's quarantine flag; clear it with
-`xattr -cr /Applications/Claudio.app`. Everything else, Documents/Claudio included, is the same as on Windows.
+first start: open it once, then allow it under **System Settings → Privacy & Security → Open Anyway** (before
+macOS 15, right-click it and choose **Open**). If macOS says the app "is damaged", it is the download's quarantine
+flag; clear it with `xattr -cr /Applications/Claudio.app`. Only pinning one app of the suite on its own (its taskbar
+button) is Windows only; the rest, Documents/Claudio included, is as below.
 
-The installed app is the same suite, started from the Start menu, and it brings the whole project with it. On the
+The installed app is the same suite, started from the Start menu (or Applications on a Mac), and it brings the whole project with it. On the
 first start it makes **Documents/Claudio**: a project folder like this repository, with `dj.mjs`, the five apps,
 the skills (`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json` and `data/` (the music and
 everything else the apps make, a folder per app). Open Claude Code in that folder and it plays all five exactly as it

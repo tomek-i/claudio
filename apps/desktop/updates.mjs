@@ -35,7 +35,7 @@ export function watchUpdates(updater, { version, onChange, manual = false }) {
 // electron-updater's errors are long (a whole HTTP answer); one short line of why
 export function reason(e) {
   const msg = String(e?.message || e || '');
-  if (/\b404\b/.test(msg)) return 'GitHub has no update to show (the releases are not public, or the latest has no latest.yml)';
+  if (/\b404\b/.test(msg)) return 'GitHub has no update to show (the releases are not public, or the latest has no update files for this system yet)';
   if (/ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ETIMEDOUT|ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ERR_NETWORK_CHANGED/.test(msg)) return 'no connection to GitHub';
   const line = msg.split('\n')[0].trim() || 'unknown error';
   return line.length > 120 ? `${line.slice(0, 119)}…` : line;

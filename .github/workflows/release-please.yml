@@ -7,7 +7,7 @@
 # reads (apps/desktop/updates.mjs); the installer-mac job builds the Mac app (`pnpm dist:mac`: a .dmg and a .zip each
 # for Apple Silicon and Intel, not signed) and attaches it with its latest-mac.yml. Run by hand (Actions →
 # release-please → Run workflow, with a tag) both build that tag and attach their files to its release, for a release
-# that has none.
+# that has none (the Mac job skips a tag from before the Mac build).
 name: release-please
 
 on:
@@ -80,10 +80,19 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # a tag from before the Mac build (run by hand for an old release) has nothing to build: skip, not fail
+      - name: Does this tag build a Mac app
+        id: mac
+        run: |
+          if node -e "process.exit(require('./package.json').scripts['dist:mac'] ? 0 : 1)"; then echo build=true >> "$GITHUB_OUTPUT"
+          else echo "::notice::$TAG has no Mac build (pnpm dist:mac): nothing to attach"; fi
       - run: pnpm install --frozen-lockfile
+        if: steps.mac.outputs.build == 'true'
       - name: Build the Mac app
+        if: steps.mac.outputs.build == 'true'
         run: pnpm dist:mac
       - name: Attach it to the release
+        if: steps.mac.outputs.build == 'true'
         run: gh release upload "$TAG" dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml --clobber
         env:
           GH_TOKEN: ${{ github.token }}

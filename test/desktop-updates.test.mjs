@@ -82,6 +82,8 @@ test('watchUpdates manual (the unsigned Mac app): a newer release is only announ
 
 test('reason: a 404, no network, anything else as its first line, cut short', () => {
   assert.match(reason(new Error('Cannot find latest.yml in the latest release artifacts: HttpError: 404')), /not public/);
+  // the Mac app reads latest-mac.yml, which its job attaches some minutes after the release is out
+  assert.doesNotMatch(reason(new Error('Cannot find latest-mac.yml: HttpError: 404')), /latest\.yml/);
   assert.equal(reason(new Error('net::ERR_INTERNET_DISCONNECTED')), 'no connection to GitHub');
   assert.equal(reason(new Error('getaddrinfo ENOTFOUND api.github.com')), 'no connection to GitHub');
   assert.equal(reason(new Error('sha512 checksum mismatch\nexpected …')), 'sha512 checksum mismatch');
