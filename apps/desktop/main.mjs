@@ -130,7 +130,8 @@ async function tellHome(id, state, detail = '') {
 let updates = null, updateState = { status: 'dev', current: app.getVersion() }, askedForUpdate = false;
 function watchForUpdates() {
   if (!app.isPackaged) return;
-  updates = watchUpdates(electronUpdater.autoUpdater, { version: app.getVersion(), onChange: updateChanged });
+  // the Mac app is not signed, so macOS would refuse the update: it is announced, and downloaded from the release page
+  updates = watchUpdates(electronUpdater.autoUpdater, { version: app.getVersion(), onChange: updateChanged, manual: process.platform === 'darwin' });
   updateState = updates.state;
   setTimeout(() => updates.check(), 5000); // quietly: what it finds shows in the footer and the menu, without a dialog
 }
@@ -145,6 +146,7 @@ function updateChanged(s) {
   if (s.status === 'latest') { askedForUpdate = false; message('info', now.text); }
   if (s.status === 'failed') { askedForUpdate = false; message('warning', 'Could not check for updates', s.error); }
   if (s.status === 'ready') { askedForUpdate = false; askToRestart(s.next); }
+  if (s.status === 'available') { askedForUpdate = false; askToDownload(s.next); }
 }
 async function updateHome() {
   await homeLoaded;
@@ -154,6 +156,7 @@ async function updateHome() {
 function updateAction() {
   if (!updates) return message('info', 'Updates come to the installed app', 'This one runs from the source tree: git pull brings it up to date.');
   if (updates.state.status === 'ready') return updates.install();
+  if (updates.state.status === 'available') return shell.openExternal(RELEASES);
   askedForUpdate = true;
   updates.check();
 }
@@ -163,6 +166,14 @@ async function askToRestart(version) {
     message: `Claudio ${version} is ready`, detail: 'Restart now to update: every app closes and the suite starts again. Later, it installs when you quit.',
   });
   if (response === 0) updates.install();
+}
+const RELEASES = 'https://github.com/tomek-i/claudio/releases/latest';
+async function askToDownload(version) {
+  const { response } = await dialog.showMessageBox(BrowserWindow.getFocusedWindow() ?? undefined, {
+    type: 'info', buttons: ['Download', 'Later'], defaultId: 0, cancelId: 1, title: 'Claudio',
+    message: `Claudio ${version} is out`, detail: 'Download it from the release page and drag it into Applications, over this one.',
+  });
+  if (response === 0) shell.openExternal(RELEASES);
 }
 const message = (type, text, detail = '') => dialog.showMessageBox(BrowserWindow.getFocusedWindow() ?? undefined, { type, title: 'Claudio', message: text, detail });
 

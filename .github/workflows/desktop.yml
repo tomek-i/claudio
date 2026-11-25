@@ -2,10 +2,11 @@
 # Four to five minutes, most of it installing things, so it does not run on every change:
 #  - on a pull request, only when the desktop app or something it runs has changed (the paths below), and then only the
 #    start-up test;
-#  - on a push to main with such a change, the start-up test and the installer build, so a broken installer is
-#    found before the release that would ship it (the release's own build is in release-please.yml);
-#  - by hand (Actions → desktop → Run workflow), on any branch: both, and the installer is kept with the run for a
-#    week, to try that branch's build.
+#  - on a push to main with such a change, the start-up test and the installer build, and the Mac app's build, so a
+#    broken installer is found before the release that would ship it (the release's own build is in
+#    release-please.yml);
+#  - by hand (Actions → desktop → Run workflow), on any branch: all three, and the installer and the Mac .dmg files
+#    are kept with the run for a day, to try that branch's build.
 name: desktop
 
 on:
@@ -99,4 +100,34 @@ jobs:
           if-no-files-found: error
           # a day: each push to main builds one (about 110 MB), and the account's artifact storage is small; the
           # releases keep their own installer
+          retention-days: 1
+
+  # The Mac app's build, so a broken one is found before a release ships it. Not on pull requests: a macOS runner
+  # costs ten times the minutes. No start-up test here yet.
+  mac:
+    if: github.event_name != 'pull_request'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the Mac app
+        run: pnpm dist:mac
+      # an Apple Silicon Mac will not open an app without a valid signature, ad hoc or not
+      - name: Check the signatures
+        run: |
+          for app in dist/mac*/Claudio.app; do
+            codesign --verify --deep --strict --verbose=2 "$app"
+            codesign -dv "$app" 2>&1 | grep -q 'Signature=adhoc'
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-app
+          path: dist/*.dmg
+          if-no-files-found: error
           retention-days: 1

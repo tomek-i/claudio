@@ -28,11 +28,21 @@ module.exports = {
     '!apps/web/public/samples/{src/**,*.wav,manifest.json}', // your own one-shots stay yours
     '!apps/**/node_modules/**',
   ],
-  // where the updater looks (main.mjs): the GitHub releases, which get the installer and its latest.yml (release-please.yml)
+  // where the updater looks (main.mjs): the GitHub releases, which get the installers and their latest.yml and
+  // latest-mac.yml (release-please.yml)
   publish: { provider: 'github', owner: 'tomek-i', repo: 'claudio' },
-  artifactName: 'Claudio-Setup-${version}.${ext}', // no spaces: it is a download link on the release page
-  win: { target: 'nsis', icon: 'apps/desktop/icon.png' },
+  // no spaces: they are download links on the release page
+  win: { target: 'nsis', icon: 'apps/desktop/icon.png', artifactName: 'Claudio-Setup-${version}.${ext}' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, shortcutName: 'Claudio' },
-  mac: { target: 'dmg', icon: 'apps/desktop/icon.png', category: 'public.app-category.music' },
+  // Apple Silicon and Intel apart, as each is half the size of one universal app. The .dmg is what people download;
+  // the .zip is what the updater reads (latest-mac.yml). Not signed with a certificate: identity '-' signs it ad hoc,
+  // without which an Apple Silicon Mac will not open it at all (left unset, electron-builder skips signing when it
+  // finds no certificate). The hardened runtime is for notarizing; with an ad hoc signature it makes macOS refuse
+  // Electron's own frameworks at launch.
+  mac: {
+    target: [{ target: 'dmg', arch: ['arm64', 'x64'] }, { target: 'zip', arch: ['arm64', 'x64'] }],
+    identity: '-', hardenedRuntime: false,
+    icon: 'apps/desktop/icon.png', category: 'public.app-category.music', artifactName: 'Claudio-${version}-${arch}.${ext}',
+  },
   linux: { target: 'AppImage', icon: 'apps/desktop/icon.png', category: 'Audio' },
 };

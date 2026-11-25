@@ -32,6 +32,7 @@
     "start": "node apps/server/server.mjs",
     "desktop": "pnpm --filter dj-claude-desktop start",
     "dist": "pnpm --filter dj-claude-desktop dist",
+    "dist:mac": "pnpm --filter dj-claude-desktop dist:mac",
     "drums": "node apps/drums/server.mjs",
     "synth": "node apps/synth/server.mjs",
     "daw": "node apps/daw/server.mjs",

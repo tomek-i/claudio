@@ -45,7 +45,14 @@ Each [release](https://github.com/tomek-i/claudio/releases) has the Windows inst
 (`Claudio-Setup-<version>.exe`); `pnpm dist` builds the same thing into `dist/`. It is not code-signed, so Windows
 asks before running it.
 
-The installed app is the same suite, started from the Start menu, and it brings the whole project with it. On the
+The Mac app is attached too: `Claudio-<version>-arm64.dmg` for Apple Silicon, `Claudio-<version>-x64.dmg` for Intel.
+Open the `.dmg` and drag Claudio into Applications. It is not signed with an Apple certificate, so macOS blocks the
+first start: open it once, then allow it under **System Settings → Privacy & Security → Open Anyway** (before
+macOS 15, right-click it and choose **Open**). If macOS says the app "is damaged", it is the download's quarantine
+flag; clear it with `xattr -cr /Applications/Claudio.app`. Only pinning one app of the suite on its own (its taskbar
+button) is Windows only; the rest, Documents/Claudio included, is as below.
+
+The installed app is the same suite, started from the Start menu (or Applications on a Mac), and it brings the whole project with it. On the
 first start it makes **Documents/Claudio**: a project folder like this repository, with `dj.mjs`, the five apps,
 the skills (`.claude/skills`), `CLAUDE.md`, `tools/produce` and its own `config.json` and `data/` (the music and
 everything else the apps make, a folder per app). Open Claude Code in that folder and it plays all five exactly as it
@@ -71,10 +78,14 @@ answers in a dialog. A check that fails says why in a line (no connection, or no
 It reads the latest [release](https://github.com/tomek-i/claudio/releases): the installer, its `.blockmap` and
 `latest.yml`, which the `installer` job attaches (electron-updater, `apps/desktop/updates.mjs`). Releases before
 0.9.0 have no `latest.yml`, so an app older than that cannot update itself: install 0.9.0 or later once by hand.
+
+On a Mac the app finds a newer release the same way (`latest-mac.yml`), but macOS will not let an unsigned app
+install its own update, so it only says that a new version is out: **Download** opens the release page, and the new
+`.dmg` is dragged into Applications over the old app.
 Run from the source tree (`pnpm desktop`), the app has no updates: `git pull` is how it gets them.
 
 ## Building and testing it
-- `pnpm dist` builds the installer into `dist/` (electron-builder; the configuration is `apps/desktop/electron-builder.config.cjs`).
+- `pnpm dist` builds the installer into `dist/` (electron-builder; the configuration is `apps/desktop/electron-builder.config.cjs`). `pnpm dist:mac` builds the Mac app, on a Mac.
 - `node --test test/desktop.test.mjs` starts the real app on a scratch project folder and checks its start-up: DJ
   Claude on its own, and the home window opening DJ Claude and Claude-808. It is skipped when Electron is not
   installed. `test/desktop-apps.test.mjs` checks the list of apps (`apps/desktop/apps.mjs`) in plain Node.
