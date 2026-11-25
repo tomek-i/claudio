@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.0](https://github.com/tomek-i/claudio/compare/v0.10.0...v0.11.0) (2026-11-25)
+
+
+### Features
+
+* **desktop:** announce updates on a mac instead of installing them ([146de55](https://github.com/tomek-i/claudio/commit/146de55dca588456553ed7ae655f521e0aaf7965))
+* **desktop:** build an unsigned mac app for each release ([17e70f3](https://github.com/tomek-i/claudio/commit/17e70f3d8d468847b6c76a0b0deb12e0756673a2))
+* **desktop:** build an unsigned mac app for each release ([930a158](https://github.com/tomek-i/claudio/commit/930a1583ad2460e9522ddad35260b1f401a74e4b))
+
+
+### Bug fixes
+
+* **desktop:** sign the mac app ad hoc so apple silicon opens it ([9de8a81](https://github.com/tomek-i/claudio/commit/9de8a813e76fc0165e43bbc76f744a42c9b53510))
+* **desktop:** skip the mac build for old tags and name no windows file ([f9f9834](https://github.com/tomek-i/claudio/commit/f9f9834f769b1bb561ef79082fdb771bb32bb197))
+
 ## [0.10.0](https://github.com/tomek-i/claudio/compare/v0.9.0...v0.10.0) (2026-11-16)
 
 
