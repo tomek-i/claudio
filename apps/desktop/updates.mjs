@@ -4,15 +4,18 @@
 // home window's footer and the Apps menu show it), and the words for each state.
 // No Electron in it: the updater is handed in, so test/desktop-updates.test.mjs drives it with a stand-in.
 
-// status: dev (run from the source tree: no updates) | idle | checking | latest | downloading | ready | failed
-export function watchUpdates(updater, { version, onChange }) {
+// status: dev (run from the source tree: no updates) | idle | checking | latest | downloading | ready | failed,
+// and with `manual` available (a newer release, which the user downloads from the release page).
+// manual: the Mac app is not code-signed, and macOS will not install an update into an unsigned app, so there it is
+// only announced.
+export function watchUpdates(updater, { version, onChange, manual = false }) {
   let state = { status: 'idle', current: version };
   const set = (s) => { state = { current: version, ...s }; onChange(state); };
-  updater.autoDownload = true;
-  updater.autoInstallOnAppQuit = true;
+  updater.autoDownload = !manual;
+  updater.autoInstallOnAppQuit = !manual;
   updater.on('checking-for-update', () => set({ status: 'checking' }));
   updater.on('update-not-available', () => set({ status: 'latest' }));
-  updater.on('update-available', (info) => set({ status: 'downloading', next: info.version, percent: 0 }));
+  updater.on('update-available', (info) => set(manual ? { status: 'available', next: info.version } : { status: 'downloading', next: info.version, percent: 0 }));
   updater.on('download-progress', (p) => set({ status: 'downloading', next: state.next, percent: Math.floor(p.percent) }));
   updater.on('update-downloaded', (info) => set({ status: 'ready', next: info.version }));
   updater.on('error', (e) => set({ status: 'failed', error: reason(e) }));
@@ -47,6 +50,7 @@ export function describe(s) {
     case 'latest': return { text: `Claudio ${s.current} is up to date`, action: 'Check for updates' };
     case 'downloading': return { text: `Downloading Claudio ${s.next}… ${s.percent}%`, action: null };
     case 'ready': return { text: `Claudio ${s.next} is ready: it installs when the app restarts`, action: 'Restart to update' };
+    case 'available': return { text: `Claudio ${s.next} is out`, action: 'Download' };
     case 'failed': return { text: `Could not check for updates: ${s.error}`, action: 'Try again' };
     default: return { text: `Claudio ${s.current}`, action: 'Check for updates' };
   }

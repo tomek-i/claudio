@@ -14,15 +14,16 @@ function fakeUpdater({ next = null, fail = null } = {}) {
     if (fail) { u.emit('error', fail); throw fail; }
     if (!next) return u.emit('update-not-available', { version: '0.8.0' });
     u.emit('update-available', { version: next });
+    if (!u.autoDownload) return; // as electron-updater: it only downloads when told to
     u.emit('download-progress', { percent: 42.7 });
     u.emit('update-downloaded', { version: next });
   };
   u.quitAndInstall = (silent, runAfter) => { u.installed = { silent, runAfter }; };
   return u;
 }
-const watch = (u) => {
+const watch = (u, opts = {}) => {
   const seen = [];
-  const w = watchUpdates(u, { version: '0.8.0', onChange: (s) => seen.push(s) });
+  const w = watchUpdates(u, { version: '0.8.0', onChange: (s) => seen.push(s), ...opts });
   return { w, seen };
 };
 
@@ -66,6 +67,19 @@ test('watchUpdates: no second check while one is under way or the update is in; 
   assert.deepEqual(u.installed, { silent: true, runAfter: true });
 });
 
+test('watchUpdates manual (the unsigned Mac app): a newer release is only announced, never downloaded or installed', async () => {
+  const u = fakeUpdater({ next: '0.9.0' }), { w, seen } = watch(u, { manual: true });
+  assert.equal(u.autoDownload, false);
+  assert.equal(u.autoInstallOnAppQuit, false);
+  await w.check();
+  assert.deepEqual(seen.map((s) => s.status), ['checking', 'available']);
+  assert.deepEqual(w.state, { status: 'available', current: '0.8.0', next: '0.9.0' });
+  w.install();
+  assert.equal(u.installed, null);
+  await w.check(); // it can look again: a newer one may have come out since
+  assert.equal(u.checks, 2);
+});
+
 test('reason: a 404, no network, anything else as its first line, cut short', () => {
   assert.match(reason(new Error('Cannot find latest.yml in the latest release artifacts: HttpError: 404')), /not public/);
   assert.equal(reason(new Error('net::ERR_INTERNET_DISCONNECTED')), 'no connection to GitHub');
@@ -81,6 +95,7 @@ test('describe: a line for each state, and the action only when there is one to 
   assert.equal(describe({ status: 'latest', current: '0.8.0' }).text, 'Claudio 0.8.0 is up to date');
   assert.deepEqual(describe({ status: 'downloading', current: '0.8.0', next: '0.9.0', percent: 42 }), { text: 'Downloading Claudio 0.9.0… 42%', action: null });
   assert.equal(describe({ status: 'ready', current: '0.8.0', next: '0.9.0' }).action, 'Restart to update');
+  assert.deepEqual(describe({ status: 'available', current: '0.8.0', next: '0.9.0' }), { text: 'Claudio 0.9.0 is out', action: 'Download' });
   assert.equal(describe({ status: 'failed', current: '0.8.0', error: 'no connection to GitHub' }).text, 'Could not check for updates: no connection to GitHub');
   assert.equal(describe({ status: 'dev', current: '0.8.0' }).action, null);
 });
