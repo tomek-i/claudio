@@ -35,10 +35,13 @@ module.exports = {
   win: { target: 'nsis', icon: 'apps/desktop/icon.png', artifactName: 'Claudio-Setup-${version}.${ext}' },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, shortcutName: 'Claudio' },
   // Apple Silicon and Intel apart, as each is half the size of one universal app. The .dmg is what people download;
-  // the .zip is what the updater reads (latest-mac.yml). Not signed with a certificate: electron-builder signs it
-  // ad hoc (CSC_IDENTITY_AUTO_DISCOVERY=false in CI), without which an Apple Silicon Mac will not open it at all.
+  // the .zip is what the updater reads (latest-mac.yml). Not signed with a certificate: identity '-' signs it ad hoc,
+  // without which an Apple Silicon Mac will not open it at all (left unset, electron-builder skips signing when it
+  // finds no certificate). The hardened runtime is for notarizing; with an ad hoc signature it makes macOS refuse
+  // Electron's own frameworks at launch.
   mac: {
     target: [{ target: 'dmg', arch: ['arm64', 'x64'] }, { target: 'zip', arch: ['arm64', 'x64'] }],
+    identity: '-', hardenedRuntime: false,
     icon: 'apps/desktop/icon.png', category: 'public.app-category.music', artifactName: 'Claudio-${version}-${arch}.${ext}',
   },
   linux: { target: 'AppImage', icon: 'apps/desktop/icon.png', category: 'Audio' },

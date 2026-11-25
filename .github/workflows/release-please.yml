@@ -71,8 +71,6 @@ jobs:
     timeout-minutes: 30
     env:
       TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
-      # no certificate: electron-builder signs the app ad hoc instead of looking for one in the keychain
-      CSC_IDENTITY_AUTO_DISCOVERY: false
     steps:
       - uses: actions/checkout@v4
         with:
