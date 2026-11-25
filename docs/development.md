@@ -32,7 +32,8 @@ node tools/bench/analyze.bench.mjs     # also: deck-voice, zoom, library
   documentation only runs nothing.
 - `.github/workflows/desktop.yml`: the desktop start-up test on Windows with the real Electron. On a pull request it
   runs only when the desktop app, the server, the page, the CLI or the lockfile changed. On a push to main with such a
-  change, and when run by hand (Actions → desktop → Run workflow), it also builds the installer.
+  change, and when run by hand (Actions → desktop → Run workflow), it also builds the installer, and the Mac app on
+  macOS (only the build: it is not started there).
 
 ## Releases
 Versions and the changelog come from the commit messages ([Conventional Commits](https://www.conventionalcommits.org):
@@ -41,11 +42,13 @@ keeps a release pull request up to date with the next version and `CHANGELOG.md`
 publishes the GitHub release. A `feat` raises the minor version, a `fix` the patch version. Setup:
 `.github/workflows/release-please.yml` and `release-please-config.json`.
 
-When a release is published, the same workflow builds the Windows installer from the released commit and attaches it
-to the release (`DJ-Claude-Setup-<version>.exe`). Run by hand with a tag, it builds and attaches the installer for a
-release that has none.
+When a release is published, the same workflow builds the Windows installer and the Mac app from the released commit
+and attaches them to the release (`Claudio-Setup-<version>.exe`; `Claudio-<version>-arm64.dmg` and `-x64.dmg`, with
+the `.zip` files and `latest-mac.yml` the Mac updater reads). Run by hand with a tag, it builds and attaches them for
+a release that has none.
 
 ## The installer
 `pnpm install` once (Electron and electron-builder, for `apps/desktop` only), then `pnpm dist` writes the installer
-to `dist/`. What goes into it is the `files` list in `apps/desktop/electron-builder.config.cjs`: anything a skill
+to `dist/`. On a Mac, `pnpm dist:mac` writes the Mac app (a `.dmg` and a `.zip` for Apple Silicon and for Intel); it
+cannot be built on Windows. Neither is signed with a certificate (the Mac app is signed ad hoc). What goes into it is the `files` list in `apps/desktop/electron-builder.config.cjs`: anything a skill
 needs at run time has to be in that list. See [The desktop app](desktop-app.md).

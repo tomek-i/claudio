@@ -102,6 +102,7 @@ the code, written for Claude.
 
 ## Notes
 - Built for personal use with music you have the rights to play. Downloads are your responsibility.
-- Windows is the primary platform (PowerShell/Git Bash), and the installer is Windows only. The servers and pages are
+- Windows is the primary platform (PowerShell/Git Bash). Releases have a Windows installer and an unsigned Mac app,
+  which is built but not yet tested on a Mac by CI. The servers and pages are
   plain Node + browser and run elsewhere, but paths such as fonts in `tools/produce/viz.mjs` default to Windows and may
   need `VIZ_FONT_BOLD`.
